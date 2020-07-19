@@ -10,7 +10,7 @@
 #include <examples/imgui_impl_glfw.h>
 #include <examples/imgui_impl_vulkan.h>
 
-#define MAX_FRAMES_IN_FLIGHT 1
+#define MAX_FRAMES_IN_FLIGHT 2
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -159,7 +159,7 @@ void VulkanRenderer::End()
 		assert(result == vk::Result::eSuccess);
 	}
 
-	// s_CurrentFrame = (s_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	s_CurrentFrame = (s_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void VulkanRenderer::BeginScene(const PerspectiveCamera& camera)
@@ -203,7 +203,7 @@ void VulkanRenderer::Rasterize(const glm::vec4& clearColor, const glm::vec3& lig
 	clearValues[1].depthStencil = VkClearDepthStencilValue{1.0f, 0};
 	memcpy(&clearValues[2].color.float32, &clearColor, sizeof(clearValues[0].color.float32));
 	vk::RenderPassBeginInfo renderPassInfo{s_Instance.m_OffscreenRenderPass.get(),
-										   s_Instance.m_OffscreenFramebuffer.get(),
+										   s_Instance.m_OffscreenFramebuffers[s_ImageIndex].get(),
 										   {{0, 0}, s_Instance.m_Extent},
 										   static_cast<uint32_t>(clearValues.size()),
 										   clearValues.data()};
@@ -609,18 +609,24 @@ void VulkanRenderer::CreateOffscreenRenderer()
 							   vk::ImageLayout::eDepthStencilAttachmentOptimal, true),
 		m_Device.get());
 
-	std::vector<vk::ImageView> attachments = {m_SampledImage.descriptor.imageView,
-											  m_OffscreenDepthImageAllocation.descriptor.imageView,
-											  m_OffscreenImageAllocation.descriptor.imageView};
+	m_OffscreenFramebuffers.resize(m_SwapChainImageViews.size());
+	for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
+	{
+		std::vector<vk::ImageView> attachments = {
+			m_SampledImage.descriptor.imageView,
+			m_OffscreenDepthImageAllocation.descriptor.imageView,
+			m_OffscreenImageAllocation.descriptor.imageView};
 
-	vk::FramebufferCreateInfo info;
-	info.setRenderPass(m_OffscreenRenderPass.get());
-	info.setAttachmentCount(static_cast<uint32_t>(attachments.size()));
-	info.setPAttachments(attachments.data());
-	info.setWidth(m_Extent.width);
-	info.setHeight(m_Extent.height);
-	info.setLayers(1);
-	m_OffscreenFramebuffer = m_Device.get().createFramebufferUnique(info);
+		vk::FramebufferCreateInfo framebufferInfo;
+		framebufferInfo.setRenderPass(m_OffscreenRenderPass.get());
+		framebufferInfo.setAttachmentCount(static_cast<uint32_t>(attachments.size()));
+		framebufferInfo.setPAttachments(attachments.data());
+		framebufferInfo.setWidth(m_Extent.width);
+		framebufferInfo.setHeight(m_Extent.height);
+		framebufferInfo.setLayers(1);
+
+		m_OffscreenFramebuffers[i] = m_Device.get().createFramebufferUnique(framebufferInfo);
+	}
 }
 
 void VulkanRenderer::CreatePostRenderer()

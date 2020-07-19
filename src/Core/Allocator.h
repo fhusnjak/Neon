@@ -28,7 +28,7 @@ public:
 										 const VmaMemoryUsage& memoryUsage);
 
 	static ImageAllocation CreateImage(const uint32_t width, const uint32_t height,
-									   vk::SampleCountFlagBits sampleCount,
+									   const vk::SampleCountFlagBits& sampleCount,
 									   const vk::Format& format, const vk::ImageTiling& tiling,
 									   const vk::ImageUsageFlags& usage,
 									   const VmaMemoryUsage& memoryUsage);

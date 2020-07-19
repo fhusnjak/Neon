@@ -105,7 +105,7 @@ private:
 	vk::UniqueImageView m_DepthImageView;
 	TextureImage m_SampledImage;
 
-	vk::UniqueFramebuffer m_OffscreenFramebuffer;
+	std::vector<vk::UniqueFramebuffer> m_OffscreenFramebuffers;
 	std::vector<vk::UniqueFramebuffer> m_PostFrameBuffers;
 	std::vector<vk::UniqueFramebuffer> m_ImGuiFrameBuffers;
 
