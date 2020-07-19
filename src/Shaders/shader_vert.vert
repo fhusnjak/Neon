@@ -25,8 +25,6 @@ layout(binding = 0, scalar) uniform CameraMatrices
     vec3 cameraPos;
     mat4 view;
     mat4 projection;
-    mat4 viewInverse;
-    mat4 projectionInverse;
 } cameraMatrices;
 
 layout(binding = 3, scalar) readonly buffer InstanceBufferObject { Instance i[]; } instances;
@@ -41,15 +39,16 @@ pushC;
 
 void main()
 {
-    mat4 modelMatrix = instances.i[pushC.instanceID].modelMatrix;
-    gl_Position = cameraMatrices.projection * cameraMatrices.view * modelMatrix * vec4(pos, 1.0);
+    mat4 model = instances.i[pushC.instanceID].modelMatrix;
     fragColor = color;
     fragNorm = norm;
     fragPos = pos;
     fragCameraPos = cameraMatrices.cameraPos;
     fragTexCoord = texCoord;
     fragMatID = matID;
-    worldPos = vec3(modelMatrix * vec4(pos, 1.0));
+    worldPos = vec3(model * vec4(pos, 1.0));
     vec3 origin = vec3(cameraMatrices.view * vec4(0, 0, 0, 1));
-    viewDir      = vec3(worldPos - origin);
+    viewDir = vec3(worldPos - origin);
+
+    gl_Position = cameraMatrices.projection * cameraMatrices.view * vec4(worldPos, 1.0);
 }

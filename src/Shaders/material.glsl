@@ -1,4 +1,4 @@
-struct Material 
+struct Material
 {
     vec3 ambient;
     vec3 diffuse;
@@ -6,13 +6,14 @@ struct Material
     vec3 transmittance;
     vec3 emission;
     float shininess;
-    float ior;       // index of refraction
-    float dissolve;  // 1 == opaque; 0 == fully transparent
+    float ior;// index of refraction
+    float dissolve;// 1 == opaque; 0 == fully transparent
     int illum;
     int textureId;
 };
 
-struct Vertex{
+struct Vertex
+{
     vec3 pos;
     vec3 norm;
     vec3 color;
@@ -39,8 +40,6 @@ const float PI = 3.14159265;
 
 vec3 computeSpecular(Material mat, vec3 viewDir, vec3 lightDir, vec3 normal)
 {
-    if(mat.illum < 2)
-        return vec3(0);
     const float kShininess = max(mat.shininess, 4.0);
 
     const float kEnergyConservation = (2.0 + kShininess) / (2.0 * PI);
