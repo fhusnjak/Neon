@@ -7,7 +7,7 @@
 #include <GLFW/glfw3.h>
 
 PerspectiveCameraController::PerspectiveCameraController(float aspectRatio, bool rotation)
-	: m_Camera(glm::radians(45.0f), aspectRatio, 0.1f, 6000.0f)
+	: m_Camera(glm::radians(45.0f), aspectRatio, 0.1f, 500.0f)
 	, m_AspectRatio(aspectRatio)
 	, m_Rotation(rotation)
 {
