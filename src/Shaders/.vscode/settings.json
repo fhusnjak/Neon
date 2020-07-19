@@ -1,0 +1,11 @@
+{
+    "editor.formatOnSave": true,
+    "files.associations": {
+        "*.rgen": "glsl",
+        "*.rint": "glsl",
+        "*.rahit": "glsl",
+        "*.rchit": "glsl",
+        "*.rmiss": "glsl",
+        "*.rcall": "glsl"
+    }
+}
