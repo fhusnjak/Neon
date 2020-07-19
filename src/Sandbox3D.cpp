@@ -10,8 +10,6 @@
 
 #define AVG_FRAME_COUNT 100
 
-bool hdr;
-
 Sandbox3D::Sandbox3D()
 	: Layer("Sandbox3D")
 	, m_CameraController((float)WIDTH / HEIGHT)
@@ -63,7 +61,6 @@ void Sandbox3D::OnImGuiRender()
 {
 	ImGui::Text("FPS %.0f", 1000.0f * static_cast<float>(m_FrameCount) / m_TimePassed);
 	ImGui::SliderFloat3("Light Position", &lightPosition.x, -20.f, 20.f);
-	ImGui::Checkbox("HDR", &hdr);
 }
 
 void Sandbox3D::OnEvent(Event& e)

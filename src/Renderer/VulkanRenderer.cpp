@@ -14,17 +14,11 @@
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
-extern bool hdr;
-extern float ni;
-extern float F0;
-
 struct CameraMatrices
 {
 	glm::vec3 cameraPos;
 	glm::mat4 view;
 	glm::mat4 projection;
-	glm::mat4 viewInverse;
-	glm::mat4 projectionInverse;
 };
 
 struct PushConstant
@@ -34,22 +28,7 @@ struct PushConstant
 	glm::vec3 lightColor;
 };
 
-struct RtPushConstant
-{
-	glm::vec4 clearColor;
-	glm::vec3 lightPosition;
-	float lightIntensity;
-	int lightType;
-	uint32_t nSamples;
-	int hdr;
-	float ni;
-	float F0;
-};
-
 auto msaaSamples = vk::SampleCountFlagBits::e8;
-
-float lightIntensity = 100.0f;
-uint32_t lightType = 0;
 
 VulkanRenderer VulkanRenderer::s_Instance;
 uint32_t VulkanRenderer::s_ImageIndex = 0;
@@ -841,7 +820,6 @@ void VulkanRenderer::UpdateCameraMatrices(const PerspectiveCamera& camera)
 {
 	auto view = camera.GetViewMatrix();
 	auto projection = camera.GetProjectionMatrix();
-	CameraMatrices m = {camera.GetPosition(), view, projection, glm::inverse(view),
-						glm::inverse(projection)};
+	CameraMatrices m = {camera.GetPosition(), view, projection};
 	Allocator::UpdateAllocation(m_CameraBufferAllocations[s_ImageIndex].allocation, m);
 }
