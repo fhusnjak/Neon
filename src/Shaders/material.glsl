@@ -32,7 +32,7 @@ struct Instance
 vec3 computeDiffuse(Material mat, vec3 lightDir, vec3 normal)
 {
     float dotNL = max(dot(normal, lightDir), 0.0);
-    vec3 c = mat.diffuse * dotNL;
+    vec3 c = mat.diffuse * max(dotNL, 0.0);
     return mat.ambient + c;
 }
 
@@ -41,11 +41,8 @@ const float PI = 3.14159265;
 vec3 computeSpecular(Material mat, vec3 viewDir, vec3 lightDir, vec3 normal)
 {
     const float kShininess = max(mat.shininess, 4.0);
-
     const float kEnergyConservation = (2.0 + kShininess) / (2.0 * PI);
-    vec3 V = normalize(-viewDir);
-    vec3 H = normalize(lightDir + V);
-    float specular = kEnergyConservation * pow(max(dot(normal, H), 0.0), kShininess);
-
+    vec3 halfway = normalize(lightDir + viewDir);
+    float specular = kEnergyConservation * pow(max(dot(normal, halfway), 0.0), kShininess);
     return vec3(mat.specular * specular);
 }

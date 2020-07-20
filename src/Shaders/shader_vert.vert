@@ -18,7 +18,6 @@ layout(location = 3) out vec3 fragCameraPos;
 layout(location = 4) out vec2 fragTexCoord;
 layout(location = 5) flat out int fragMatID;
 layout(location = 6) out vec3 worldPos;
-layout(location = 7) out vec3 viewDir;
 
 layout(binding = 0, scalar) uniform CameraMatrices
 {
@@ -41,14 +40,12 @@ void main()
 {
     mat4 model = instances.i[pushC.instanceID].modelMatrix;
     fragColor = color;
-    fragNorm = norm;
+    fragNorm = normalize(norm);
     fragPos = pos;
     fragCameraPos = cameraMatrices.cameraPos;
     fragTexCoord = texCoord;
     fragMatID = matID;
     worldPos = vec3(model * vec4(pos, 1.0));
-    vec3 origin = vec3(cameraMatrices.view * vec4(0, 0, 0, 1));
-    viewDir = vec3(worldPos - origin);
 
     gl_Position = cameraMatrices.projection * cameraMatrices.view * vec4(worldPos, 1.0);
 }

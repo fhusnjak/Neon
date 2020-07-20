@@ -14,7 +14,6 @@ layout(location = 3) in vec3 fragCameraPos;
 layout(location = 4) in vec2 fragTexCoord;
 layout(location = 5) flat in int fragMatID;
 layout(location = 6) in vec3 worldPos;
-layout(location = 7) in vec3 viewDir;
 
 layout(location = 0) out vec4 outColor;
 
@@ -35,50 +34,23 @@ void main()
     int objId = instances.i[pushC.instanceID].objId;
     Material mat = materials[objId].m[fragMatID];
 
-    vec3 N = normalize(fragNorm);
-
-    // Vector toward light
-    vec3  L;
+    vec3 lightDir = pushC.lightPosition - worldPos;
     float lightIntensity = 50.0f;
-    vec3  lDir     = pushC.lightPosition - worldPos;
-    float d        = length(lDir);
+    float d = length(lightDir);
     lightIntensity = 50.0f / (d * d);
-    L              = normalize(lDir);
+    lightDir = normalize(lightDir);
 
-    // Diffuse
-    vec3 diffuse = computeDiffuse(mat, L, N);
+    vec3 diffuse = computeDiffuse(mat, lightDir, fragNorm);
     if (mat.textureId >= 0)
     {
-        int  txtOffset  = instances.i[pushC.instanceID].texOffset;
-        uint txtId      = txtOffset + mat.textureId;
+        int txtOffset = instances.i[pushC.instanceID].texOffset;
+        uint txtId = txtOffset + mat.textureId;
         vec3 diffuseTxt = texture(textureSamplers[txtId], fragTexCoord).xyz;
         diffuse *= diffuseTxt;
     }
 
-    // Specular
-    vec3 specular = computeSpecular(mat, viewDir, L, N);
+    vec3 viewDir = normalize(fragCameraPos - worldPos);
+    vec3 specular = computeSpecular(mat, viewDir, lightDir, fragNorm);
 
-    // Result
-    vec3 outC = vec3(lightIntensity * (diffuse + specular));
-
-    //   vec3 norm = normalize(fragNorm);
-    //   vec3 lightDir = normalize(pushC.lightPosition - fragPos);
-
-    //   float diff = max(dot(norm, lightDir), 0.0);
-    //   vec3 diffuse = diff * pushC.lightColor;
-
-    //   vec3 diffuseTxt = texture(textureSamplers[materials[pushC.instanceID].m[fragMatID].textureId + pushC.texOffset], fragTexCoord).xyz;
-    //   diffuse *= diffuseTxt;
-    //
-    //   float specularStrength = 0.5;
-    //   vec3 viewDir = normalize(fragCameraPos - fragPos);
-    //   vec3 reflectDir = reflect(-lightDir, norm);
-    //   float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-    //   vec3 specular = specularStrength * spec * pushC.lightColor;  
-
-    //  vec3 result = (diffuse + specular);
-    // outColor = vec4(1.0f, 0.0f, 0.0f, 0.0f);
-    //outColor = vec4(materials[pushC.instanceID].m[0].shininess, materials[pushC.instanceID].m[0].ior, materials[pushC.instanceID].m[0].dissolve, 1.0f);
-    //outColor = vec4(result, 1.0f);
-    outColor = texture(textureSamplers[mat.textureId + instances.i[pushC.instanceID].texOffset], fragTexCoord).rgba;
+    outColor = vec4(lightIntensity * (diffuse + specular), 1.0f);
 }
