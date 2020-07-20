@@ -48,3 +48,5 @@ add_executable(Neon
         vendor/imgui/imgui_widgets.cpp)
 
 target_link_libraries(Neon $ENV{VULKAN_SDK}/lib/vulkan-1.lib ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glfw-3.3.2/lib-vc2019/glfw3.lib)
+
+target_precompile_headers(Neon PUBLIC src/neopch.h)
