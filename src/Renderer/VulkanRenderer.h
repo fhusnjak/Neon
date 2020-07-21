@@ -31,10 +31,10 @@ public:
 	static vk::CommandBuffer BeginSingleTimeCommands();
 	static void EndSingleTimeCommands(vk::CommandBuffer commandBuffer);
 	static vk::ImageView CreateImageView(vk::Image image, vk::Format format,
-										 vk::ImageAspectFlags aspectFlags);
+										 const vk::ImageAspectFlags& aspectFlags);
 	static vk::UniqueImageView CreateImageViewUnique(vk::Image image, vk::Format format,
-													 vk::ImageAspectFlags aspectFlags);
-	static vk::Sampler CreateSampler(const vk::SamplerCreateInfo createInfo);
+													 const vk::ImageAspectFlags& aspectFlags);
+	static vk::Sampler CreateSampler(const vk::SamplerCreateInfo& createInfo);
 
 private:
 	VulkanRenderer() = default;

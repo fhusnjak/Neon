@@ -254,7 +254,7 @@ void VulkanRenderer::EndSingleTimeCommands(vk::CommandBuffer commandBuffer)
 }
 
 vk::ImageView VulkanRenderer::CreateImageView(vk::Image image, vk::Format format,
-											  vk::ImageAspectFlags aspectFlags)
+											  const vk::ImageAspectFlags& aspectFlags)
 {
 	vk::ImageSubresourceRange subResourceRange(aspectFlags, 0, 1, 0, 1);
 	vk::ImageViewCreateInfo imageViewCreateInfo{{},		image, vk::ImageViewType::e2D,
@@ -263,7 +263,7 @@ vk::ImageView VulkanRenderer::CreateImageView(vk::Image image, vk::Format format
 }
 
 vk::UniqueImageView VulkanRenderer::CreateImageViewUnique(vk::Image image, vk::Format format,
-														  vk::ImageAspectFlags aspectFlags)
+														  const vk::ImageAspectFlags& aspectFlags)
 {
 	vk::ImageSubresourceRange subResourceRange(aspectFlags, 0, 1, 0, 1);
 	vk::ImageViewCreateInfo imageViewCreateInfo{{},		image, vk::ImageViewType::e2D,
@@ -271,7 +271,7 @@ vk::UniqueImageView VulkanRenderer::CreateImageViewUnique(vk::Image image, vk::F
 	return s_Instance.m_Device.get().createImageViewUnique(imageViewCreateInfo);
 }
 
-vk::Sampler VulkanRenderer::CreateSampler(const vk::SamplerCreateInfo createInfo)
+vk::Sampler VulkanRenderer::CreateSampler(const vk::SamplerCreateInfo& createInfo)
 {
 	return s_Instance.m_Device.get().createSampler(createInfo);
 }
@@ -297,7 +297,7 @@ void VulkanRenderer::InitRenderer(WindowsWindow* window)
 void VulkanRenderer::CreateInstance()
 {
 	vk::DynamicLoader dl;
-	PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr =
+	auto vkGetInstanceProcAddr =
 		dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
@@ -354,6 +354,7 @@ void VulkanRenderer::CreateDevice()
 											 m_QueueFamilyIndices.presentFamily.value()};
 	float queuePriority = 1.0f;
 	std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+	queueCreateInfos.reserve(queueFamilyIndices.size());
 	for (uint32_t queueFamilyIndex : queueFamilyIndices)
 	{
 		queueCreateInfos.push_back({{}, queueFamilyIndex, 1, &queuePriority});
@@ -390,13 +391,13 @@ void VulkanRenderer::CreateDevice()
 	m_PresentQueue = m_Device.get().getQueue(m_QueueFamilyIndices.presentFamily.value(), 0);
 
 	vk::PhysicalDeviceProperties physicalDeviceProperties = m_PhysicalDevice.getProperties();
-	size_t minUniformOffsetAlligment =
+	size_t minUniformOffsetAlignment =
 		physicalDeviceProperties.limits.minUniformBufferOffsetAlignment;
 	m_DynamicAlligment = sizeof(Material);
-	if (minUniformOffsetAlligment > 0)
+	if (minUniformOffsetAlignment > 0)
 	{
 		m_DynamicAlligment =
-			(m_DynamicAlligment + minUniformOffsetAlligment - 1) & ~(minUniformOffsetAlligment - 1);
+			(m_DynamicAlligment + minUniformOffsetAlignment - 1) & ~(minUniformOffsetAlignment - 1);
 	}
 
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(m_Device.get());
@@ -667,22 +668,15 @@ void VulkanRenderer::CreateImGuiRenderer()
 void VulkanRenderer::CreateOffscreenDescriptorResources()
 {
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
-	bindings.push_back({0, vk::DescriptorType::eUniformBuffer, 1,
-						vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eRaygenNV});
-	bindings.push_back(
-		{1, vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(models.size()),
-		 vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eClosestHitNV});
-	bindings.push_back(
-		{2, vk::DescriptorType::eCombinedImageSampler,
-		 static_cast<uint32_t>(ObjModel::s_TextureImages.size()),
-		 vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eClosestHitNV});
-	bindings.push_back({3, vk::DescriptorType::eStorageBuffer, 1,
-						vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment |
-							vk::ShaderStageFlagBits::eClosestHitNV});
-	bindings.push_back({4, vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(models.size()),
-						vk::ShaderStageFlagBits::eClosestHitNV});
-	bindings.push_back({5, vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(models.size()),
-						vk::ShaderStageFlagBits::eClosestHitNV});
+	bindings.emplace_back(0, vk::DescriptorType::eUniformBuffer, 1,
+						  vk::ShaderStageFlagBits::eVertex);
+	bindings.emplace_back(1, vk::DescriptorType::eStorageBuffer,
+						  static_cast<uint32_t>(models.size()), vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(2, vk::DescriptorType::eCombinedImageSampler,
+						  static_cast<uint32_t>(ObjModel::s_TextureImages.size()),
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(3, vk::DescriptorType::eStorageBuffer, 1,
+						  vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
 
 	m_OffscreenDescriptorSets.Init(m_Device.get());
 	m_OffscreenDescriptorSets.CreateDescriptorSetLayout(bindings);
@@ -697,8 +691,8 @@ void VulkanRenderer::CreateOffscreenDescriptorResources()
 void VulkanRenderer::CreatePostDescriptorResources()
 {
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
-	bindings.push_back(
-		{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment});
+	bindings.emplace_back(0, vk::DescriptorType::eCombinedImageSampler, 1,
+						  vk::ShaderStageFlagBits::eFragment);
 	m_PostDescriptorSets.Init(m_Device.get());
 	m_PostDescriptorSets.CreateDescriptorSetLayout(bindings);
 	m_PostDescriptorPool = vk::UniqueDescriptorPool(
@@ -714,26 +708,25 @@ void VulkanRenderer::UpdateOffscreenDescriptorSets()
 	std::vector<vk::DescriptorBufferInfo> materialBufferInfo;
 	std::vector<vk::DescriptorBufferInfo> vertexBufferInfo;
 	std::vector<vk::DescriptorBufferInfo> indexBufferInfo;
-	for (size_t i = 0; i < models.size(); ++i)
+	for (auto& model : models)
 	{
-		materialBufferInfo.push_back({models[i].materialBuffer.buffer, 0, VK_WHOLE_SIZE});
-		vertexBufferInfo.push_back({models[i].vertexBuffer.buffer, 0, VK_WHOLE_SIZE});
-		indexBufferInfo.push_back({models[i].indexBuffer.buffer, 0, VK_WHOLE_SIZE});
+		materialBufferInfo.emplace_back(model.materialBuffer.buffer, 0, VK_WHOLE_SIZE);
+		vertexBufferInfo.emplace_back(model.vertexBuffer.buffer, 0, VK_WHOLE_SIZE);
+		indexBufferInfo.emplace_back(model.indexBuffer.buffer, 0, VK_WHOLE_SIZE);
 	}
 
 	std::vector<vk::DescriptorImageInfo> texturesBufferInfo;
-	for (size_t i = 0; i < ObjModel::s_TextureImages.size(); ++i)
+	texturesBufferInfo.reserve(ObjModel::s_TextureImages.size());
+	for (auto& s_TextureImage : ObjModel::s_TextureImages)
 	{
-		texturesBufferInfo.push_back(ObjModel::s_TextureImages[i].descriptor);
+		texturesBufferInfo.push_back(s_TextureImage.descriptor);
 	}
 
 	std::vector<vk::WriteDescriptorSet> descriptorWrites = {
 		m_OffscreenDescriptorSets.CreateWrite(0, &cameraBufferInfo, 0),
 		m_OffscreenDescriptorSets.CreateWrite(1, materialBufferInfo.data(), 0),
 		m_OffscreenDescriptorSets.CreateWrite(2, texturesBufferInfo.data(), 0),
-		m_OffscreenDescriptorSets.CreateWrite(3, &instanceBufferInfo, 0),
-		m_OffscreenDescriptorSets.CreateWrite(4, vertexBufferInfo.data(), 0),
-		m_OffscreenDescriptorSets.CreateWrite(5, indexBufferInfo.data(), 0)};
+		m_OffscreenDescriptorSets.CreateWrite(3, &instanceBufferInfo, 0)};
 
 	m_OffscreenDescriptorSets.Update(descriptorWrites);
 }
