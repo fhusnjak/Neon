@@ -50,18 +50,6 @@ vk::WriteDescriptorSet DescriptorSetType::CreateWrite(const size_t binding,
 			info};
 }
 
-vk::WriteDescriptorSet
-DescriptorSetType::CreateWrite(const size_t binding,
-							   const vk::WriteDescriptorSetAccelerationStructureNV* info,
-							   const uint32_t arrayElement)
-{
-	vk::WriteDescriptorSet res({}, m_Bindings[binding].binding, arrayElement,
-							   m_Bindings[binding].descriptorCount,
-							   m_Bindings[binding].descriptorType);
-	res.setPNext(info);
-	return res;
-}
-
 void DescriptorSetType::Update(std::vector<vk::WriteDescriptorSet>& descriptorWrites)
 {
 	assert(descriptorWrites.size() == m_Bindings.size());

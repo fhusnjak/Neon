@@ -13,9 +13,8 @@ Allocator Allocator::s_Allocator;
 void Allocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device)
 {
 	s_Allocator.m_PhysicalDevice = physicalDevice;
-	s_Allocator.m_Device = device;
 	VmaAllocatorCreateInfo allocatorInfo{{}, physicalDevice, device};
-	allocatorInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
+	allocatorInfo.flags |= (uint32_t)VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
 	vmaCreateAllocator(&allocatorInfo, &s_Allocator.m_Allocator);
 }
 
@@ -141,7 +140,7 @@ ImageAllocation Allocator::CreateTextureImage(const std::string& filename)
 	{
 		texWidth = texHeight = 1;
 		texChannels = 4;
-		glm::u8vec4* color = new glm::u8vec4(255, 128, 0, 128);
+		auto* color = new glm::u8vec4(255, 128, 0, 128);
 		pixels = reinterpret_cast<stbi_uc*>(color);
 	}
 
@@ -237,3 +236,7 @@ ImageAllocation Allocator::CreateHdrTextureImage(const std::string& filename)
 	s_Allocator.m_StagingBuffers.push(stagingBufferAllocation);
 	return imageAllocation;
 }
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "modernize-use-equals-default"
+Allocator::Allocator() noexcept {}
+#pragma clang diagnostic pop

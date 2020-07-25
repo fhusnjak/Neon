@@ -36,7 +36,7 @@ add_executable(Neon
         src/Renderer/VulkanShader.cpp
         src/Tools/FileTools.cpp
         src/Tools/VulkanTools.cpp
-        src/Window/WindowsWindow.cpp
+        src/Window/Window.cpp
         src/Application.cpp
         src/main.cpp
         src/Sandbox3D.cpp

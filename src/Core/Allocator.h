@@ -21,13 +21,18 @@ struct ImageAllocation
 class Allocator
 {
 public:
+	Allocator(const Allocator&) = delete;
+	Allocator& operator=(const Allocator&) = delete;
+	Allocator(const Allocator&&) = delete;
+	Allocator& operator=(const Allocator&&) = delete;
+
 	static void Init(vk::PhysicalDevice physicalDevice, vk::Device device);
 	static void FlushStaging();
 	static BufferAllocation CreateBuffer(const vk::DeviceSize& size,
 										 const vk::BufferUsageFlags& usage,
 										 const VmaMemoryUsage& memoryUsage);
 
-	static ImageAllocation CreateImage(const uint32_t width, const uint32_t height,
+	static ImageAllocation CreateImage(uint32_t width, uint32_t height,
 									   const vk::SampleCountFlagBits& sampleCount,
 									   const vk::Format& format, const vk::ImageTiling& tiling,
 									   const vk::ImageUsageFlags& usage,
@@ -76,15 +81,11 @@ public:
 	}
 
 private:
-	Allocator() = default;
-	Allocator(const Allocator&) = delete;
-	Allocator& operator=(const Allocator&) = delete;
+	Allocator() noexcept;
 
 private:
 	static Allocator s_Allocator;
-
-	VmaAllocator m_Allocator;
+	VmaAllocator m_Allocator{};
 	vk::PhysicalDevice m_PhysicalDevice;
-	vk::Device m_Device;
 	std::queue<BufferAllocation> m_StagingBuffers;
 };

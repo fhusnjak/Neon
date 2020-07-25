@@ -10,7 +10,7 @@ bool CheckExtensionSupport(uint32_t glfwExtensionCount, const char* const* glfwE
 		bool found = false;
 		for (const auto& extension : extensions)
 		{
-			if (strcmp(extension.extensionName, *glfwExtensions))
+			if (strcmp(extension.extensionName, *glfwExtensions) != 0)
 			{
 				found = true;
 				break;
@@ -133,19 +133,17 @@ bool IsDeviceSuitable(vk::PhysicalDevice& physicalDevice, vk::SurfaceKHR& surfac
 }
 
 vk::Format FindSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling,
-							   vk::FormatFeatureFlags features, vk::PhysicalDevice& physicalDevice)
+							   const vk::FormatFeatureFlags& features,
+							   vk::PhysicalDevice& physicalDevice)
 {
 	for (auto& format : candidates)
 	{
 		vk::FormatProperties props = physicalDevice.getFormatProperties(format);
 		if (tiling == vk::ImageTiling::eLinear &&
-			(props.linearTilingFeatures & features) == features)
+				(props.linearTilingFeatures & features) == features ||
+			tiling == vk::ImageTiling::eOptimal &&
+				(props.optimalTilingFeatures & features) == features)
 		{ return format; }
-		else if (tiling == vk::ImageTiling::eOptimal &&
-				 (props.optimalTilingFeatures & features) == features)
-		{
-			return format;
-		}
 	}
 
 	throw std::runtime_error("Format not found");
@@ -157,17 +155,4 @@ vk::Format FindDepthFormat(vk::PhysicalDevice& physicalDevice)
 		{vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
 		vk::ImageTiling::eOptimal, vk::FormatFeatureFlagBits::eDepthStencilAttachment,
 		physicalDevice);
-}
-
-uint32_t FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,
-						vk::PhysicalDevice physicalDevice)
-{
-	vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
-	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-	{
-		if (typeFilter & (1 << i) &&
-			(memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-		{ return i; }
-	}
-	throw std::runtime_error("failed to find suitable memory type!");
 }

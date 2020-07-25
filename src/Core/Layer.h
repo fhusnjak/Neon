@@ -5,7 +5,7 @@
 class Layer
 {
 public:
-	Layer(const std::string& name = "Layer");
+	explicit Layer(std::string  name = "Layer");
 	virtual ~Layer() = default;
 
 	virtual void OnAttach() { }
@@ -18,7 +18,7 @@ public:
 
 	virtual void OnEvent(Event& event) { }
 
-	inline const std::string& GetName() const
+	[[nodiscard]] inline const std::string& GetName() const
 	{
 		return m_DebugName;
 	}

@@ -15,10 +15,6 @@ public:
 	vk::WriteDescriptorSet CreateWrite(const size_t binding, const vk::DescriptorImageInfo* info,
 									   const uint32_t arrayElement);
 
-	vk::WriteDescriptorSet CreateWrite(const size_t binding,
-									   const vk::WriteDescriptorSetAccelerationStructureNV* info,
-									   const uint32_t arrayElement);
-
 	void Update(std::vector<vk::WriteDescriptorSet>& descriptorWrites);
 
 	const std::vector<vk::DescriptorSet>& Get() const

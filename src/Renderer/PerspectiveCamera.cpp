@@ -1,5 +1,3 @@
-#include "neopch.h"
-
 #include "PerspectiveCamera.h"
 
 PerspectiveCamera::PerspectiveCamera(float fovY, float aspect, float zNear, float zFar)

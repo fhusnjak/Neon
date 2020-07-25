@@ -8,7 +8,7 @@
 #include "GraphicsPipeline.h"
 
 #define GLFW_INCLUDE_VULKAN
-#include "Window/WindowsWindow.h"
+#include "Window/Window.h"
 
 #include "Tools/VulkanTools.h"
 
@@ -17,10 +17,11 @@ class VulkanRenderer
 public:
 	VulkanRenderer(const VulkanRenderer& other) = delete;
 	VulkanRenderer& operator=(const VulkanRenderer&) = delete;
-	static void Init(WindowsWindow* window);
+	VulkanRenderer(const VulkanRenderer&& other) = delete;
+	VulkanRenderer& operator=(const VulkanRenderer&&) = delete;
+	static void Init(Window* window);
 	static void Shutdown();
 	static void Flush(const std::vector<ObjInstance>& instances_);
-	static void WaitIdle();
 	static void Begin();
 	static void End();
 	static void BeginScene(const PerspectiveCamera& camera);
@@ -37,8 +38,8 @@ public:
 	static vk::Sampler CreateSampler(const vk::SamplerCreateInfo& createInfo);
 
 private:
-	VulkanRenderer() = default;
-	void InitRenderer(WindowsWindow* window);
+	VulkanRenderer() noexcept;
+	void InitRenderer(Window* window);
 	void CreateInstance();
 	void CreateSurface();
 	void PickPhysicalDevice();
@@ -69,9 +70,9 @@ private:
 	static uint32_t s_ImageIndex;
 	static uint32_t s_CurrentFrame;
 
-	WindowsWindow* m_Window = nullptr;
+	Window* m_Window = nullptr;
 
-	size_t m_DynamicAlligment = -1;
+	size_t m_DynamicAlignment = -1;
 
 	vk::UniqueInstance m_Instance;
 	vk::UniqueSurfaceKHR m_Surface;
@@ -101,18 +102,15 @@ private:
 	TextureImage m_OffscreenImageAllocation;
 	TextureImage m_OffscreenDepthImageAllocation;
 
-	ImageAllocation m_DepthImageAllocation;
+	ImageAllocation m_DepthImageAllocation{};
 	vk::UniqueImageView m_DepthImageView;
 	TextureImage m_SampledImage;
 
-	std::vector<vk::UniqueFramebuffer> m_OffscreenFramebuffers;
+	std::vector<vk::UniqueFramebuffer> m_OffscreenFrameBuffers;
 	std::vector<vk::UniqueFramebuffer> m_PostFrameBuffers;
 	std::vector<vk::UniqueFramebuffer> m_ImGuiFrameBuffers;
 
 	vk::UniqueCommandPool m_CommandPool;
-
-	std::vector<vk::UniqueDeviceMemory> m_VertexBufferMemory;
-	std::vector<vk::UniqueDeviceMemory> m_IndexBufferMemory;
 
 	std::vector<BufferAllocation> m_CameraBufferAllocations;
 
@@ -127,7 +125,6 @@ private:
 	std::vector<vk::UniqueCommandBuffer> m_CommandBuffers;
 
 	std::vector<vk::UniqueSemaphore> m_ImageAvailableSemaphores;
-	std::vector<vk::UniqueSemaphore> m_FirstQueueFinished;
 	std::vector<vk::UniqueSemaphore> m_RenderFinishedSemaphores;
 	std::vector<vk::UniqueFence> m_InFlightFences;
 	std::vector<vk::Fence> m_ImagesInFlight;

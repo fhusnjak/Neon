@@ -6,11 +6,11 @@ class ImGuiLayer : public Layer
 {
 public:
 	ImGuiLayer() = default;
-	~ImGuiLayer() = default;
+	~ImGuiLayer() override = default;
 
 	void OnAttach() override;
 	void OnDetach() override;
 
-	void Begin();
-	void End();
+	static void Begin();
+	static void End();
 };

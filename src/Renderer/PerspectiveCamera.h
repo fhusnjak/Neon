@@ -24,7 +24,7 @@ public:
 		RecalculateViewMatrix();
 	}
 
-	const glm::vec3& GetPosition() const
+	[[nodiscard]] const glm::vec3& GetPosition() const
 	{
 		return m_Position;
 	}
@@ -61,22 +61,22 @@ public:
 		RecalculateViewMatrix();
 	}
 
-	const glm::mat4& GetProjectionMatrix() const
+	[[nodiscard]] const glm::mat4& GetProjectionMatrix() const
 	{
 		return m_ProjectionMatrix;
 	}
 
-	const glm::mat4& GetViewMatrix() const
+	[[nodiscard]] const glm::mat4& GetViewMatrix() const
 	{
 		return m_ViewMatrix;
 	}
 
-	const glm::vec3& GetFront() const
+	[[nodiscard]] const glm::vec3& GetFront() const
 	{
 		return m_Front;
 	}
 
-	const glm::vec3& GetUp() const
+	[[nodiscard]] const glm::vec3& GetUp() const
 	{
 		return m_Up;
 	}
@@ -86,9 +86,9 @@ private:
 
 private:
 	glm::mat4 m_ProjectionMatrix;
-	glm::mat4 m_ViewMatrix;
+	glm::mat4 m_ViewMatrix{};
 
-	glm::vec3 m_Position;
-	glm::vec3 m_Front;
+	glm::vec3 m_Position{};
+	glm::vec3 m_Front{};
 	glm::vec3 m_Up = {0.0f, 1.0f, 0.0f};
 };

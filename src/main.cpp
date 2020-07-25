@@ -4,7 +4,7 @@
 
 int main()
 {
-	Application* app = new Application("Neon");
+	auto* app = new Application("Neon");
 	app->Run();
 	delete app;
 	return 0;

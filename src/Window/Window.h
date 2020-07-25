@@ -9,34 +9,34 @@
 
 #define HEIGHT 1080
 
-class WindowsWindow
+class Window
 {
 public:
 	using EventCallbackFn = std::function<void(Event&)>;
 
-	WindowsWindow(const std::string& name);
-	~WindowsWindow();
+	explicit Window(const std::string& name);
+	~Window();
 
 	void OnUpdate();
 
-	inline bool Resized() const
+	[[nodiscard]] inline bool Resized() const
 	{
 		return m_Data.Resized;
 	}
 
 	void ResetResized();
 
-	inline unsigned int GetWidth() const
+	[[nodiscard]] inline unsigned int GetWidth() const
 	{
 		return m_Data.Width;
 	}
 
-	inline unsigned int GetHeight() const
+	[[nodiscard]] inline unsigned int GetHeight() const
 	{
 		return m_Data.Height;
 	}
 
-	inline GLFWwindow* GetNativeWindow() const
+	[[nodiscard]] inline GLFWwindow* GetNativeWindow() const
 	{
 		return m_Window;
 	}
@@ -51,7 +51,7 @@ private:
 	void Shutdown();
 
 private:
-	GLFWwindow* m_Window;
+	GLFWwindow* m_Window = nullptr;
 
 	struct WindowData
 	{

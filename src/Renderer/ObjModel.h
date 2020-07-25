@@ -42,25 +42,17 @@ struct ObjInstance
 	uint32_t objModelIndex{0};
 	glm::mat4 modelMatrix{1};
 	glm::mat4 modelMatrixIT{1};
-	uint32_t textureOffset;
+	uint32_t textureOffset{};
 };
 
 struct TextureImage
 {
-	vk::DescriptorImageInfo descriptor;
-	ImageAllocation textureAllocation;
+	vk::DescriptorImageInfo descriptor{};
+	ImageAllocation textureAllocation{};
 };
 
 struct ObjModel
 {
-public:
-	uint32_t indicesCount{0};
-	uint32_t verticesCount{0};
-	BufferAllocation vertexBuffer;
-	BufferAllocation indexBuffer;
-	BufferAllocation materialBuffer;
-	uint32_t textureOffset;
-
 public:
 	ObjModel() = default;
 	static void LoadSkysphere();
@@ -70,4 +62,12 @@ public:
 	static std::vector<TextureImage> s_SkyboxTextureImages;
 	static TextureImage s_Skysphere;
 	static TextureImage s_HdrSkysphere;
+
+public:
+	uint32_t indicesCount{0};
+	uint32_t verticesCount{0};
+	BufferAllocation vertexBuffer{};
+	BufferAllocation indexBuffer{};
+	BufferAllocation materialBuffer{};
+	uint32_t textureOffset{};
 };

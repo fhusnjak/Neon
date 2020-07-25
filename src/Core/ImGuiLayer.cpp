@@ -9,6 +9,8 @@
 #include <examples/imgui_impl_glfw.h>
 #include <examples/imgui_impl_vulkan.h>
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "hicpp-signed-bitwise"
 void ImGuiLayer::OnAttach()
 {
 	IMGUI_CHECKVERSION();
@@ -18,6 +20,7 @@ void ImGuiLayer::OnAttach()
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForVulkan(Application::Get().GetWindow().GetNativeWindow(), true);
 }
+#pragma clang diagnostic pop
 
 void ImGuiLayer::OnDetach()
 {
@@ -36,7 +39,7 @@ void ImGuiLayer::Begin()
 void ImGuiLayer::End()
 {
 	ImGuiIO& io = ImGui::GetIO();
-	Application& app = Application::Get();
+	const Application& app = Application::Get();
 	io.DisplaySize = ImVec2((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
 	ImGui::Render();
 	VulkanRenderer::DrawImGui();

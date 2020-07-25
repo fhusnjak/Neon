@@ -8,7 +8,7 @@
 class PerspectiveCameraController
 {
 public:
-	PerspectiveCameraController(float aspectRatio, bool rotation = false);
+	explicit PerspectiveCameraController(float aspectRatio, bool rotation = false) noexcept;
 
 	void OnUpdate(float ts);
 	void OnEvent(Event& e);
@@ -18,12 +18,12 @@ public:
 		return m_Camera;
 	}
 
-	const PerspectiveCamera& GetCamera() const
+	[[nodiscard]] const PerspectiveCamera& GetCamera() const
 	{
 		return m_Camera;
 	}
 
-	float GetZoomLevel() const
+	[[nodiscard]] float GetZoomLevel() const
 	{
 		return m_ZoomLevel;
 	}
@@ -34,8 +34,8 @@ public:
 	}
 
 private:
-	bool OnWindowResized(WindowResizeEvent& e);
-	bool OnKeyPressedEvent(KeyPressedEvent& e);
+	bool OnWindowResize(WindowResizeEvent& e);
+	bool OnKeyPress(KeyPressedEvent& e);
 
 private:
 	PerspectiveCamera m_Camera;

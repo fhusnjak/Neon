@@ -19,7 +19,7 @@ struct QueueFamilyIndices
 	std::optional<uint32_t> graphicsFamily;
 	std::optional<uint32_t> presentFamily;
 
-	inline bool IsComplete() const
+	[[nodiscard]] inline bool IsComplete() const
 	{
 		return graphicsFamily.has_value() && presentFamily.has_value();
 	}
@@ -46,9 +46,6 @@ SwapChainSupportDetails QuerySwapChainSupport(vk::PhysicalDevice device, vk::Sur
 bool IsDeviceSuitable(vk::PhysicalDevice& device, vk::SurfaceKHR& surface);
 
 vk::Format FindSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling,
-							   vk::FormatFeatureFlags features, vk::PhysicalDevice& physicalDevice);
+							   const vk::FormatFeatureFlags& features, vk::PhysicalDevice& physicalDevice);
 
 vk::Format FindDepthFormat(vk::PhysicalDevice& physicalDevice);
-
-uint32_t FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,
-						vk::PhysicalDevice physicalDevice);

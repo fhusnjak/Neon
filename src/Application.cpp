@@ -8,7 +8,7 @@
 
 Application* Application::s_Instance = nullptr;
 
-Application::Application(const std::string& name)
+Application::Application(const std::string& name) noexcept
 	: m_Window(name)
 {
 	assert(s_Instance == nullptr);
@@ -92,8 +92,6 @@ bool Application::OnWindowResize(WindowResizeEvent& e)
 		m_Minimized = true;
 		return false;
 	}
-
 	m_Minimized = false;
-
 	return false;
 }

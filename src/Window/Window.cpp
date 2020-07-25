@@ -1,31 +1,31 @@
 #include "neopch.h"
 
-#include "WindowsWindow.h"
+#include "Window.h"
 
 #include "Event/KeyEvent.h"
 
-WindowsWindow::WindowsWindow(const std::string& name)
+Window::Window(const std::string& name)
 	: m_Data{name, WIDTH, HEIGHT}
 {
 	Init();
 }
 
-WindowsWindow::~WindowsWindow()
+Window::~Window()
 {
 	Shutdown();
 }
 
-void WindowsWindow::OnUpdate()
+void Window::OnUpdate()
 {
 	glfwPollEvents();
 }
 
-void WindowsWindow::ResetResized()
+void Window::ResetResized()
 {
 	m_Data.Resized = false;
 }
 
-void WindowsWindow::Init()
+void Window::Init()
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -63,11 +63,12 @@ void WindowsWindow::Init()
 							   data.EventCallback(event);
 							   break;
 						   }
+						   default: break;
 						   }
 					   });
 }
 
-void WindowsWindow::Shutdown()
+void Window::Shutdown()
 {
 	glfwDestroyWindow(m_Window);
 	glfwTerminate();

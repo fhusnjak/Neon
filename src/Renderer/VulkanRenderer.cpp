@@ -38,11 +38,16 @@ static std::vector<ObjModel> models;
 static std::vector<ObjInstance> instances;
 static BufferAllocation instanceBufferAlloc;
 
-std::vector<const char*> instanceExtensions = {
-	VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME};
+static std::vector<const char*> instanceExtensions;
 
-void VulkanRenderer::Init(WindowsWindow* window)
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "modernize-use-equals-default"
+VulkanRenderer::VulkanRenderer() noexcept {}
+#pragma clang diagnostic pop
+
+void VulkanRenderer::Init(Window* window)
 {
+	instanceExtensions.push_back({VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME});
 	s_Instance.InitRenderer(window);
 }
 
@@ -68,11 +73,6 @@ void VulkanRenderer::Flush(const std::vector<ObjInstance>& instances_)
 	s_Instance.CreatePostDescriptorResources();
 	s_Instance.CreatePostGraphicsPipeline();
 	s_Instance.UpdatePostDescriptorSets();
-}
-
-void VulkanRenderer::WaitIdle()
-{
-	s_Instance.m_Device.get().waitIdle();
 }
 
 void VulkanRenderer::Begin()
@@ -182,7 +182,7 @@ void VulkanRenderer::Rasterize(const glm::vec4& clearColor, const glm::vec3& lig
 	clearValues[1].depthStencil = VkClearDepthStencilValue{1.0f, 0};
 	memcpy(&clearValues[2].color.float32, &clearColor, sizeof(clearValues[0].color.float32));
 	vk::RenderPassBeginInfo renderPassInfo{s_Instance.m_OffscreenRenderPass.get(),
-										   s_Instance.m_OffscreenFramebuffers[s_ImageIndex].get(),
+										   s_Instance.m_OffscreenFrameBuffers[s_ImageIndex].get(),
 										   {{0, 0}, s_Instance.m_Extent},
 										   static_cast<uint32_t>(clearValues.size()),
 										   clearValues.data()};
@@ -276,7 +276,7 @@ vk::Sampler VulkanRenderer::CreateSampler(const vk::SamplerCreateInfo& createInf
 	return s_Instance.m_Device.get().createSampler(createInfo);
 }
 
-void VulkanRenderer::InitRenderer(WindowsWindow* window)
+void VulkanRenderer::InitRenderer(Window* window)
 {
 	m_Window = window;
 	CreateInstance();
@@ -294,6 +294,8 @@ void VulkanRenderer::InitRenderer(WindowsWindow* window)
 	CreateSyncObjects();
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "hicpp-signed-bitwise"
 void VulkanRenderer::CreateInstance()
 {
 	vk::DynamicLoader dl;
@@ -324,6 +326,7 @@ void VulkanRenderer::CreateInstance()
 
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(m_Instance.get());
 }
+#pragma clang diagnostic pop
 
 void VulkanRenderer::CreateSurface()
 {
@@ -393,11 +396,11 @@ void VulkanRenderer::CreateDevice()
 	vk::PhysicalDeviceProperties physicalDeviceProperties = m_PhysicalDevice.getProperties();
 	size_t minUniformOffsetAlignment =
 		physicalDeviceProperties.limits.minUniformBufferOffsetAlignment;
-	m_DynamicAlligment = sizeof(Material);
+	m_DynamicAlignment = sizeof(Material);
 	if (minUniformOffsetAlignment > 0)
 	{
-		m_DynamicAlligment =
-			(m_DynamicAlligment + minUniformOffsetAlignment - 1) & ~(minUniformOffsetAlignment - 1);
+		m_DynamicAlignment =
+			(m_DynamicAlignment + minUniformOffsetAlignment - 1) & ~(minUniformOffsetAlignment - 1);
 	}
 
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(m_Device.get());
@@ -589,7 +592,7 @@ void VulkanRenderer::CreateOffscreenRenderer()
 							   vk::ImageLayout::eDepthStencilAttachmentOptimal, true),
 		m_Device.get());
 
-	m_OffscreenFramebuffers.resize(m_SwapChainImageViews.size());
+	m_OffscreenFrameBuffers.resize(m_SwapChainImageViews.size());
 	for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
 	{
 		std::vector<vk::ImageView> attachments = {
@@ -605,7 +608,7 @@ void VulkanRenderer::CreateOffscreenRenderer()
 		framebufferInfo.setHeight(m_Extent.height);
 		framebufferInfo.setLayers(1);
 
-		m_OffscreenFramebuffers[i] = m_Device.get().createFramebufferUnique(framebufferInfo);
+		m_OffscreenFrameBuffers[i] = m_Device.get().createFramebufferUnique(framebufferInfo);
 	}
 }
 
@@ -813,6 +816,6 @@ void VulkanRenderer::UpdateCameraMatrices(const PerspectiveCamera& camera)
 {
 	auto view = camera.GetViewMatrix();
 	auto projection = camera.GetProjectionMatrix();
-	CameraMatrices m = {camera.GetPosition(), view, projection};
+	CameraMatrices m{camera.GetPosition(), view, projection};
 	Allocator::UpdateAllocation(m_CameraBufferAllocations[s_ImageIndex].allocation, m);
 }

@@ -6,7 +6,7 @@
 
 #include <GLFW/glfw3.h>
 
-PerspectiveCameraController::PerspectiveCameraController(float aspectRatio, bool rotation)
+PerspectiveCameraController::PerspectiveCameraController(float aspectRatio, bool rotation) noexcept
 	: m_Camera(glm::radians(45.0f), aspectRatio, 0.1f, 500.0f)
 	, m_AspectRatio(aspectRatio)
 	, m_Rotation(rotation)
@@ -48,12 +48,12 @@ void PerspectiveCameraController::OnEvent(Event& e)
 {
 	EventDispatcher dispatcher(e);
 	dispatcher.Dispatch<WindowResizeEvent>(
-		std::bind(&PerspectiveCameraController::OnWindowResized, this, std::placeholders::_1));
+		[this](WindowResizeEvent& e) { return OnWindowResize(e); });
 	dispatcher.Dispatch<KeyPressedEvent>(
-		std::bind(&PerspectiveCameraController::OnKeyPressedEvent, this, std::placeholders::_1));
+		[this](KeyPressedEvent& e) { return OnKeyPress(e); });
 }
 
-bool PerspectiveCameraController::OnWindowResized(WindowResizeEvent& e)
+bool PerspectiveCameraController::OnWindowResize(WindowResizeEvent& e)
 {
 	if (e.GetWidth() == 0 || e.GetHeight() == 0) return false;
 	m_AspectRatio = (float)e.GetWidth() / (float)e.GetHeight();
@@ -62,7 +62,7 @@ bool PerspectiveCameraController::OnWindowResized(WindowResizeEvent& e)
 	return false;
 }
 
-bool PerspectiveCameraController::OnKeyPressedEvent(KeyPressedEvent& e)
+bool PerspectiveCameraController::OnKeyPress(KeyPressedEvent& e)
 {
 	if (e.GetKeyCode() == GLFW_KEY_ESCAPE)
 	{
