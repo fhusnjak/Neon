@@ -2,11 +2,13 @@
 
 #include "RenderPass.h"
 
-vk::RenderPass util::CreateRenderPass(
-	const vk::Device& device, vk::Format colorAttachmentFormat,
-	vk::SampleCountFlagBits samples, bool clearColor, vk::ImageLayout colorInitialLayout,
-	vk::ImageLayout colorFinalLayout, vk::Format depthAttachmentFormat, bool clearDepth,
-	vk::ImageLayout depthInitialLayout, vk::ImageLayout depthFinalLayout, bool resolve)
+vk::RenderPass util::CreateRenderPass(const vk::Device& device, vk::Format colorAttachmentFormat,
+									  vk::SampleCountFlagBits samples, bool clearColor,
+									  vk::ImageLayout colorInitialLayout,
+									  vk::ImageLayout colorFinalLayout,
+									  vk::Format depthAttachmentFormat, bool clearDepth,
+									  vk::ImageLayout depthInitialLayout,
+									  vk::ImageLayout depthFinalLayout, bool resolve)
 {
 	std::vector<vk::AttachmentDescription> attachments;
 	vk::AttachmentDescription colorAttachment{{},

@@ -8,7 +8,7 @@ class GraphicsPipeline
 {
 public:
 	GraphicsPipeline() = default;
-	operator vk::Pipeline()
+	explicit operator vk::Pipeline()
 	{
 		return m_Pipeline.get();
 	}
@@ -23,7 +23,7 @@ public:
 						std::vector<vk::VertexInputAttributeDescription> attributeDesc,
 						vk::CullModeFlagBits cullMode);
 
-	inline const vk::PipelineLayout GetLayout() const
+	[[nodiscard]] inline const vk::PipelineLayout GetLayout() const
 	{
 		return m_Layout.get();
 	}
