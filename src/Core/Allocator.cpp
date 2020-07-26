@@ -238,5 +238,5 @@ ImageAllocation Allocator::CreateHdrTextureImage(const std::string& filename)
 }
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "modernize-use-equals-default"
-Allocator::Allocator() noexcept {}
+Allocator::Allocator() noexcept { }
 #pragma clang diagnostic pop

@@ -49,8 +49,7 @@ void PerspectiveCameraController::OnEvent(Event& e)
 	EventDispatcher dispatcher(e);
 	dispatcher.Dispatch<WindowResizeEvent>(
 		[this](WindowResizeEvent& e) { return OnWindowResize(e); });
-	dispatcher.Dispatch<KeyPressedEvent>(
-		[this](KeyPressedEvent& e) { return OnKeyPress(e); });
+	dispatcher.Dispatch<KeyPressedEvent>([this](KeyPressedEvent& e) { return OnKeyPress(e); });
 }
 
 bool PerspectiveCameraController::OnWindowResize(WindowResizeEvent& e)

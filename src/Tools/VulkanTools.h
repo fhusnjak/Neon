@@ -46,6 +46,7 @@ SwapChainSupportDetails QuerySwapChainSupport(vk::PhysicalDevice device, vk::Sur
 bool IsDeviceSuitable(vk::PhysicalDevice& device, vk::SurfaceKHR& surface);
 
 vk::Format FindSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling,
-							   const vk::FormatFeatureFlags& features, vk::PhysicalDevice& physicalDevice);
+							   const vk::FormatFeatureFlags& features,
+							   vk::PhysicalDevice& physicalDevice);
 
 vk::Format FindDepthFormat(vk::PhysicalDevice& physicalDevice);
