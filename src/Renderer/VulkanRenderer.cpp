@@ -42,7 +42,7 @@ static std::vector<const char*> instanceExtensions;
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "modernize-use-equals-default"
-VulkanRenderer::VulkanRenderer() noexcept {}
+VulkanRenderer::VulkanRenderer() noexcept { }
 #pragma clang diagnostic pop
 
 void VulkanRenderer::Init(Window* window)
@@ -56,14 +56,14 @@ void VulkanRenderer::Shutdown()
 	s_Instance.m_Device.get().waitIdle();
 }
 
-void VulkanRenderer::Flush(const std::vector<ObjInstance>& instances_)
+void VulkanRenderer::PushModels(const std::vector<ObjModel>& models_)
 {
-	instances = instances_;
-	auto cmdBuf = BeginSingleTimeCommands();
-	instanceBufferAlloc = Allocator::CreateDeviceLocalBuffer(
-		cmdBuf, instances, vk::BufferUsageFlagBits::eStorageBuffer);
-	EndSingleTimeCommands(cmdBuf);
-	s_Instance.m_Device.get().waitIdle();
+	models = models_;
+	CreateSwapChainDependencies();
+}
+
+void VulkanRenderer::CreateSwapChainDependencies()
+{
 	s_Instance.CreateOffscreenDescriptorResources();
 	s_Instance.CreateOffscreenGraphicsPipeline();
 	s_Instance.CreateUniformBuffers(s_Instance.m_CameraBufferAllocations, sizeof(CameraMatrices));
@@ -490,7 +490,7 @@ void VulkanRenderer::RecreateSwapChain()
 	CreatePostRenderer();
 	CreateImGuiRenderer();
 	CreateCommandBuffers();
-	Flush(instances);
+	CreateSwapChainDependencies();
 }
 
 void VulkanRenderer::IntegrateImGui()
@@ -818,4 +818,17 @@ void VulkanRenderer::UpdateCameraMatrices(const PerspectiveCamera& camera)
 	auto projection = camera.GetProjectionMatrix();
 	CameraMatrices m{camera.GetPosition(), view, projection};
 	Allocator::UpdateAllocation(m_CameraBufferAllocations[s_ImageIndex].allocation, m);
+}
+
+void VulkanRenderer::PushInstances(const std::vector<ObjInstance>& instances_)
+{
+	instances = instances_;
+	auto cmdBuf = BeginSingleTimeCommands();
+	instanceBufferAlloc = Allocator::CreateDeviceLocalBuffer(
+		cmdBuf, instances, vk::BufferUsageFlagBits::eStorageBuffer);
+	EndSingleTimeCommands(cmdBuf);
+}
+void VulkanRenderer::PushInstance(const ObjInstance& instance)
+{
+	instances.push_back(instance);
 }

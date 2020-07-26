@@ -21,14 +21,17 @@ public:
 	VulkanRenderer& operator=(const VulkanRenderer&&) = delete;
 	static void Init(Window* window);
 	static void Shutdown();
-	static void Flush(const std::vector<ObjInstance>& instances_);
+	static void PushModels(const std::vector<ObjModel>& models_);
+	static void PushModel(ObjModel model);
+	static void CreateSwapChainDependencies();
+	static void PushInstances(const std::vector<ObjInstance>& instances_);
+	static void PushInstance(const ObjInstance& instance);
 	static void Begin();
 	static void End();
 	static void BeginScene(const PerspectiveCamera& camera);
 	static void EndScene();
 	static void Rasterize(const glm::vec4& clearColor, const glm::vec3& lightPosition);
 	static void DrawImGui();
-	static void PushModel(ObjModel model);
 	static vk::CommandBuffer BeginSingleTimeCommands();
 	static void EndSingleTimeCommands(vk::CommandBuffer commandBuffer);
 	static vk::ImageView CreateImageView(vk::Image image, vk::Format format,

@@ -20,10 +20,6 @@ Sandbox3D::Sandbox3D()
 	m_Models.push_back(ObjModel::LoadModel("models/plane.obj"));
 	m_Models.push_back(ObjModel::LoadModel("models/wuson.obj"));
 
-	VulkanRenderer::PushModel(m_Models[0]);
-	VulkanRenderer::PushModel(m_Models[1]);
-	VulkanRenderer::PushModel(m_Models[2]);
-
 	auto model = glm::translate(glm::mat4(1.0), glm::vec3(-5.0, 0.0, 0.0));
 	m_Instances.push_back({0, model, glm::inverseTranspose(model), m_Models[0].textureOffset});
 	model = glm::translate(glm::mat4(1.0), glm::vec3(0.0, -1.1, 0.0));
@@ -31,7 +27,8 @@ Sandbox3D::Sandbox3D()
 	model = glm::translate(glm::mat4(1.0), glm::vec3(-2.0, -1.0, 0.0));
 	m_Instances.push_back({2, model, glm::inverseTranspose(model), m_Models[2].textureOffset});
 
-	VulkanRenderer::Flush(m_Instances);
+	VulkanRenderer::PushInstances(m_Instances);
+	VulkanRenderer::PushModels(m_Models);
 }
 
 void Sandbox3D::OnAttach() { }
