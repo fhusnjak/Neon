@@ -4,13 +4,7 @@
 
 class Input
 {
-private:
-	Input() = default;
-
 public:
-	Input(const Input&) = delete;
-	Input& operator=(const Input&) = delete;
-
 	static bool IsKeyPressed(int key);
 
 	static bool IsMouseButtonPressed(int button);
