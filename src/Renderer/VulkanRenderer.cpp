@@ -10,7 +10,7 @@
 #include <examples/imgui_impl_glfw.h>
 #include <examples/imgui_impl_vulkan.h>
 
-#define MAX_FRAMES_IN_FLIGHT 2
+#define MAX_FRAMES_IN_FLIGHT 1
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -138,7 +138,7 @@ void VulkanRenderer::End()
 		assert(result == vk::Result::eSuccess);
 	}
 
-	s_CurrentFrame = (s_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	//s_CurrentFrame = (s_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void VulkanRenderer::BeginScene(const PerspectiveCamera& camera)
@@ -148,7 +148,7 @@ void VulkanRenderer::BeginScene(const PerspectiveCamera& camera)
 
 void VulkanRenderer::EndScene()
 {
-	std::array<vk::ClearValue, 2> clearValues = {};
+	/*std::array<vk::ClearValue, 2> clearValues = {};
 	clearValues[0].color = std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f};
 	clearValues[1].depthStencil = VkClearDepthStencilValue{1.0f, 0};
 	vk::RenderPassBeginInfo renderPassInfo{s_Instance.m_PostRenderPass.get(),
@@ -172,7 +172,7 @@ void VulkanRenderer::EndScene()
 		vk::PipelineBindPoint::eGraphics, s_Instance.m_PostGraphicsPipeline.GetLayout(), 0,
 		s_Instance.m_PostDescriptorSets.Get(), {});
 	s_Instance.m_CommandBuffers[s_ImageIndex].get().draw(3, 1, 0, 0);
-	s_Instance.m_CommandBuffers[s_ImageIndex].get().endRenderPass();
+	s_Instance.m_CommandBuffers[s_ImageIndex].get().endRenderPass();*/
 }
 
 void VulkanRenderer::Rasterize(const glm::vec4& clearColor, const glm::vec3& lightPosition)
@@ -292,6 +292,7 @@ void VulkanRenderer::InitRenderer(Window* window)
 	CreateImGuiRenderer();
 	CreateCommandBuffers();
 	CreateSyncObjects();
+	vkDeviceWaitIdle(m_Device.get());
 }
 
 #pragma clang diagnostic push
@@ -483,7 +484,6 @@ void VulkanRenderer::RecreateSwapChain()
 	}
 
 	vkDeviceWaitIdle(m_Device.get());
-
 	CreateSwapChain();
 	CreateSwapChainImageViews();
 	CreateOffscreenRenderer();
@@ -491,10 +491,12 @@ void VulkanRenderer::RecreateSwapChain()
 	CreateImGuiRenderer();
 	CreateCommandBuffers();
 	CreateSwapChainDependencies();
+	vkDeviceWaitIdle(m_Device.get());
 }
 
 void VulkanRenderer::IntegrateImGui()
 {
+	ImGui_ImplVulkan_Shutdown();
 	std::vector<vk::DescriptorPoolSize> poolSizes = {
 		{vk::DescriptorType::eSampler, 1000},
 		{vk::DescriptorType::eCombinedImageSampler, 1000},
@@ -530,6 +532,12 @@ void VulkanRenderer::IntegrateImGui()
 	vk::CommandBuffer commandBuffer = BeginSingleTimeCommands();
 	ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
 	EndSingleTimeCommands(commandBuffer);
+
+	m_ImGuiOffscreenTextureDescSet = ImGui_ImplVulkan_CreateTexture();
+	ImGui_ImplVulkan_UpdateTexture(
+		m_ImGuiOffscreenTextureDescSet, m_OffscreenImageAllocation.descriptor.sampler,
+		m_OffscreenImageAllocation.descriptor.imageView,
+		(VkImageLayout)m_OffscreenImageAllocation.descriptor.imageLayout);
 }
 
 void VulkanRenderer::CreateSwapChainImageViews()
@@ -828,7 +836,18 @@ void VulkanRenderer::PushInstances(const std::vector<ObjInstance>& instances_)
 		cmdBuf, instances, vk::BufferUsageFlagBits::eStorageBuffer);
 	EndSingleTimeCommands(cmdBuf);
 }
+
 void VulkanRenderer::PushInstance(const ObjInstance& instance)
 {
 	instances.push_back(instance);
+}
+
+vk::Extent2D VulkanRenderer::GetExtent2D()
+{
+	return s_Instance.m_Extent;
+}
+
+void* VulkanRenderer::GetOffscreenImageID()
+{
+	return s_Instance.m_ImGuiOffscreenTextureDescSet;
 }

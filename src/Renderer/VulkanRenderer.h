@@ -39,6 +39,8 @@ public:
 	static vk::UniqueImageView CreateImageViewUnique(vk::Image image, vk::Format format,
 													 const vk::ImageAspectFlags& aspectFlags);
 	static vk::Sampler CreateSampler(const vk::SamplerCreateInfo& createInfo);
+	static void* GetOffscreenImageID();
+	static vk::Extent2D GetExtent2D();
 
 private:
 	VulkanRenderer() noexcept;
@@ -131,4 +133,6 @@ private:
 	std::vector<vk::UniqueSemaphore> m_RenderFinishedSemaphores;
 	std::vector<vk::UniqueFence> m_InFlightFences;
 	std::vector<vk::Fence> m_ImagesInFlight;
+
+	VkDescriptorSet m_ImGuiOffscreenTextureDescSet = nullptr;
 };
