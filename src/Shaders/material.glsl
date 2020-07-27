@@ -40,9 +40,10 @@ const float PI = 3.14159265;
 
 vec3 computeSpecular(Material mat, vec3 viewDir, vec3 lightDir, vec3 normal)
 {
+    if (dot(normal, lightDir) < 0) return vec3(0);
     const float kShininess = max(mat.shininess, 4.0);
     const float kEnergyConservation = (2.0 + kShininess) / (2.0 * PI);
     vec3 halfway = normalize(lightDir + viewDir);
     float specular = kEnergyConservation * pow(max(dot(normal, halfway), 0.0), kShininess);
-    return vec3(mat.specular * specular);
+    return vec3(max(mat.specular * specular, 0));
 }
