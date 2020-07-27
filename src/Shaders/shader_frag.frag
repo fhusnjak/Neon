@@ -52,5 +52,6 @@ void main()
     vec3 viewDir = normalize(fragCameraPos - worldPos);
     vec3 specular = computeSpecular(mat, viewDir, lightDir, fragNorm);
 
-    outColor = vec4(lightIntensity * (diffuse + specular), 1.0f);
+    float gamma = 1. / 2.2;
+    outColor = pow(vec4(lightIntensity * (diffuse + specular), 1.0f), vec4(gamma));
 }
