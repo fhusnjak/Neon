@@ -68,12 +68,12 @@ void Application::Run()
 				layer->OnUpdate(
 					std::chrono::duration<float, std::chrono::milliseconds::period>(timeStep)
 						.count());
-			m_ImGuiLayer->Begin();
+			ImGuiLayer::Begin();
 			{
 				for (Layer* layer : m_LayerStack)
 					layer->OnImGuiRender();
 			}
-			m_ImGuiLayer->End();
+			ImGuiLayer::End();
 		}
 		VulkanRenderer::End();
 	}
