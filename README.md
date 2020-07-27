@@ -1,4 +1,4 @@
 # Neon
-Another C++ Vulkan engine.
+C++ Vulkan engine.
 
 Personal project for practicing Vulkan and graphics programming principles.
