@@ -22,7 +22,7 @@ public:
 	static void Init(Window* window);
 	static void Shutdown();
 	static void PushModels(const std::vector<ObjModel>& models_);
-	static void PushModel(ObjModel model);
+	static void PushModel(const ObjModel& model);
 	static void CreateSwapChainDependencies();
 	static void PushInstances(const std::vector<ObjInstance>& instances_);
 	static void PushInstance(const ObjInstance& instance);
@@ -60,6 +60,7 @@ private:
 	void CreateOffscreenDescriptorResources();
 	void CreatePostDescriptorResources();
 	void UpdateOffscreenDescriptorSets();
+	void UpdateInstanceResources();
 	void UpdatePostDescriptorSets();
 	void CreateOffscreenGraphicsPipeline();
 	void CreatePostGraphicsPipeline();

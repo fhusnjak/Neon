@@ -228,9 +228,10 @@ void VulkanRenderer::DrawImGui()
 	s_Instance.m_CommandBuffers[s_ImageIndex].get().endRenderPass();
 }
 
-void VulkanRenderer::PushModel(ObjModel model)
+void VulkanRenderer::PushModel(const ObjModel& model)
 {
 	models.push_back(model);
+	CreateSwapChainDependencies();
 }
 
 vk::CommandBuffer VulkanRenderer::BeginSingleTimeCommands()
@@ -491,6 +492,7 @@ void VulkanRenderer::RecreateSwapChain()
 	CreateImGuiRenderer();
 	CreateCommandBuffers();
 	CreateSwapChainDependencies();
+	UpdateInstanceResources();
 	vkDeviceWaitIdle(m_Device.get());
 }
 
@@ -678,6 +680,7 @@ void VulkanRenderer::CreateImGuiRenderer()
 
 void VulkanRenderer::CreateOffscreenDescriptorResources()
 {
+	// TODO: Separate main set into more sets (instance set, model set, camera set, texture image set)
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
 	bindings.emplace_back(0, vk::DescriptorType::eUniformBuffer, 1,
 						  vk::ShaderStageFlagBits::eVertex);
@@ -715,7 +718,6 @@ void VulkanRenderer::UpdateOffscreenDescriptorSets()
 {
 	vk::DescriptorBufferInfo cameraBufferInfo{m_CameraBufferAllocations[0].buffer, 0,
 											  sizeof(CameraMatrices)};
-	vk::DescriptorBufferInfo instanceBufferInfo{instanceBufferAlloc.buffer, 0, VK_WHOLE_SIZE};
 	std::vector<vk::DescriptorBufferInfo> materialBufferInfo;
 	std::vector<vk::DescriptorBufferInfo> vertexBufferInfo;
 	std::vector<vk::DescriptorBufferInfo> indexBufferInfo;
@@ -736,7 +738,21 @@ void VulkanRenderer::UpdateOffscreenDescriptorSets()
 	std::vector<vk::WriteDescriptorSet> descriptorWrites = {
 		m_OffscreenDescriptorSets.CreateWrite(0, &cameraBufferInfo, 0),
 		m_OffscreenDescriptorSets.CreateWrite(1, materialBufferInfo.data(), 0),
-		m_OffscreenDescriptorSets.CreateWrite(2, texturesBufferInfo.data(), 0),
+		m_OffscreenDescriptorSets.CreateWrite(2, texturesBufferInfo.data(), 0)};
+
+	m_OffscreenDescriptorSets.Update(descriptorWrites);
+}
+
+void VulkanRenderer::UpdateInstanceResources()
+{
+	auto cmdBuf = BeginSingleTimeCommands();
+	instanceBufferAlloc = Allocator::CreateDeviceLocalBuffer(
+		cmdBuf, instances, vk::BufferUsageFlagBits::eStorageBuffer);
+	EndSingleTimeCommands(cmdBuf);
+
+	vk::DescriptorBufferInfo instanceBufferInfo{instanceBufferAlloc.buffer, 0, VK_WHOLE_SIZE};
+
+	std::vector<vk::WriteDescriptorSet> descriptorWrites = {
 		m_OffscreenDescriptorSets.CreateWrite(3, &instanceBufferInfo, 0)};
 
 	m_OffscreenDescriptorSets.Update(descriptorWrites);
@@ -831,15 +847,13 @@ void VulkanRenderer::UpdateCameraMatrices(const PerspectiveCamera& camera)
 void VulkanRenderer::PushInstances(const std::vector<ObjInstance>& instances_)
 {
 	instances = instances_;
-	auto cmdBuf = BeginSingleTimeCommands();
-	instanceBufferAlloc = Allocator::CreateDeviceLocalBuffer(
-		cmdBuf, instances, vk::BufferUsageFlagBits::eStorageBuffer);
-	EndSingleTimeCommands(cmdBuf);
+	s_Instance.UpdateInstanceResources();
 }
 
 void VulkanRenderer::PushInstance(const ObjInstance& instance)
 {
 	instances.push_back(instance);
+	s_Instance.UpdateInstanceResources();
 }
 
 vk::Extent2D VulkanRenderer::GetExtent2D()

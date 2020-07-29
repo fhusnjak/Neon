@@ -28,8 +28,8 @@ Sandbox3D::Sandbox3D()
 	model = glm::translate(glm::mat4(1.0), glm::vec3(-2.0, -1.0, 0.0));
 	m_Instances.push_back({2, model, glm::inverseTranspose(model), m_Models[2].textureOffset});
 
-	VulkanRenderer::PushInstances(m_Instances);
 	VulkanRenderer::PushModels(m_Models);
+	VulkanRenderer::PushInstances(m_Instances);
 }
 
 void Sandbox3D::OnAttach() { }
