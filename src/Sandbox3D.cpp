@@ -104,6 +104,7 @@ void Sandbox3D::OnImGuiRender()
 
 	ImGui::Begin("Settings");
 	ImGui::Text("FPS %.0f", 1000.0f * m_FrameCount / m_TimePassed);
+	ImGui::SliderFloat3("Light Position", &lightPosition.x, -20.f, 20.f);
 	vk::Extent2D extent = VulkanRenderer::GetExtent2D();
 	ImGui::Image(VulkanRenderer::GetOffscreenImageID(),
 				 ImVec2{(float)extent.width, (float)extent.height});
