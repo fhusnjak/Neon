@@ -18,6 +18,7 @@ include_directories(vendor/glfw-3.3.2/include)
 include_directories(vendor/glm-0.9.9.7)
 include_directories(vendor/imgui)
 include_directories(vendor/loader)
+include_directories(vendor/entt)
 
 add_executable(Neon
         src/Core/Allocator.cpp
