@@ -18,6 +18,12 @@ struct ImageAllocation
 	VmaAllocation allocation;
 };
 
+struct TextureImage
+{
+	vk::DescriptorImageInfo descriptor{};
+	ImageAllocation textureAllocation{};
+};
+
 class Allocator
 {
 public:
@@ -79,6 +85,8 @@ public:
 		s_Allocator.m_StagingBuffers.push(stagingBufferAllocation);
 		return resultBufferAllocation;
 	}
+
+	static void FreeMemory(VmaAllocation allocation);
 
 private:
 	Allocator() noexcept;

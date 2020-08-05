@@ -240,3 +240,8 @@ ImageAllocation Allocator::CreateHdrTextureImage(const std::string& filename)
 #pragma ide diagnostic ignored "modernize-use-equals-default"
 Allocator::Allocator() noexcept { }
 #pragma clang diagnostic pop
+
+void Allocator::FreeMemory(VmaAllocation allocation)
+{
+	vmaFreeMemory(s_Allocator.m_Allocator, allocation);
+}
