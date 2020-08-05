@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(Neon)
 
-add_compile_definitions(VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
-
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories($ENV{VULKAN_SDK})
@@ -26,10 +24,12 @@ add_executable(Neon
         src/Core/Input.cpp
         src/Core/Layer.cpp
         src/Core/LayerStack.cpp
+        src/Renderer/Context.cpp
+        src/Renderer/PhysicalDevice.cpp
+        src/Renderer/LogicalDevice.cpp
         src/Renderer/DescriptorPool.cpp
-        src/Renderer/DescriptorSetType.cpp
+        src/Renderer/DescriptorSet.cpp
         src/Renderer/GraphicsPipeline.cpp
-        src/Renderer/ObjModel.cpp
         src/Renderer/PerspectiveCamera.cpp
         src/Renderer/PerspectiveCameraController.cpp
         src/Renderer/RenderPass.cpp
@@ -41,6 +41,8 @@ add_executable(Neon
         src/Application.cpp
         src/main.cpp
         src/Sandbox3D.cpp
+        src/Scene/Scene.cpp
+        src/Scene/Entity.cpp
 
         vendor/imgui/examples/imgui_impl_glfw.cpp
         vendor/imgui/examples/imgui_impl_vulkan.cpp
