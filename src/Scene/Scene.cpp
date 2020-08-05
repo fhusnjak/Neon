@@ -4,7 +4,6 @@
 
 #include "Scene.h"
 #include "VulkanRenderer.h"
-#include "Components.h"
 
 #include "Core/Core.h"
 
@@ -155,7 +154,7 @@ Entity Scene::CreateWavefrontEntity(const std::string& filename, const std::stri
 		cmdBuff, materials, vk::BufferUsageFlagBits::eStorageBuffer);
 	for (auto& texturePath : textures)
 	{
-		ImageAllocation imgAllocation = Allocator::CreateTextureImage("textures/" + texturePath);
+		ImageAllocation imgAllocation = Allocator::CreateTextureImage(texturePath);
 		vk::ImageView textureImageView = VulkanRenderer::CreateImageView(
 			imgAllocation.image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 		vk::SamplerCreateInfo samplerInfo = {
@@ -196,8 +195,9 @@ void Scene::OnUpdate(float ts, PerspectiveCameraController controller, glm::vec4
 	auto group = m_Registry.group<TransformComponent>(entt::get<MeshComponent, MaterialComponent>);
 	for (auto entity : group)
 	{
-		const auto& [transform, mesh, material] = group.get<TransformComponent, MeshComponent, MaterialComponent>(entity);
-		VulkanRenderer::Rasterize(transform, mesh, material, lightPosition);
+		const auto& [transform, mesh, material] =
+			group.get<TransformComponent, MeshComponent, MaterialComponent>(entity);
+		VulkanRenderer::Render(transform, mesh, material, lightPosition);
 	}
 	VulkanRenderer::EndScene();
 }

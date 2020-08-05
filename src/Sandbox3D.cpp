@@ -6,8 +6,6 @@
 
 #include <entt.h>
 
-#include "Scene/Components.h"
-
 #define AVG_FRAME_COUNT 100
 
 Sandbox3D::Sandbox3D()
