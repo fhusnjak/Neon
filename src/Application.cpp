@@ -14,9 +14,9 @@ Application::Application(const std::string& name) noexcept
 	assert(s_Instance == nullptr);
 	s_Instance = this;
 	m_Window.SetEventCallback([this](Event& e) { OnEvent(e); });
-	VulkanRenderer::Init(&m_Window);
 	m_ImGuiLayer = new ImGuiLayer();
 	PushOverlay(m_ImGuiLayer);
+	VulkanRenderer::Init(&m_Window);
 	PushLayer(new Sandbox3D());
 }
 

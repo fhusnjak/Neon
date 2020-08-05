@@ -6,6 +6,8 @@
 
 #include "Renderer/PerspectiveCameraController.h"
 
+#include "Scene/Scene.h"
+
 class Sandbox3D : public Layer
 {
 public:
@@ -23,6 +25,8 @@ private:
 	PerspectiveCameraController m_CameraController;
 	std::vector<ObjInstance> m_Instances;
 	std::vector<ObjModel> m_Models;
+
+	std::shared_ptr<Scene> m_ActiveScene;
 
 	std::queue<float> m_Times;
 	float m_TimePassed = 0.0f;

@@ -10,47 +10,54 @@
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragNorm;
 layout(location = 2) in vec3 fragPos;
-layout(location = 3) in vec3 fragCameraPos;
-layout(location = 4) in vec2 fragTexCoord;
-layout(location = 5) flat in int fragMatID;
-layout(location = 6) in vec3 worldPos;
+layout(location = 3) in vec2 fragTexCoord;
+layout(location = 4) flat in int fragMatID;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 1, scalar) readonly buffer MaterialBufferObject { Material m[]; } materials[];
-layout(binding = 2) uniform sampler2D textureSamplers[];
-layout(binding = 3, scalar) readonly buffer InstanceBufferObject { Instance i[]; } instances;
+layout(binding = 0, scalar) uniform CameraMatrices
+{
+    vec3 cameraPos;
+    mat4 view;
+    mat4 projection;
+} cameraMatrices;
+layout(binding = 1, scalar) readonly buffer MaterialBufferObject
+{
+    Material materials[];
+};
+layout(binding = 2) uniform sampler2D textureSampler;
 
 layout(push_constant, scalar) uniform PushConstant
 {
-    int instanceID;
+    mat4 model;
     vec3 lightPosition;
     vec3 lightColor;
 }
-pushC;
+pushConstant;
 
 void main()
 {
-    int objId = instances.i[pushC.instanceID].objId;
-    Material mat = materials[objId].m[fragMatID];
+    vec3 normal = normalize(fragNorm);
 
-    vec3 lightDir = pushC.lightPosition - worldPos;
+    vec3 worldPos = vec3(pushConstant.model * vec4(fragPos, 1.0));
+
+    Material mat = materials[fragMatID];
+
+    vec3 lightDir = pushConstant.lightPosition - worldPos;
     float lightIntensity = 50.0f;
     float d = length(lightDir);
     lightIntensity = 50.0f / (d * d);
     lightDir = normalize(lightDir);
 
-    vec3 diffuse = computeDiffuse(mat, lightDir, fragNorm);
+    vec3 diffuse = computeDiffuse(mat, lightDir, normal);
     if (mat.textureId >= 0)
     {
-        int txtOffset = instances.i[pushC.instanceID].texOffset;
-        uint txtId = txtOffset + mat.textureId;
-        vec3 diffuseTxt = texture(textureSamplers[txtId], fragTexCoord).xyz;
+        vec3 diffuseTxt = texture(textureSampler, fragTexCoord).xyz;
         diffuse *= diffuseTxt;
     }
 
-    vec3 viewDir = normalize(fragCameraPos - worldPos);
-    vec3 specular = computeSpecular(mat, viewDir, lightDir, fragNorm);
+    vec3 viewDir = normalize(cameraMatrices.cameraPos - worldPos);
+    vec3 specular = computeSpecular(mat, viewDir, lightDir, normal);
 
     float gamma = 1. / 2.2;
     outColor = pow(vec4(lightIntensity * (diffuse + specular), 1.0f), vec4(gamma));

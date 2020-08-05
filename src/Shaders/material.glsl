@@ -12,23 +12,6 @@ struct Material
     int textureId;
 };
 
-struct Vertex
-{
-    vec3 pos;
-    vec3 norm;
-    vec3 color;
-    vec2 texCoord;
-    int matID;
-};
-
-struct Instance
-{
-    int objId;
-    mat4 modelMatrix;
-    mat4 modelMatrixIT;
-    int texOffset;
-};
-
 vec3 computeDiffuse(Material mat, vec3 lightDir, vec3 normal)
 {
     float dotNL = max(dot(normal, lightDir), 0.0);

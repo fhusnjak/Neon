@@ -14,10 +14,8 @@ layout(location = 4) in int matID;
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragNorm;
 layout(location = 2) out vec3 fragPos;
-layout(location = 3) out vec3 fragCameraPos;
-layout(location = 4) out vec2 fragTexCoord;
-layout(location = 5) flat out int fragMatID;
-layout(location = 6) out vec3 worldPos;
+layout(location = 3) out vec2 fragTexCoord;
+layout(location = 4) flat out int fragMatID;
 
 layout(binding = 0, scalar) uniform CameraMatrices
 {
@@ -26,26 +24,21 @@ layout(binding = 0, scalar) uniform CameraMatrices
     mat4 projection;
 } cameraMatrices;
 
-layout(binding = 3, scalar) readonly buffer InstanceBufferObject { Instance i[]; } instances;
-
 layout(push_constant, scalar) uniform PushConstant
 {
-    int instanceID;
+    mat4 model;
     vec3 lightPosition;
     vec3 lightColor;
 }
-pushC;
+pushConstant;
 
 void main()
 {
-    mat4 model = instances.i[pushC.instanceID].modelMatrix;
     fragColor = color;
     fragNorm = normalize(norm);
     fragPos = pos;
-    fragCameraPos = cameraMatrices.cameraPos;
     fragTexCoord = texCoord;
     fragMatID = matID;
-    worldPos = vec3(model * vec4(pos, 1.0));
 
-    gl_Position = cameraMatrices.projection * cameraMatrices.view * vec4(worldPos, 1.0);
+    gl_Position = cameraMatrices.projection * cameraMatrices.view * pushConstant.model * vec4(pos, 1.0);
 }
