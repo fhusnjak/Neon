@@ -8,13 +8,16 @@ class GraphicsPipeline
 {
 public:
 	GraphicsPipeline() = default;
-	explicit operator vk::Pipeline()
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "google-explicit-constructor"
+	operator vk::Pipeline()
 	{
 		return m_Pipeline.get();
 	}
+#pragma clang diagnostic pop
 	void Init(vk::Device device);
-	void LoadVertexShader(std::string file);
-	void LoadFragmentShader(std::string file);
+	void LoadVertexShader(const std::string& file);
+	void LoadFragmentShader(const std::string& file);
 	void CreatePipelineLayout(std::vector<vk::DescriptorSetLayout> descLayouts,
 							  std::vector<vk::PushConstantRange> pushConstRanges);
 	void CreatePipeline(vk::RenderPass renderPass, vk::SampleCountFlagBits samples,
@@ -23,7 +26,7 @@ public:
 						std::vector<vk::VertexInputAttributeDescription> attributeDesc,
 						vk::CullModeFlagBits cullMode);
 
-	[[nodiscard]] inline const vk::PipelineLayout GetLayout() const
+	[[nodiscard]] inline vk::PipelineLayout GetLayout() const
 	{
 		return m_Layout.get();
 	}

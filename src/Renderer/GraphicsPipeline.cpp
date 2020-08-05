@@ -7,13 +7,13 @@ void GraphicsPipeline::Init(vk::Device device)
 	m_Device = device;
 }
 
-void GraphicsPipeline::LoadVertexShader(std::string file)
+void GraphicsPipeline::LoadVertexShader(const std::string& file)
 {
 	m_Shaders.emplace_back(m_Device, vk::ShaderStageFlagBits::eVertex);
 	m_Shaders[m_Shaders.size() - 1].LoadFromFile(file);
 }
 
-void GraphicsPipeline::LoadFragmentShader(std::string file)
+void GraphicsPipeline::LoadFragmentShader(const std::string& file)
 {
 	m_Shaders.emplace_back(m_Device, vk::ShaderStageFlagBits::eFragment);
 	m_Shaders[m_Shaders.size() - 1].LoadFromFile(file);
