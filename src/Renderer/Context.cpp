@@ -3,11 +3,12 @@
 //
 
 #include "Context.h"
+#include <Core/Allocator.h>
 #include <GLFW/glfw3.h>
 
 Context Context::s_Instance;
 
-Context::Context() noexcept {}
+Context::Context() noexcept { }
 
 void Context::Init()
 {
@@ -21,7 +22,7 @@ void Context::Init()
 	const char** glfwExtensions;
 	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 	m_InstanceExtensions.insert(m_InstanceExtensions.end(), glfwExtensions,
-							  glfwExtensions + glfwExtensionCount);
+								glfwExtensions + glfwExtensionCount);
 	assert(CheckExtensionSupport());
 	vk::ApplicationInfo applicationInfo("Neon", 1, "Vulkan engine", 1, VK_API_VERSION_1_0);
 #ifdef NDEBUG
@@ -38,16 +39,19 @@ void Context::Init()
 	m_VkInstance = vk::createInstanceUnique(instanceCreateInfo);
 }
 
-void Context::AddDevice(const DeviceType& deviceType, const PhysicalDevice& physicalDevice,
-						const LogicalDevice& logicalDevice)
+void Context::CreateDevice(const vk::SurfaceKHR& surface,
+						   const std::vector<vk::QueueFlagBits>& queueFlags)
 {
-	assert(m_Devices.find(deviceType) == m_Devices.end());
-	m_Devices.insert({deviceType, {physicalDevice, logicalDevice}});
+	assert(m_PhysicalDevice == nullptr);
+	assert(m_LogicalDevice == nullptr);
+	m_PhysicalDevice = PhysicalDevice::Create(surface, m_DeviceExtensions, queueFlags);
+	m_LogicalDevice = LogicalDevice::Create(*m_PhysicalDevice);
 }
 
 bool Context::CheckExtensionSupport()
 {
-	std::vector<vk::ExtensionProperties> supportedExtensions = vk::enumerateInstanceExtensionProperties();
+	std::vector<vk::ExtensionProperties> supportedExtensions =
+		vk::enumerateInstanceExtensionProperties();
 	for (const auto& extension : m_InstanceExtensions)
 	{
 		bool found = false;
@@ -83,8 +87,18 @@ bool Context::CheckValidationLayerSupport()
 	return true;
 }
 
-DeviceBundle Context::GetDeviceBundle(DeviceType deviceType)
+PhysicalDevice& Context::GetPhysicalDevice()
 {
-	assert(m_Devices.find(deviceType) != m_Devices.end());
-	return m_Devices.find(deviceType)->second;
+	assert(m_PhysicalDevice != nullptr);
+	return *m_PhysicalDevice;
+}
+
+LogicalDevice& Context::GetLogicalDevice()
+{
+	assert(m_LogicalDevice != nullptr);
+	return *m_LogicalDevice;
+}
+void Context::InitAllocator()
+{
+	Allocator::Init(m_PhysicalDevice->GetHandle(), m_LogicalDevice->GetHandle());
 }

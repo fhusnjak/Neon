@@ -52,10 +52,7 @@ void VulkanRenderer::Init(Window* window)
 
 void VulkanRenderer::Shutdown()
 {
-	Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle()
-		.waitIdle();
+	Context::GetInstance().GetLogicalDevice().GetHandle().waitIdle();
 }
 
 void VulkanRenderer::CreateSwapChainDependencies()
@@ -66,9 +63,7 @@ void VulkanRenderer::CreateSwapChainDependencies()
 
 void VulkanRenderer::Begin()
 {
-	auto& logicalDevice = Context::GetInstance()
-							  .GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-							  .m_LogicalDevice.GetHandle();
+	auto& logicalDevice = Context::GetInstance().GetLogicalDevice().GetHandle();
 	logicalDevice.waitForFences(s_Instance.m_InFlightFences[s_CurrentFrame].get(), VK_TRUE,
 								UINT64_MAX);
 	auto result = logicalDevice.acquireNextImageKHR(
@@ -99,9 +94,7 @@ void VulkanRenderer::Begin()
 
 void VulkanRenderer::End()
 {
-	const auto& logicalDevice = Context::GetInstance()
-							  .GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-							  .m_LogicalDevice;
+	const auto& logicalDevice = Context::GetInstance().GetLogicalDevice();
 	s_Instance.m_CommandBuffers[s_ImageIndex].get().end();
 
 	vk::Semaphore waitSemaphores[] = {s_Instance.m_ImageAvailableSemaphores[s_CurrentFrame].get()};
@@ -115,7 +108,7 @@ void VulkanRenderer::End()
 	logicalDevice.GetHandle().resetFences({s_Instance.m_InFlightFences[s_CurrentFrame].get()});
 
 	logicalDevice.GetGraphicsQueue().submit({submitInfo},
-									  s_Instance.m_InFlightFences[s_CurrentFrame].get());
+											s_Instance.m_InFlightFences[s_CurrentFrame].get());
 
 	vk::PresentInfoKHR presentInfo{1, signalSemaphores, 1, &s_Instance.m_SwapChain.get(),
 								   &s_ImageIndex};
@@ -157,10 +150,10 @@ void VulkanRenderer::EndScene()
 	s_Instance.m_CommandBuffers[s_ImageIndex].get().endRenderPass();
 }
 
-void VulkanRenderer::Rasterize(const TransformComponent& transformComponent,
-							   const MeshComponent& meshComponent,
-							   const MaterialComponent& materialComponent,
-							   const glm::vec3& lightPosition)
+void VulkanRenderer::Render(const TransformComponent& transformComponent,
+							const MeshComponent& meshComponent,
+							const MaterialComponent& materialComponent,
+							const glm::vec3& lightPosition)
 {
 	s_Instance.m_CommandBuffers[s_ImageIndex].get().bindPipeline(
 		vk::PipelineBindPoint::eGraphics, s_Instance.m_OffscreenGraphicsPipeline);
@@ -199,9 +192,7 @@ void VulkanRenderer::DrawImGui()
 
 vk::CommandBuffer VulkanRenderer::BeginSingleTimeCommands()
 {
-	auto& logicalDevice = Context::GetInstance()
-							  .GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-							  .m_LogicalDevice.GetHandle();
+	auto& logicalDevice = Context::GetInstance().GetLogicalDevice().GetHandle();
 	vk::CommandBufferAllocateInfo allocInfo{s_Instance.m_CommandPool.get(),
 											vk::CommandBufferLevel::ePrimary, 1};
 	vk::CommandBuffer commandBuffer = logicalDevice.allocateCommandBuffers(allocInfo)[0];
@@ -212,9 +203,7 @@ vk::CommandBuffer VulkanRenderer::BeginSingleTimeCommands()
 
 void VulkanRenderer::EndSingleTimeCommands(vk::CommandBuffer commandBuffer)
 {
-	const auto& logicalDevice = Context::GetInstance()
-							  .GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-							  .m_LogicalDevice;
+	const auto& logicalDevice = Context::GetInstance().GetLogicalDevice();
 	commandBuffer.end();
 	vk::SubmitInfo submitInfo{0, nullptr, nullptr, 1, &commandBuffer};
 	logicalDevice.GetGraphicsQueue().submit(submitInfo, nullptr);
@@ -225,9 +214,7 @@ void VulkanRenderer::EndSingleTimeCommands(vk::CommandBuffer commandBuffer)
 vk::ImageView VulkanRenderer::CreateImageView(vk::Image image, vk::Format format,
 											  const vk::ImageAspectFlags& aspectFlags)
 {
-	auto& logicalDevice = Context::GetInstance()
-							  .GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-							  .m_LogicalDevice.GetHandle();
+	auto& logicalDevice = Context::GetInstance().GetLogicalDevice().GetHandle();
 	vk::ImageSubresourceRange subResourceRange(aspectFlags, 0, 1, 0, 1);
 	vk::ImageViewCreateInfo imageViewCreateInfo{{},		image, vk::ImageViewType::e2D,
 												format, {},	   subResourceRange};
@@ -237,9 +224,7 @@ vk::ImageView VulkanRenderer::CreateImageView(vk::Image image, vk::Format format
 vk::UniqueImageView VulkanRenderer::CreateImageViewUnique(vk::Image image, vk::Format format,
 														  const vk::ImageAspectFlags& aspectFlags)
 {
-	auto& logicalDevice = Context::GetInstance()
-							  .GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-							  .m_LogicalDevice.GetHandle();
+	auto& logicalDevice = Context::GetInstance().GetLogicalDevice().GetHandle();
 	vk::ImageSubresourceRange subResourceRange(aspectFlags, 0, 1, 0, 1);
 	vk::ImageViewCreateInfo imageViewCreateInfo{{},		image, vk::ImageViewType::e2D,
 												format, {},	   subResourceRange};
@@ -248,10 +233,7 @@ vk::UniqueImageView VulkanRenderer::CreateImageViewUnique(vk::Image image, vk::F
 
 vk::Sampler VulkanRenderer::CreateSampler(const vk::SamplerCreateInfo& createInfo)
 {
-	return Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle()
-		.createSampler(createInfo);
+	return Context::GetInstance().GetLogicalDevice().GetHandle().createSampler(createInfo);
 }
 
 void VulkanRenderer::InitRenderer(Window* window)
@@ -260,12 +242,8 @@ void VulkanRenderer::InitRenderer(Window* window)
 	m_Window = window;
 	Context::GetInstance().Init();
 	CreateSurface();
-	std::vector<vk::QueueFlagBits> queueFlags = {vk::QueueFlagBits::eGraphics};
-	auto physicalDevice =
-		PhysicalDevice(m_Surface.get(), Context::GetInstance().GetDeviceExtensions(), queueFlags);
-	auto logicalDevice = LogicalDevice(physicalDevice);
-	Context::GetInstance().AddDevice(DeviceType::GRAPHICS_DEVICE, physicalDevice, logicalDevice);
-	InitAllocator();
+	Context::GetInstance().CreateDevice(m_Surface.get(), {vk::QueueFlagBits::eGraphics});
+	Context::GetInstance().InitAllocator();
 	CreateSwapChain();
 	CreateSwapChainImageViews();
 	CreateCommandPool();
@@ -275,10 +253,7 @@ void VulkanRenderer::InitRenderer(Window* window)
 	CreateSyncObjects();
 	s_Instance.CreateUniformBuffers(s_Instance.m_CameraBufferAllocations, sizeof(CameraMatrices));
 	CreateSwapChainDependencies();
-	Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle()
-		.waitIdle();
+	Context::GetInstance().GetLogicalDevice().GetHandle().waitIdle();
 }
 
 void VulkanRenderer::CreateSurface()
@@ -290,25 +265,11 @@ void VulkanRenderer::CreateSurface()
 		vk::UniqueSurfaceKHR(vk::SurfaceKHR(surface), Context::GetInstance().GetVkInstance());
 }
 
-void VulkanRenderer::InitAllocator()
-{
-	Allocator::Init(Context::GetInstance()
-						.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-						.m_PhysicalDevice.GetHandle(),
-					Context::GetInstance()
-						.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-						.m_LogicalDevice.GetHandle());
-}
-
 void VulkanRenderer::CreateSwapChain()
 {
-	const auto& physicalDevice = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_PhysicalDevice;
-	const auto& logicalDevice = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice;
-	auto deviceSurfaceProperties = physicalDevice.GetDeviceSurfaceProperties();
+	const auto& physicalDevice = Context::GetInstance().GetPhysicalDevice();
+	const auto& logicalDevice = Context::GetInstance().GetLogicalDevice();
+	auto deviceSurfaceProperties = physicalDevice.GetDeviceSurfaceProperties(m_Surface.get());
 	std::vector<vk::SurfaceFormatKHR> availableSurfaceFormats = deviceSurfaceProperties.formats;
 	assert(!availableSurfaceFormats.empty());
 	vk::SurfaceFormatKHR surfaceFormat = availableSurfaceFormats[0];
@@ -355,7 +316,8 @@ void VulkanRenderer::CreateSwapChain()
 		deviceSurfaceProperties.surfaceCapabilities.currentTransform,
 		vk::CompositeAlphaFlagBitsKHR::eOpaque, presentMode, true, nullptr);
 
-	if (physicalDevice.GetPresentQueueFamily().m_Index != physicalDevice.GetGraphicsQueueFamily().m_Index)
+	if (physicalDevice.GetPresentQueueFamily().m_Index !=
+		physicalDevice.GetGraphicsQueueFamily().m_Index)
 	{
 		uint32_t queueFamilyIndices[] = {physicalDevice.GetGraphicsQueueFamily().m_Index,
 										 physicalDevice.GetPresentQueueFamily().m_Index};
@@ -371,9 +333,7 @@ void VulkanRenderer::CreateSwapChain()
 
 void VulkanRenderer::RecreateSwapChain()
 {
-	const auto& device = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle();
+	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
 	int width = 0, height = 0;
 	glfwGetFramebufferSize(m_Window->GetNativeWindow(), &width, &height);
 	while (width == 0 || height == 0)
@@ -394,12 +354,8 @@ void VulkanRenderer::RecreateSwapChain()
 
 void VulkanRenderer::IntegrateImGui()
 {
-	const auto& device = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice;
-	const auto& physicalDevice = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_PhysicalDevice;
+	const auto& device = Context::GetInstance().GetLogicalDevice();
+	const auto& physicalDevice = Context::GetInstance().GetPhysicalDevice();
 	ImGui_ImplVulkan_Shutdown();
 	std::vector<vk::DescriptorPoolSize> poolSizes = {
 		{vk::DescriptorType::eSampler, 1000},
@@ -456,9 +412,7 @@ void VulkanRenderer::CreateSwapChainImageViews()
 
 void VulkanRenderer::CreateOffscreenRenderer()
 {
-	const auto& device = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle();
+	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
 	m_SampledImage.textureAllocation = Allocator::CreateImage(
 		m_Extent.width, m_Extent.height, msaaSamples, vk::Format::eR32G32B32A32Sfloat,
 		vk::ImageTiling::eOptimal,
@@ -529,12 +483,10 @@ void VulkanRenderer::CreateOffscreenRenderer()
 
 void VulkanRenderer::CreateImGuiRenderer()
 {
-	const auto& device = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle();
+	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
 	m_ImGuiRenderPass = vk::UniqueRenderPass(
-		util::CreateRenderPass(device, m_SwapChainImageFormat, vk::SampleCountFlagBits::e1,
-							   false, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR),
+		util::CreateRenderPass(device, m_SwapChainImageFormat, vk::SampleCountFlagBits::e1, false,
+							   vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR),
 		device);
 
 	m_ImGuiFrameBuffers.resize(m_SwapChainImageViews.size());
@@ -554,9 +506,7 @@ void VulkanRenderer::CreateImGuiRenderer()
 
 void VulkanRenderer::CreateOffscreenGraphicsPipeline()
 {
-	const auto& device = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle();
+	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
 	bindings.emplace_back(0, vk::DescriptorType::eUniformBuffer, 1,
 						  vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
@@ -582,12 +532,8 @@ void VulkanRenderer::CreateOffscreenGraphicsPipeline()
 
 void VulkanRenderer::CreateCommandPool()
 {
-	const auto& device = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle();
-	const auto& physicalDevice = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_PhysicalDevice;
+	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
+	const auto& physicalDevice = Context::GetInstance().GetPhysicalDevice();
 	vk::CommandPoolCreateInfo poolInfo{vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
 									   physicalDevice.GetGraphicsQueueFamily().m_Index};
 	m_CommandPool = device.createCommandPoolUnique(poolInfo);
@@ -606,9 +552,7 @@ void VulkanRenderer::CreateUniformBuffers(std::vector<BufferAllocation>& bufferA
 
 void VulkanRenderer::CreateCommandBuffers()
 {
-	const auto& device = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle();
+	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
 	m_CommandBuffers.resize(m_SwapChainImages.size());
 	vk::CommandBufferAllocateInfo allocInfo{m_CommandPool.get(), vk::CommandBufferLevel::ePrimary,
 											static_cast<uint32_t>(m_CommandBuffers.size())};
@@ -617,9 +561,7 @@ void VulkanRenderer::CreateCommandBuffers()
 
 void VulkanRenderer::CreateSyncObjects()
 {
-	const auto& device = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle();
+	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
 	m_ImagesInFlight.resize(m_SwapChainImages.size());
 
 	vk::SemaphoreCreateInfo semaphoreInfo{};
@@ -653,9 +595,7 @@ void* VulkanRenderer::GetOffscreenImageID()
 
 void VulkanRenderer::CreateWavefrontDescriptorSet(MaterialComponent& materialComponent)
 {
-	const auto& device = Context::GetInstance()
-		.GetDeviceBundle(DeviceType::GRAPHICS_DEVICE)
-		.m_LogicalDevice.GetHandle();
+	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
 	bindings.emplace_back(0, vk::DescriptorType::eUniformBuffer, 1,
 						  vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);

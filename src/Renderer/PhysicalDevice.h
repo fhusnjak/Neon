@@ -27,9 +27,14 @@ struct QueueFamily
 class PhysicalDevice
 {
 public:
-	PhysicalDevice(const vk::SurfaceKHR& surface,
-				   const std::vector<const char*>& requiredExtensions,
-				   const std::vector<vk::QueueFlagBits>& queueFlags);
+	PhysicalDevice(const PhysicalDevice&) = delete;
+	PhysicalDevice(PhysicalDevice&&) = delete;
+	PhysicalDevice& operator=(const PhysicalDevice&) = delete;
+	PhysicalDevice& operator=(PhysicalDevice&&) = delete;
+
+	static std::unique_ptr<PhysicalDevice>
+	Create(const vk::SurfaceKHR& surface, const std::vector<const char*>& requiredExtensions,
+		   const std::vector<vk::QueueFlagBits>& queueFlags);
 
 	[[nodiscard]] const vk::PhysicalDevice& GetHandle() const
 	{
@@ -39,9 +44,9 @@ public:
 	{
 		return m_Properties;
 	}
-	[[nodiscard]] const DeviceSurfaceProperties& GetDeviceSurfaceProperties() const
+	[[nodiscard]] DeviceSurfaceProperties GetDeviceSurfaceProperties(const vk::SurfaceKHR& surface) const
 	{
-		return m_DeviceSurfaceProperties;
+		return QueryDeviceSurfaceProperties(m_Handle, surface);;
 	}
 	[[nodiscard]] QueueFamily GetGraphicsQueueFamily() const
 	{
@@ -69,6 +74,9 @@ public:
 	}
 
 private:
+	PhysicalDevice(const vk::SurfaceKHR& surface,
+				   const std::vector<const char*>& requiredExtensions,
+				   const std::vector<vk::QueueFlagBits>& queueFlags);
 	[[nodiscard]] static int IsDeviceSuitable(const vk::PhysicalDevice& physicalDevice,
 											  const vk::SurfaceKHR& surface,
 											  const std::vector<const char*>& requiredExtensions,
@@ -89,7 +97,6 @@ private:
 	vk::PhysicalDeviceProperties m_Properties;
 	vk::PhysicalDeviceFeatures m_Features;
 	vk::PhysicalDeviceMemoryProperties m_MemoryProperties;
-	DeviceSurfaceProperties m_DeviceSurfaceProperties;
 	std::vector<vk::ExtensionProperties> m_SupportedExtensions;
 	std::vector<const char*> m_RequiredExtensions;
 	QueueFamily m_GraphicsQueueFamily;

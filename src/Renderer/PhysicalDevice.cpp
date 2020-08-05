@@ -4,6 +4,15 @@
 
 #include "Context.h"
 
+std::unique_ptr<PhysicalDevice>
+PhysicalDevice::Create(const vk::SurfaceKHR& surface,
+					   const std::vector<const char*>& requiredExtensions,
+					   const std::vector<vk::QueueFlagBits>& queueFlags)
+{
+	auto physicalDevice = new PhysicalDevice(surface, requiredExtensions, queueFlags);
+	return std::unique_ptr<PhysicalDevice>(physicalDevice);
+}
+
 PhysicalDevice::PhysicalDevice(const vk::SurfaceKHR& surface,
 							   const std::vector<const char*>& requiredExtensions,
 							   const std::vector<vk::QueueFlagBits>& queueFlags)
@@ -21,7 +30,6 @@ PhysicalDevice::PhysicalDevice(const vk::SurfaceKHR& surface,
 	m_Properties = m_Handle.getProperties();
 	m_Features = m_Handle.getFeatures();
 	m_MemoryProperties = m_Handle.getMemoryProperties();
-	m_DeviceSurfaceProperties = QueryDeviceSurfaceProperties(m_Handle, surface);
 	m_SupportedExtensions = m_Handle.enumerateDeviceExtensionProperties();
 	m_RequiredExtensions = requiredExtensions;
 	FindQueueFamilies(surface);

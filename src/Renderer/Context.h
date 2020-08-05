@@ -7,22 +7,8 @@
 
 #include "LogicalDevice.h"
 #include "PhysicalDevice.h"
+#include <utility>
 #include <vulkan/vulkan.hpp>
-
-enum class DeviceType
-{
-	GRAPHICS_DEVICE,
-	COMPUTING_DEVICE
-};
-
-struct DeviceBundle
-{
-	PhysicalDevice m_PhysicalDevice;
-	LogicalDevice m_LogicalDevice;
-	DeviceBundle(const PhysicalDevice& physicalDevice, const LogicalDevice& logicalDevice)
-		: m_PhysicalDevice(physicalDevice)
-		, m_LogicalDevice(logicalDevice){};
-};
 
 class Context
 {
@@ -33,13 +19,9 @@ public:
 	{
 		return s_Instance;
 	}
-	const vk::Instance& GetVkInstance()
+	[[nodiscard]] const vk::Instance& GetVkInstance() const
 	{
 		return m_VkInstance.get();
-	}
-	std::vector<const char*>& GetEnabledLayers()
-	{
-		return m_EnabledLayers;
 	}
 	[[nodiscard]] const std::vector<const char*>& GetValidationLayers() const
 	{
@@ -49,9 +31,11 @@ public:
 	{
 		return m_DeviceExtensions;
 	}
-	void AddDevice(const DeviceType& deviceType, const PhysicalDevice& physicalDevice,
-				   const LogicalDevice& logicalDevice);
-	DeviceBundle GetDeviceBundle(DeviceType deviceType);
+	void CreateDevice(const vk::SurfaceKHR& surface,
+					  const std::vector<vk::QueueFlagBits>& queueFlags);
+	PhysicalDevice& GetPhysicalDevice();
+	LogicalDevice& GetLogicalDevice();
+	void InitAllocator();
 
 private:
 	Context() noexcept;
@@ -65,8 +49,8 @@ private:
 private:
 	static Context s_Instance;
 	vk::UniqueInstance m_VkInstance;
-	std::unordered_map<DeviceType, DeviceBundle> m_Devices;
-	std::vector<const char*> m_EnabledLayers;
+	std::unique_ptr<PhysicalDevice> m_PhysicalDevice;
+	std::shared_ptr<LogicalDevice> m_LogicalDevice;
 	const std::vector<const char*> m_ValidationLayers = {"VK_LAYER_KHRONOS_validation"};
 	const std::vector<const char*> m_DeviceExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,

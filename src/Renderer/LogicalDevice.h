@@ -5,13 +5,28 @@
 #ifndef NEON_LOGICALDEVICE_H
 #define NEON_LOGICALDEVICE_H
 
-#include <thread>
 #include "PhysicalDevice.h"
+#include <thread>
 
-class LogicalDevice {
-
+class LogicalDevice : public std::enable_shared_from_this<LogicalDevice>
+{
 public:
-	explicit LogicalDevice(const PhysicalDevice& physicalDevice);
+	~LogicalDevice();
+	LogicalDevice(const LogicalDevice&) = delete;
+	LogicalDevice(LogicalDevice&&) = delete;
+	LogicalDevice& operator=(const LogicalDevice&) = delete;
+	LogicalDevice& operator=(LogicalDevice&&) = delete;
+
+	static std::shared_ptr<LogicalDevice> Create(const PhysicalDevice& physicalDevice);
+
+	std::shared_ptr<LogicalDevice> GetSharedPtr()
+	{
+		return shared_from_this();
+	}
+	std::shared_ptr<const LogicalDevice> GetSharedPtr() const
+	{
+		return shared_from_this();
+	}
 	[[nodiscard]] const vk::Device& GetHandle() const
 	{
 		return m_Handle;
@@ -32,6 +47,10 @@ public:
 	{
 		return m_TransferQueue;
 	}
+
+private:
+	explicit LogicalDevice(const PhysicalDevice& physicalDevice);
+
 private:
 	vk::Device m_Handle;
 	vk::Queue m_GraphicsQueue;

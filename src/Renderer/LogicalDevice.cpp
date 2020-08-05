@@ -4,6 +4,18 @@
 
 #include "LogicalDevice.h"
 #include "Context.h"
+
+LogicalDevice::~LogicalDevice()
+{
+	m_Handle.destroy();
+}
+
+std::shared_ptr<LogicalDevice> LogicalDevice::Create(const PhysicalDevice& physicalDevice)
+{
+	auto logicalDevice = new LogicalDevice(physicalDevice);
+	return std::shared_ptr<LogicalDevice>(logicalDevice);
+}
+
 LogicalDevice::LogicalDevice(const PhysicalDevice& physicalDevice)
 {
 	std::set<uint32_t> queueFamilyIndices = {physicalDevice.GetGraphicsQueueFamily().m_Index,

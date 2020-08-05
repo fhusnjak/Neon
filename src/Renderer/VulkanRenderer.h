@@ -30,7 +30,7 @@ public:
 	static void End();
 	static void BeginScene(const PerspectiveCamera& camera, const glm::vec4& clearColor);
 	static void EndScene();
-	static void Rasterize(const TransformComponent& transformComponent,
+	static void Render(const TransformComponent& transformComponent,
 						  const MeshComponent& meshComponent,
 						  const MaterialComponent& materialComponent,
 						  const glm::vec3& lightPosition);
@@ -50,8 +50,6 @@ private:
 	VulkanRenderer() noexcept;
 	void InitRenderer(Window* window);
 	void CreateSurface();
-	void CreateDevice();
-	void InitAllocator();
 	void CreateSwapChain();
 	void RecreateSwapChain();
 	void IntegrateImGui();
