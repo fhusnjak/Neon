@@ -36,7 +36,6 @@ add_executable(Neon
         src/Renderer/VulkanRenderer.cpp
         src/Renderer/VulkanShader.cpp
         src/Tools/FileTools.cpp
-        src/Tools/VulkanTools.cpp
         src/Window/Window.cpp
         src/Application.cpp
         src/main.cpp

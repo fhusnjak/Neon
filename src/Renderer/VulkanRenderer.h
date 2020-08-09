@@ -14,14 +14,13 @@
 #include "Window/Window.h"
 
 #include "PhysicalDevice.h"
-#include "Tools/VulkanTools.h"
 
 class VulkanRenderer
 {
 public:
 	VulkanRenderer(const VulkanRenderer& other) = delete;
-	VulkanRenderer& operator=(const VulkanRenderer&) = delete;
 	VulkanRenderer(const VulkanRenderer&& other) = delete;
+	VulkanRenderer& operator=(const VulkanRenderer&) = delete;
 	VulkanRenderer& operator=(const VulkanRenderer&&) = delete;
 	static void Init(Window* window);
 	static void Shutdown();
@@ -31,9 +30,8 @@ public:
 	static void BeginScene(const PerspectiveCamera& camera, const glm::vec4& clearColor);
 	static void EndScene();
 	static void Render(const TransformComponent& transformComponent,
-						  const MeshComponent& meshComponent,
-						  const MaterialComponent& materialComponent,
-						  const glm::vec3& lightPosition);
+					   const MeshComponent& meshComponent,
+					   const MaterialComponent& materialComponent, const glm::vec3& lightPosition);
 	static void DrawImGui();
 	static vk::CommandBuffer BeginSingleTimeCommands();
 	static void EndSingleTimeCommands(vk::CommandBuffer commandBuffer);
