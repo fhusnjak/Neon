@@ -1,7 +1,10 @@
 #pragma once
 
+#include "Event.h"
 #include "Event/Event.h"
 
+namespace Neon
+{
 class Layer
 {
 public:
@@ -26,3 +29,4 @@ public:
 protected:
 	std::string m_DebugName;
 };
+} // namespace Neon

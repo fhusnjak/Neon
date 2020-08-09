@@ -10,9 +10,10 @@
 #include <utility>
 #include <vulkan/vulkan.hpp>
 
+namespace Neon
+{
 class Context
 {
-
 public:
 	void Init();
 	static Context& GetInstance()
@@ -62,5 +63,6 @@ private:
 	std::vector<const char*> m_InstanceExtensions = {
 		VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME};
 };
+} // namespace Neon
 
 #endif //NEON_CONTEXT_H

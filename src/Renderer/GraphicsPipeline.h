@@ -1,9 +1,12 @@
 #pragma once
 
 #include "Renderer/VulkanShader.h"
+#include "VulkanShader.h"
 
 #include <vulkan/vulkan.hpp>
 
+namespace Neon
+{
 class GraphicsPipeline
 {
 public:
@@ -37,3 +40,4 @@ private:
 	vk::UniquePipelineLayout m_Layout;
 	vk::UniquePipeline m_Pipeline;
 };
+} // namespace Neon

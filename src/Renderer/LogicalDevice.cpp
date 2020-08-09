@@ -4,19 +4,21 @@
 
 #include "LogicalDevice.h"
 #include "Context.h"
+#include "PhysicalDevice.h"
 
-LogicalDevice::~LogicalDevice()
+Neon::LogicalDevice::~LogicalDevice()
 {
 	m_Handle.destroy();
 }
 
-std::shared_ptr<LogicalDevice> LogicalDevice::Create(const PhysicalDevice& physicalDevice)
+std::shared_ptr<Neon::LogicalDevice>
+Neon::LogicalDevice::Create(const PhysicalDevice& physicalDevice)
 {
 	auto logicalDevice = new LogicalDevice(physicalDevice);
 	return std::shared_ptr<LogicalDevice>(logicalDevice);
 }
 
-LogicalDevice::LogicalDevice(const PhysicalDevice& physicalDevice)
+Neon::LogicalDevice::LogicalDevice(const PhysicalDevice& physicalDevice)
 {
 	std::set<uint32_t> queueFamilyIndices = {physicalDevice.GetGraphicsQueueFamily().m_Index,
 											 physicalDevice.GetComputeQueueFamily().m_Index};
@@ -53,8 +55,8 @@ LogicalDevice::LogicalDevice(const PhysicalDevice& physicalDevice)
 		{},
 		static_cast<uint32_t>(queueCreateInfos.size()),
 		queueCreateInfos.data(),
-		static_cast<uint32_t>(Context::GetInstance().GetValidationLayers().size()),
-		Context::GetInstance().GetValidationLayers().data(),
+		static_cast<uint32_t>(Neon::Context::GetInstance().GetValidationLayers().size()),
+		Neon::Context::GetInstance().GetValidationLayers().data(),
 		static_cast<uint32_t>(physicalDevice.GetRequiredExtensions().size()),
 		physicalDevice.GetRequiredExtensions().data(),
 		nullptr};

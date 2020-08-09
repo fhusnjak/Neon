@@ -2,11 +2,14 @@
 
 #include <vulkan/vulkan.hpp>
 
+namespace Neon
+{
 class DescriptorSet
 {
 public:
 	void Init(vk::Device device);
-	void CreateDescriptorSet(vk::DescriptorPool pool, const std::vector<vk::DescriptorSetLayoutBinding>& bindings);
+	void CreateDescriptorSet(vk::DescriptorPool pool,
+							 const std::vector<vk::DescriptorSetLayoutBinding>& bindings);
 
 	vk::WriteDescriptorSet CreateWrite(size_t binding, const vk::DescriptorBufferInfo* info,
 									   uint32_t arrayElement);
@@ -32,3 +35,4 @@ private:
 	vk::DescriptorSetLayout m_Layout;
 	vk::DescriptorSet m_Set;
 };
+} // namespace Neon

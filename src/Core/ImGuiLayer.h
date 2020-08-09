@@ -1,7 +1,10 @@
 #pragma once
 
 #include "Core/Layer.h"
+#include "Layer.h"
 
+namespace Neon
+{
 class ImGuiLayer : public Layer
 {
 public:
@@ -14,3 +17,4 @@ public:
 	static void Begin();
 	static void End();
 };
+} // namespace Neon

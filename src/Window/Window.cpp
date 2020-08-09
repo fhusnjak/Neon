@@ -2,30 +2,32 @@
 
 #include "Window.h"
 
+#include "ApplicationEvent.h"
 #include "Event/KeyEvent.h"
+#include "KeyEvent.h"
 
-Window::Window(const std::string& name)
+Neon::Window::Window(const std::string& name)
 	: m_Data{name, WIDTH, HEIGHT}
 {
 	Init();
 }
 
-Window::~Window()
+Neon::Window::~Window()
 {
 	Shutdown();
 }
 
-void Window::OnUpdate()
+void Neon::Window::OnUpdate()
 {
 	glfwPollEvents();
 }
 
-void Window::ResetResized()
+void Neon::Window::ResetResized()
 {
 	m_Data.Resized = false;
 }
 
-void Window::Init()
+void Neon::Window::Init()
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -37,12 +39,12 @@ void Window::Init()
 		data->Width = width;
 		data->Height = height;
 		data->Resized = true;
-		WindowResizeEvent event(width, height);
+		Neon::WindowResizeEvent event(width, height);
 		data->EventCallback(event);
 	});
 	glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window) {
 		auto data = reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
-		WindowCloseEvent event;
+		Neon::WindowCloseEvent event;
 		data->EventCallback(event);
 	});
 	glfwSetKeyCallback(m_Window,
@@ -53,13 +55,13 @@ void Window::Init()
 						   {
 						   case GLFW_PRESS:
 						   {
-							   KeyPressedEvent event(key);
+							   Neon::KeyPressedEvent event(key);
 							   data.EventCallback(event);
 							   break;
 						   }
 						   case GLFW_RELEASE:
 						   {
-							   KeyReleasedEvent event(key);
+							   Neon::KeyReleasedEvent event(key);
 							   data.EventCallback(event);
 							   break;
 						   }
@@ -68,7 +70,7 @@ void Window::Init()
 					   });
 }
 
-void Window::Shutdown()
+void Neon::Window::Shutdown()
 {
 	glfwDestroyWindow(m_Window);
 	glfwTerminate();

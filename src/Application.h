@@ -1,9 +1,14 @@
 #pragma once
 
+#include "ApplicationEvent.h"
 #include "Core/ImGuiLayer.h"
 #include "Core/LayerStack.h"
+#include "Event.h"
 #include "Event/ApplicationEvent.h"
 #include "Event/Event.h"
+#include "ImGuiLayer.h"
+#include "Layer.h"
+#include "Window.h"
 #include "Window/Window.h"
 
 #include <chrono>
@@ -19,11 +24,11 @@ public:
 	Application& operator=(const Application&& other) = delete;
 
 	void Run();
-	void OnEvent(Event& e);
-	void PushLayer(Layer* layer);
-	void PushOverlay(Layer* layer);
+	void OnEvent(Neon::Event& e);
+	void PushLayer(Neon::Layer* layer);
+	void PushOverlay(Neon::Layer* layer);
 
-	[[nodiscard]] const inline Window& GetWindow() const noexcept
+	[[nodiscard]] const inline Neon::Window& GetWindow() const noexcept
 	{
 		return m_Window;
 	}
@@ -34,16 +39,16 @@ public:
 	}
 
 private:
-	bool OnWindowClose(WindowCloseEvent& e);
-	bool OnWindowResize(WindowResizeEvent& e);
+	bool OnWindowClose(Neon::WindowCloseEvent& e);
+	bool OnWindowResize(Neon::WindowResizeEvent& e);
 
 private:
 	static Application* s_Instance;
 
-	Window m_Window;
+	Neon::Window m_Window;
 	bool m_Running = true;
 	bool m_Minimized = false;
-	ImGuiLayer* m_ImGuiLayer;
+	Neon::ImGuiLayer* m_ImGuiLayer;
 	LayerStack m_LayerStack;
 	std::chrono::time_point<std::chrono::steady_clock> m_LastFrameTime =
 		std::chrono::high_resolution_clock::now();

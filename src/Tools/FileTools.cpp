@@ -2,7 +2,7 @@
 
 #include "FileTools.h"
 
-std::vector<char> ReadFile(const std::string& filename)
+std::vector<char> Neon::ReadFile(const std::string& filename)
 {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 

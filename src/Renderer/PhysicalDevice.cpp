@@ -4,22 +4,22 @@
 
 #include "Context.h"
 
-std::unique_ptr<PhysicalDevice>
-PhysicalDevice::Create(const vk::SurfaceKHR& surface,
+std::unique_ptr<Neon::PhysicalDevice>
+Neon::PhysicalDevice::Create(const vk::SurfaceKHR& surface,
 					   const std::vector<const char*>& requiredExtensions,
 					   const std::vector<vk::QueueFlagBits>& queueFlags)
 {
-	auto physicalDevice = new PhysicalDevice(surface, requiredExtensions, queueFlags);
-	return std::unique_ptr<PhysicalDevice>(physicalDevice);
+	auto physicalDevice = new Neon::PhysicalDevice(surface, requiredExtensions, queueFlags);
+	return std::unique_ptr<Neon::PhysicalDevice>(physicalDevice);
 }
 
-PhysicalDevice::PhysicalDevice(const vk::SurfaceKHR& surface,
+Neon::PhysicalDevice::PhysicalDevice(const vk::SurfaceKHR& surface,
 							   const std::vector<const char*>& requiredExtensions,
 							   const std::vector<vk::QueueFlagBits>& queueFlags)
 {
 	std::multimap<int, VkPhysicalDevice> candidates;
 	std::vector<vk::PhysicalDevice> devices =
-		Context::GetInstance().GetVkInstance().enumeratePhysicalDevices();
+		Neon::Context::GetInstance().GetVkInstance().enumeratePhysicalDevices();
 	for (auto& device : devices)
 	{
 		if (int score = IsDeviceSuitable(device, surface, requiredExtensions, queueFlags) > -1)
@@ -35,13 +35,13 @@ PhysicalDevice::PhysicalDevice(const vk::SurfaceKHR& surface,
 	FindQueueFamilies(surface);
 }
 
-int PhysicalDevice::IsDeviceSuitable(const vk::PhysicalDevice& physicalDevice,
+int Neon::PhysicalDevice::IsDeviceSuitable(const vk::PhysicalDevice& physicalDevice,
 									 const vk::SurfaceKHR& surface,
 									 const std::vector<const char*>& requiredExtensions,
 									 const std::vector<vk::QueueFlagBits>& queueFlags)
 {
 	if (!CheckExtensionSupport(physicalDevice, requiredExtensions)) return -1;
-	DeviceSurfaceProperties surfaceProperties =
+	Neon::DeviceSurfaceProperties surfaceProperties =
 		QueryDeviceSurfaceProperties(physicalDevice, surface);
 	if (surfaceProperties.formats.empty() || surfaceProperties.presentModes.empty()) return -1;
 	vk::PhysicalDeviceFeatures supportedFeatures = physicalDevice.getFeatures();
@@ -51,7 +51,7 @@ int PhysicalDevice::IsDeviceSuitable(const vk::PhysicalDevice& physicalDevice,
 	return properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu ? 10 : 1;
 }
 
-bool PhysicalDevice::CheckExtensionSupport(const vk::PhysicalDevice& physicalDevice,
+bool Neon::PhysicalDevice::CheckExtensionSupport(const vk::PhysicalDevice& physicalDevice,
 										   std::vector<const char*> requiredExtensions)
 {
 	auto supportedExtensions = physicalDevice.enumerateDeviceExtensionProperties();
@@ -64,18 +64,18 @@ bool PhysicalDevice::CheckExtensionSupport(const vk::PhysicalDevice& physicalDev
 	return requiredExtensionsSet.empty();
 }
 
-DeviceSurfaceProperties
-PhysicalDevice::QueryDeviceSurfaceProperties(const vk::PhysicalDevice& physicalDevice,
+Neon::DeviceSurfaceProperties
+Neon::PhysicalDevice::QueryDeviceSurfaceProperties(const vk::PhysicalDevice& physicalDevice,
 											 const vk::SurfaceKHR& surface)
 {
-	DeviceSurfaceProperties surfaceProperties{};
+	Neon::DeviceSurfaceProperties surfaceProperties{};
 	surfaceProperties.surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
 	surfaceProperties.formats = physicalDevice.getSurfaceFormatsKHR(surface);
 	surfaceProperties.presentModes = physicalDevice.getSurfacePresentModesKHR(surface);
 	return surfaceProperties;
 }
 
-bool PhysicalDevice::CheckQueueFamilySupport(const vk::PhysicalDevice& physicalDevice,
+bool Neon::PhysicalDevice::CheckQueueFamilySupport(const vk::PhysicalDevice& physicalDevice,
 											 const vk::SurfaceKHR& surface,
 											 const std::vector<vk::QueueFlagBits>& queueFlags)
 {
@@ -98,7 +98,7 @@ bool PhysicalDevice::CheckQueueFamilySupport(const vk::PhysicalDevice& physicalD
 	return true;
 }
 
-void PhysicalDevice::FindQueueFamilies(const vk::SurfaceKHR& surface)
+void Neon::PhysicalDevice::FindQueueFamilies(const vk::SurfaceKHR& surface)
 {
 	std::vector<vk::QueueFamilyProperties> queueFamilyProperties =
 		m_Handle.getQueueFamilyProperties();
@@ -106,7 +106,7 @@ void PhysicalDevice::FindQueueFamilies(const vk::SurfaceKHR& surface)
 
 	for (const auto& queueFamilyProperty : queueFamilyProperties)
 	{
-		QueueFamily queueFamily{index};
+		Neon::QueueFamily queueFamily{index};
 		if (queueFamilyProperty.queueFlags & vk::QueueFlagBits::eGraphics)
 		{ m_GraphicsQueueFamily = queueFamily; }
 		if (m_Handle.getSurfaceSupportKHR(static_cast<uint32_t>(index), surface))

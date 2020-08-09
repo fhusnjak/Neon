@@ -1,7 +1,6 @@
 #ifndef NEON_VULKANRENDERER_H
 #define NEON_VULKANRENDERER_H
 
-#include "ObjModel.h"
 #include "PerspectiveCamera.h"
 #include "VulkanShader.h"
 #include <Scene/Components.h>
@@ -13,8 +12,12 @@
 #define GLFW_INCLUDE_VULKAN
 #include "Window/Window.h"
 
+#include "Allocator.h"
 #include "PhysicalDevice.h"
+#include "Window.h"
 
+namespace Neon
+{
 class VulkanRenderer
 {
 public:
@@ -112,5 +115,6 @@ private:
 
 	VkDescriptorSet m_ImGuiOffscreenTextureDescSet = nullptr;
 };
+} // namespace Neon
 
 #endif //NEON_VULKANRENDERER_H

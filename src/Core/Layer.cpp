@@ -4,7 +4,7 @@
 
 #include <utility>
 
-Layer::Layer(std::string name)
+Neon::Layer::Layer(std::string name)
 	: m_DebugName(std::move(name))
 {
 }

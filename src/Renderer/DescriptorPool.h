@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.hpp>
 
-namespace util
+namespace Neon
 {
 vk::DescriptorPool CreateDescriptorPool(const vk::Device device,
 										const std::vector<vk::DescriptorSetLayoutBinding>& bindings,
@@ -11,4 +11,4 @@ vk::DescriptorPool CreateDescriptorPool(const vk::Device device,
 vk::DescriptorPool CreateDescriptorPool(const vk::Device device,
 										const std::vector<vk::DescriptorPoolSize>& sizes,
 										const uint32_t maxSets);
-} // namespace util
+} // namespace Neon

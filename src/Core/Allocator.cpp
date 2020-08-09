@@ -6,11 +6,12 @@
 #include "Renderer/VulkanRenderer.h"
 
 #define STB_IMAGE_IMPLEMENTATION
+#include "VulkanRenderer.h"
 #include "stb_image.h"
 
-Allocator Allocator::s_Allocator;
+Neon::Allocator Neon::Allocator::s_Allocator;
 
-void Allocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device)
+void Neon::Allocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device)
 {
 	s_Allocator.m_PhysicalDevice = physicalDevice;
 	VmaAllocatorCreateInfo allocatorInfo{{}, physicalDevice, device};
@@ -18,20 +19,20 @@ void Allocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device)
 	vmaCreateAllocator(&allocatorInfo, &s_Allocator.m_Allocator);
 }
 
-void Allocator::FlushStaging()
+void Neon::Allocator::FlushStaging()
 {
 	while (!s_Allocator.m_StagingBuffers.empty())
 	{
-		BufferAllocation& stagingBufferAllocation = s_Allocator.m_StagingBuffers.front();
+		Neon::BufferAllocation& stagingBufferAllocation = s_Allocator.m_StagingBuffers.front();
 		s_Allocator.m_StagingBuffers.pop();
 		vmaDestroyBuffer(s_Allocator.m_Allocator, stagingBufferAllocation.buffer,
 						 stagingBufferAllocation.allocation);
 	}
 }
 
-BufferAllocation Allocator::CreateBuffer(const vk::DeviceSize& size,
-										 const vk::BufferUsageFlags& usage,
-										 const VmaMemoryUsage& memoryUsage)
+Neon::BufferAllocation Neon::Allocator::CreateBuffer(const vk::DeviceSize& size,
+													 const vk::BufferUsageFlags& usage,
+													 const VmaMemoryUsage& memoryUsage)
 {
 	VmaAllocationCreateInfo allocInfo = {};
 	allocInfo.usage = memoryUsage;
@@ -39,17 +40,18 @@ BufferAllocation Allocator::CreateBuffer(const vk::DeviceSize& size,
 	bufferInfo.size = size;
 	bufferInfo.usage = static_cast<VkBufferUsageFlags>(usage);
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	BufferAllocation bufferAllocation{};
+	Neon::BufferAllocation bufferAllocation{};
 	vmaCreateBuffer(s_Allocator.m_Allocator, &bufferInfo, &allocInfo, &bufferAllocation.buffer,
 					&bufferAllocation.allocation, nullptr);
 	return bufferAllocation;
 }
 
-ImageAllocation Allocator::CreateImage(const uint32_t width, const uint32_t height,
-									   const vk::SampleCountFlagBits& sampleCount,
-									   const vk::Format& format, const vk::ImageTiling& tiling,
-									   const vk::ImageUsageFlags& usage,
-									   const VmaMemoryUsage& memoryUsage)
+Neon::ImageAllocation Neon::Allocator::CreateImage(const uint32_t width, const uint32_t height,
+												   const vk::SampleCountFlagBits& sampleCount,
+												   const vk::Format& format,
+												   const vk::ImageTiling& tiling,
+												   const vk::ImageUsageFlags& usage,
+												   const VmaMemoryUsage& memoryUsage)
 {
 	VmaAllocationCreateInfo allocInfo = {};
 	allocInfo.usage = memoryUsage;
@@ -65,14 +67,14 @@ ImageAllocation Allocator::CreateImage(const uint32_t width, const uint32_t heig
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	imageInfo.queueFamilyIndexCount = 0;
 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	ImageAllocation imageAllocation{};
+	Neon::ImageAllocation imageAllocation{};
 	vmaCreateImage(s_Allocator.m_Allocator, &imageInfo, &allocInfo, &imageAllocation.image,
 				   &imageAllocation.allocation, nullptr);
 	return imageAllocation;
 }
 
-void Allocator::TransitionImageLayout(vk::Image image, vk::ImageAspectFlagBits aspect,
-									  vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
+void Neon::Allocator::TransitionImageLayout(vk::Image image, vk::ImageAspectFlagBits aspect,
+											vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
 {
 	vk::ImageSubresourceRange imgSubresourceRange{aspect, 0, 1, 0, 1};
 	vk::ImageMemoryBarrier barrier{{},
@@ -130,7 +132,7 @@ void Allocator::TransitionImageLayout(vk::Image image, vk::ImageAspectFlagBits a
 	VulkanRenderer::EndSingleTimeCommands(commandBuffer);
 }
 
-ImageAllocation Allocator::CreateTextureImage(const std::string& filename)
+Neon::ImageAllocation Neon::Allocator::CreateTextureImage(const std::string& filename)
 {
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels =
@@ -147,7 +149,7 @@ ImageAllocation Allocator::CreateTextureImage(const std::string& filename)
 	vk::DeviceSize imageSize =
 		static_cast<uint64_t>(texWidth) * static_cast<uint64_t>(texHeight) * sizeof(glm::u8vec4);
 
-	BufferAllocation stagingBufferAllocation =
+	Neon::BufferAllocation stagingBufferAllocation =
 		CreateBuffer(imageSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_GPU_TO_CPU);
 
 	void* mappedData;
@@ -157,7 +159,7 @@ ImageAllocation Allocator::CreateTextureImage(const std::string& filename)
 
 	stbi_image_free(pixels);
 
-	ImageAllocation imageAllocation =
+	Neon::ImageAllocation imageAllocation =
 		CreateImage(texWidth, texHeight, vk::SampleCountFlagBits::e1, vk::Format::eR8G8B8A8Srgb,
 					vk::ImageTiling::eOptimal,
 					vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
@@ -188,7 +190,7 @@ ImageAllocation Allocator::CreateTextureImage(const std::string& filename)
 	return imageAllocation;
 }
 
-ImageAllocation Allocator::CreateHdrTextureImage(const std::string& filename)
+Neon::ImageAllocation Neon::Allocator::CreateHdrTextureImage(const std::string& filename)
 {
 	int texWidth, texHeight, nrComponents;
 	float* pixels = stbi_loadf(filename.c_str(), &texWidth, &texHeight, &nrComponents, 0);
@@ -196,7 +198,7 @@ ImageAllocation Allocator::CreateHdrTextureImage(const std::string& filename)
 	vk::DeviceSize imageSize =
 		static_cast<uint64_t>(texWidth) * static_cast<uint64_t>(texHeight) * sizeof(float) * 3;
 
-	BufferAllocation stagingBufferAllocation =
+	Neon::BufferAllocation stagingBufferAllocation =
 		CreateBuffer(imageSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_GPU_TO_CPU);
 
 	void* mappedData;
@@ -206,7 +208,7 @@ ImageAllocation Allocator::CreateHdrTextureImage(const std::string& filename)
 
 	stbi_image_free(pixels);
 
-	ImageAllocation imageAllocation =
+	Neon::ImageAllocation imageAllocation =
 		CreateImage(texWidth, texHeight, vk::SampleCountFlagBits::e1, vk::Format::eR32G32B32Sfloat,
 					vk::ImageTiling::eLinear,
 					vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
@@ -238,10 +240,10 @@ ImageAllocation Allocator::CreateHdrTextureImage(const std::string& filename)
 }
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "modernize-use-equals-default"
-Allocator::Allocator() noexcept { }
+Neon::Allocator::Allocator() noexcept { }
 #pragma clang diagnostic pop
 
-void Allocator::FreeMemory(VmaAllocation allocation)
+void Neon::Allocator::FreeMemory(VmaAllocation allocation)
 {
 	vmaFreeMemory(s_Allocator.m_Allocator, allocation);
 }

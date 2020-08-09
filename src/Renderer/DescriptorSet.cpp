@@ -1,13 +1,11 @@
-#include "neopch.h"
-
 #include "DescriptorSet.h"
 
-void DescriptorSet::Init(vk::Device device)
+void Neon::DescriptorSet::Init(vk::Device device)
 {
 	m_Device = device;
 }
 
-void DescriptorSet::CreateDescriptorSet(
+void Neon::DescriptorSet::CreateDescriptorSet(
 	vk::DescriptorPool pool, const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
 {
 	vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(bindings.size()),
@@ -20,9 +18,9 @@ void DescriptorSet::CreateDescriptorSet(
 	m_Set = m_Device.allocateDescriptorSets(allocInfo)[0];
 }
 
-vk::WriteDescriptorSet DescriptorSet::CreateWrite(const size_t binding,
-													  const vk::DescriptorBufferInfo* info,
-													  const uint32_t arrayElement)
+vk::WriteDescriptorSet Neon::DescriptorSet::CreateWrite(const size_t binding,
+														const vk::DescriptorBufferInfo* info,
+														const uint32_t arrayElement)
 {
 	return {{},
 			m_Bindings[binding].binding,
@@ -33,9 +31,9 @@ vk::WriteDescriptorSet DescriptorSet::CreateWrite(const size_t binding,
 			info};
 }
 
-vk::WriteDescriptorSet DescriptorSet::CreateWrite(const size_t binding,
-													  const vk::DescriptorImageInfo* info,
-													  const uint32_t arrayElement)
+vk::WriteDescriptorSet Neon::DescriptorSet::CreateWrite(const size_t binding,
+														const vk::DescriptorImageInfo* info,
+														const uint32_t arrayElement)
 {
 	return {{},
 			m_Bindings[binding].binding,
@@ -45,7 +43,7 @@ vk::WriteDescriptorSet DescriptorSet::CreateWrite(const size_t binding,
 			info};
 }
 
-void DescriptorSet::Update(std::vector<vk::WriteDescriptorSet>& descriptorWrites)
+void Neon::DescriptorSet::Update(std::vector<vk::WriteDescriptorSet>& descriptorWrites)
 {
 	assert(descriptorWrites.size() <= m_Bindings.size());
 	for (auto& wr : descriptorWrites)

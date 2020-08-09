@@ -6,24 +6,23 @@
 
 #include <vulkan/vulkan.hpp>
 
+namespace Neon
+{
 struct BufferAllocation
 {
 	VkBuffer buffer;
 	VmaAllocation allocation;
 };
-
 struct ImageAllocation
 {
 	VkImage image;
 	VmaAllocation allocation;
 };
-
 struct TextureImage
 {
 	vk::DescriptorImageInfo descriptor{};
 	ImageAllocation textureAllocation{};
 };
-
 class Allocator
 {
 public:
@@ -97,3 +96,4 @@ private:
 	vk::PhysicalDevice m_PhysicalDevice;
 	std::queue<BufferAllocation> m_StagingBuffers;
 };
+} // namespace Neon

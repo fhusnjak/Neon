@@ -2,25 +2,26 @@
 
 #include "GraphicsPipeline.h"
 
-void GraphicsPipeline::Init(vk::Device device)
+void Neon::GraphicsPipeline::Init(vk::Device device)
 {
 	m_Device = device;
 }
 
-void GraphicsPipeline::LoadVertexShader(const std::string& file)
+void Neon::GraphicsPipeline::LoadVertexShader(const std::string& file)
 {
 	m_Shaders.emplace_back(m_Device, vk::ShaderStageFlagBits::eVertex);
 	m_Shaders[m_Shaders.size() - 1].LoadFromFile(file);
 }
 
-void GraphicsPipeline::LoadFragmentShader(const std::string& file)
+void Neon::GraphicsPipeline::LoadFragmentShader(const std::string& file)
 {
 	m_Shaders.emplace_back(m_Device, vk::ShaderStageFlagBits::eFragment);
 	m_Shaders[m_Shaders.size() - 1].LoadFromFile(file);
 }
 
-void GraphicsPipeline::CreatePipelineLayout(std::vector<vk::DescriptorSetLayout> descLayouts,
-											std::vector<vk::PushConstantRange> pushConstRanges)
+void Neon::GraphicsPipeline::CreatePipelineLayout(
+	std::vector<vk::DescriptorSetLayout> descLayouts,
+	std::vector<vk::PushConstantRange> pushConstRanges)
 {
 	vk::PipelineLayoutCreateInfo pipelineLayoutInfo{{},
 													static_cast<uint32_t>(descLayouts.size()),
@@ -30,7 +31,7 @@ void GraphicsPipeline::CreatePipelineLayout(std::vector<vk::DescriptorSetLayout>
 	m_Layout = m_Device.createPipelineLayoutUnique(pipelineLayoutInfo);
 }
 
-void GraphicsPipeline::CreatePipeline(
+void Neon::GraphicsPipeline::CreatePipeline(
 	vk::RenderPass renderPass, vk::SampleCountFlagBits samples, vk::Extent2D extent,
 	std::vector<vk::VertexInputBindingDescription> bindingDesc,
 	std::vector<vk::VertexInputAttributeDescription> attributeDesc, vk::CullModeFlagBits cullMode)

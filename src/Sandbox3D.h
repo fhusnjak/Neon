@@ -2,13 +2,14 @@
 
 #include "Core/Layer.h"
 
-#include "Renderer/ObjModel.h"
-
 #include "Renderer/PerspectiveCameraController.h"
 
+#include "Event.h"
+#include "Layer.h"
+#include "PerspectiveCameraController.h"
 #include "Scene/Scene.h"
 
-class Sandbox3D : public Layer
+class Sandbox3D : public Neon::Layer
 {
 public:
 	Sandbox3D();
@@ -19,14 +20,12 @@ public:
 
 	void OnUpdate(float ts) override;
 	void OnImGuiRender() override;
-	void OnEvent(Event& e) override;
+	void OnEvent(Neon::Event& e) override;
 
 private:
-	PerspectiveCameraController m_CameraController;
-	std::vector<ObjInstance> m_Instances;
-	std::vector<ObjModel> m_Models;
+	Neon::PerspectiveCameraController m_CameraController;
 
-	std::shared_ptr<Scene> m_ActiveScene;
+	std::shared_ptr<Neon::Scene> m_ActiveScene;
 
 	std::queue<float> m_Times;
 	float m_TimePassed = 0.0f;

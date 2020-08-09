@@ -3,14 +3,16 @@
 //
 
 #include "Context.h"
-#include <Core/Allocator.h>
+#include "Allocator.h"
+#include "LogicalDevice.h"
+#include "PhysicalDevice.h"
 #include <GLFW/glfw3.h>
 
-Context Context::s_Instance;
+Neon::Context Neon::Context::s_Instance;
 
-Context::Context() noexcept { }
+Neon::Context::Context() noexcept { }
 
-void Context::Init()
+void Neon::Context::Init()
 {
 	if (!glfwVulkanSupported())
 	{
@@ -39,8 +41,8 @@ void Context::Init()
 	m_VkInstance = vk::createInstanceUnique(instanceCreateInfo);
 }
 
-void Context::CreateDevice(const vk::SurfaceKHR& surface,
-						   const std::vector<vk::QueueFlagBits>& queueFlags)
+void Neon::Context::CreateDevice(const vk::SurfaceKHR& surface,
+								 const std::vector<vk::QueueFlagBits>& queueFlags)
 {
 	assert(m_PhysicalDevice == nullptr);
 	assert(m_LogicalDevice == nullptr);
@@ -48,7 +50,7 @@ void Context::CreateDevice(const vk::SurfaceKHR& surface,
 	m_LogicalDevice = LogicalDevice::Create(*m_PhysicalDevice);
 }
 
-bool Context::CheckExtensionSupport()
+bool Neon::Context::CheckExtensionSupport()
 {
 	std::vector<vk::ExtensionProperties> supportedExtensions =
 		vk::enumerateInstanceExtensionProperties();
@@ -68,7 +70,7 @@ bool Context::CheckExtensionSupport()
 	return true;
 }
 
-bool Context::CheckValidationLayerSupport()
+bool Neon::Context::CheckValidationLayerSupport()
 {
 	std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
 	for (auto layerName : m_ValidationLayers)
@@ -87,18 +89,18 @@ bool Context::CheckValidationLayerSupport()
 	return true;
 }
 
-PhysicalDevice& Context::GetPhysicalDevice()
+Neon::PhysicalDevice& Neon::Context::GetPhysicalDevice()
 {
 	assert(m_PhysicalDevice != nullptr);
 	return *m_PhysicalDevice;
 }
 
-LogicalDevice& Context::GetLogicalDevice()
+Neon::LogicalDevice& Neon::Context::GetLogicalDevice()
 {
 	assert(m_LogicalDevice != nullptr);
 	return *m_LogicalDevice;
 }
-void Context::InitAllocator()
+void Neon::Context::InitAllocator()
 {
-	Allocator::Init(m_PhysicalDevice->GetHandle(), m_LogicalDevice->GetHandle());
+	Neon::Allocator::Init(m_PhysicalDevice->GetHandle(), m_LogicalDevice->GetHandle());
 }

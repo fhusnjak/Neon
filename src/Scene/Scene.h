@@ -10,6 +10,8 @@
 #include "PerspectiveCameraController.h"
 #include "entt.h"
 
+namespace Neon
+{
 class Entity;
 
 struct Vertex
@@ -66,7 +68,7 @@ public:
 	Entity CreateWavefrontEntity(const std::string& filename,
 								 const std::string& name = std::string());
 
-	void OnUpdate(float ts, PerspectiveCameraController controller, glm::vec4 clearColor,
+	void OnUpdate(float ts, Neon::PerspectiveCameraController controller, glm::vec4 clearColor,
 				  glm::vec3 lightPosition);
 
 private:
@@ -74,5 +76,6 @@ private:
 
 	friend class Entity;
 };
+} // namespace Neon
 
 #endif //NEON_SCENE_H

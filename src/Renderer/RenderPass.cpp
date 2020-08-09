@@ -1,8 +1,6 @@
-#include "neopch.h"
-
 #include "RenderPass.h"
 
-vk::RenderPass util::CreateRenderPass(const vk::Device& device, vk::Format colorAttachmentFormat,
+vk::RenderPass Neon::CreateRenderPass(const vk::Device& device, vk::Format colorAttachmentFormat,
 									  vk::SampleCountFlagBits samples, bool clearColor,
 									  vk::ImageLayout colorInitialLayout,
 									  vk::ImageLayout colorFinalLayout,

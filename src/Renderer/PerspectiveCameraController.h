@@ -1,10 +1,15 @@
 #pragma once
 
+#include "ApplicationEvent.h"
+#include "Event.h"
 #include "Event/ApplicationEvent.h"
 #include "Event/Event.h"
 #include "Event/KeyEvent.h"
+#include "KeyEvent.h"
 #include "PerspectiveCamera.h"
 
+namespace Neon
+{
 class PerspectiveCameraController
 {
 public:
@@ -45,3 +50,4 @@ private:
 	float m_ZoomLevel = 1.0f;
 	bool m_Cursor = true;
 };
+} // namespace Neon

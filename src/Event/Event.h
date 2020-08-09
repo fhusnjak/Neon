@@ -2,8 +2,9 @@
 
 #include <ostream>
 
+namespace Neon
+{
 #define BIT(x) (1 << x)
-
 enum class EventType
 {
 	None = 0,
@@ -23,7 +24,6 @@ enum class EventType
 	MouseMoved,
 	MouseScrolled
 };
-
 enum EventCategory
 {
 	None = 0,
@@ -33,7 +33,6 @@ enum EventCategory
 	EventCategoryMouse = BIT(3),
 	EventCategoryMouseButton = BIT(4)
 };
-
 #define EVENT_CLASS_TYPE(type)                                                                     \
 	static EventType GetStaticType()                                                               \
 	{                                                                                              \
@@ -47,13 +46,11 @@ enum EventCategory
 	{                                                                                              \
 		return #type;                                                                              \
 	}
-
 #define EVENT_CLASS_CATEGORY(category)                                                             \
 	virtual int GetCategoryFlags() const override                                                  \
 	{                                                                                              \
 		return category;                                                                           \
 	}
-
 class Event
 {
 public:
@@ -72,7 +69,6 @@ public:
 		return GetCategoryFlags() & category;
 	}
 };
-
 class EventDispatcher
 {
 public:
@@ -95,8 +91,8 @@ public:
 private:
 	Event& m_Event;
 };
-
 inline std::ostream& operator<<(std::ostream& os, const Event& e)
 {
 	return os << e.ToString();
 }
+} // namespace Neon

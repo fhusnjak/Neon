@@ -2,15 +2,16 @@
 
 #include "VulkanShader.h"
 
+#include "FileTools.h"
 #include "Tools/FileTools.h"
 
-VulkanShader::VulkanShader(vk::Device device, vk::ShaderStageFlagBits stage)
+Neon::VulkanShader::VulkanShader(vk::Device device, vk::ShaderStageFlagBits stage)
 	: m_Device(device)
 	, m_Stage(stage)
 {
 }
 
-void VulkanShader::LoadFromFile(const std::string& fileName)
+void Neon::VulkanShader::LoadFromFile(const std::string& fileName)
 {
 	std::vector<char> code = ReadFile(fileName);
 	vk::ShaderModuleCreateInfo createInfo{
@@ -18,7 +19,7 @@ void VulkanShader::LoadFromFile(const std::string& fileName)
 	m_Module = m_Device.createShaderModuleUnique(createInfo);
 }
 
-vk::PipelineShaderStageCreateInfo VulkanShader::GetShaderStageCreateInfo() const
+vk::PipelineShaderStageCreateInfo Neon::VulkanShader::GetShaderStageCreateInfo() const
 {
 	return {{}, m_Stage, m_Module.get(), "main"};
 }

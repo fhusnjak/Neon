@@ -5,6 +5,9 @@
 #ifndef NEON_COMPONENTS_H
 #define NEON_COMPONENTS_H
 
+#include "Allocator.h"
+#include "DescriptorSet.h"
+#include "GraphicsPipeline.h"
 #include <Core/Allocator.h>
 #include <Renderer/DescriptorSet.h>
 #include <Renderer/GraphicsPipeline.h>
@@ -49,13 +52,14 @@ struct MeshComponent
 {
 	uint32_t m_VerticesCount{0};
 	uint32_t m_IndicesCount{0};
-	BufferAllocation m_VertexBuffer{};
-	BufferAllocation m_IndexBuffer{};
+	Neon::BufferAllocation m_VertexBuffer{};
+	Neon::BufferAllocation m_IndexBuffer{};
 
 	MeshComponent() = default;
 	MeshComponent(const MeshComponent&) = default;
 	MeshComponent(const uint32_t indicesCount, const uint32_t verticesCount,
-				  const BufferAllocation& vertexBuffer, const BufferAllocation indexBuffer)
+				  const Neon::BufferAllocation& vertexBuffer,
+				  const Neon::BufferAllocation indexBuffer)
 		: m_VerticesCount(verticesCount)
 		, m_IndicesCount(indicesCount)
 		, m_VertexBuffer(vertexBuffer)
@@ -66,14 +70,14 @@ struct MeshComponent
 
 struct MaterialComponent
 {
-	BufferAllocation m_MaterialBuffer{};
-	std::vector<TextureImage> m_TextureImages;
-	std::vector<DescriptorSet> m_DescriptorSets;
-	GraphicsPipeline graphicsPipeline;
+	Neon::BufferAllocation m_MaterialBuffer{};
+	std::vector<Neon::TextureImage> m_TextureImages;
+	std::vector<Neon::DescriptorSet> m_DescriptorSets;
+	Neon::GraphicsPipeline graphicsPipeline;
 
 	MaterialComponent() = default;
-	MaterialComponent(const BufferAllocation& materialBuffer,
-					  std::vector<TextureImage>  textureImages)
+	MaterialComponent(const Neon::BufferAllocation& materialBuffer,
+					  std::vector<Neon::TextureImage> textureImages)
 		: m_MaterialBuffer(materialBuffer)
 		, m_TextureImages(std::move(textureImages))
 	{

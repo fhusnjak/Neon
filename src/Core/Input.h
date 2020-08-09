@@ -2,6 +2,8 @@
 
 #include <vector>
 
+namespace Neon
+{
 class Input
 {
 public:
@@ -19,3 +21,4 @@ public:
 
 	static void DisableCursor();
 };
+} // namespace Neon

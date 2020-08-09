@@ -1,9 +1,7 @@
-#include "neopch.h"
-
 #include "DescriptorPool.h"
 
 vk::DescriptorPool
-util::CreateDescriptorPool(const vk::Device device,
+Neon::CreateDescriptorPool(const vk::Device device,
 						   const std::vector<vk::DescriptorSetLayoutBinding>& bindings,
 						   const uint32_t maxSets)
 {
@@ -13,10 +11,10 @@ util::CreateDescriptorPool(const vk::Device device,
 	{
 		sizes.emplace_back(b.descriptorType, b.descriptorCount * maxSets);
 	}
-	return util::CreateDescriptorPool(device, sizes, maxSets);
+	return CreateDescriptorPool(device, sizes, maxSets);
 }
 
-vk::DescriptorPool util::CreateDescriptorPool(const vk::Device device,
+vk::DescriptorPool Neon::CreateDescriptorPool(const vk::Device device,
 											  const std::vector<vk::DescriptorPoolSize>& sizes,
 											  const uint32_t maxSets)
 {

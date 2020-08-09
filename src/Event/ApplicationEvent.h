@@ -2,15 +2,16 @@
 
 #include "Event.h"
 
+namespace Neon
+{
 class WindowCloseEvent : public Event
 {
 public:
 	WindowCloseEvent() { }
 
 	EVENT_CLASS_TYPE(WindowClose);
-	EVENT_CLASS_CATEGORY(EventCategory::EventCategoryApplication);
+	EVENT_CLASS_CATEGORY(EventCategoryApplication);
 };
-
 class WindowResizeEvent : public Event
 {
 public:
@@ -31,9 +32,10 @@ public:
 	}
 
 	EVENT_CLASS_TYPE(WindowResize);
-	EVENT_CLASS_CATEGORY(EventCategory::EventCategoryApplication);
+	EVENT_CLASS_CATEGORY(EventCategoryApplication);
 
 private:
 	int m_Width;
 	int m_Height;
 };
+} // namespace Neon

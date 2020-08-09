@@ -4,7 +4,13 @@
 
 #include "Application.h"
 
+#include "ApplicationEvent.h"
+#include "Event.h"
+#include "ImGuiLayer.h"
+#include "Layer.h"
 #include "Sandbox3D.h"
+#include "VulkanRenderer.h"
+#include "Window.h"
 
 Application* Application::s_Instance = nullptr;
 
@@ -13,24 +19,25 @@ Application::Application(const std::string& name) noexcept
 {
 	assert(s_Instance == nullptr);
 	s_Instance = this;
-	m_Window.SetEventCallback([this](Event& e) { OnEvent(e); });
-	m_ImGuiLayer = new ImGuiLayer();
+	m_Window.SetEventCallback([this](Neon::Event& e) { OnEvent(e); });
+	m_ImGuiLayer = new Neon::ImGuiLayer();
 	PushOverlay(m_ImGuiLayer);
-	VulkanRenderer::Init(&m_Window);
+	Neon::VulkanRenderer::Init(&m_Window);
 	PushLayer(new Sandbox3D());
 }
 
 Application::~Application()
 {
-	VulkanRenderer::Shutdown();
+	Neon::VulkanRenderer::Shutdown();
 }
 
-void Application::OnEvent(Event& e)
+void Application::OnEvent(Neon::Event& e)
 {
-	EventDispatcher dispatcher(e);
-	dispatcher.Dispatch<WindowCloseEvent>([this](WindowCloseEvent& e) { return OnWindowClose(e); });
-	dispatcher.Dispatch<WindowResizeEvent>(
-		[this](WindowResizeEvent& e) { return OnWindowResize(e); });
+	Neon::EventDispatcher dispatcher(e);
+	dispatcher.Dispatch<Neon::WindowCloseEvent>(
+		[this](Neon::WindowCloseEvent& e) { return OnWindowClose(e); });
+	dispatcher.Dispatch<Neon::WindowResizeEvent>(
+		[this](Neon::WindowResizeEvent& e) { return OnWindowResize(e); });
 
 	for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it)
 	{
@@ -39,13 +46,13 @@ void Application::OnEvent(Event& e)
 	}
 }
 
-void Application::PushLayer(Layer* layer)
+void Application::PushLayer(Neon::Layer* layer)
 {
 	m_LayerStack.PushLayer(layer);
 	layer->OnAttach();
 }
 
-void Application::PushOverlay(Layer* layer)
+void Application::PushOverlay(Neon::Layer* layer)
 {
 	m_LayerStack.PushOverlay(layer);
 	layer->OnAttach();
@@ -61,31 +68,31 @@ void Application::Run()
 
 		m_Window.OnUpdate();
 
-		VulkanRenderer::Begin();
+		Neon::VulkanRenderer::Begin();
 		if (!m_Minimized)
 		{
-			for (Layer* layer : m_LayerStack)
+			for (Neon::Layer* layer : m_LayerStack)
 				layer->OnUpdate(
 					std::chrono::duration<float, std::chrono::milliseconds::period>(timeStep)
 						.count());
-			ImGuiLayer::Begin();
+			Neon::ImGuiLayer::Begin();
 			{
-				for (Layer* layer : m_LayerStack)
+				for (Neon::Layer* layer : m_LayerStack)
 					layer->OnImGuiRender();
 			}
-			ImGuiLayer::End();
+			Neon::ImGuiLayer::End();
 		}
-		VulkanRenderer::End();
+		Neon::VulkanRenderer::End();
 	}
 }
 
-bool Application::OnWindowClose(WindowCloseEvent& e)
+bool Application::OnWindowClose(Neon::WindowCloseEvent& e)
 {
 	m_Running = false;
 	return true;
 }
 
-bool Application::OnWindowResize(WindowResizeEvent& e)
+bool Application::OnWindowResize(Neon::WindowResizeEvent& e)
 {
 	if (e.GetWidth() == 0 || e.GetHeight() == 0)
 	{

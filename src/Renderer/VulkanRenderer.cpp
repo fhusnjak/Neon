@@ -1,10 +1,10 @@
 #include "VulkanRenderer.h"
 
-#include "Tools/FileTools.h"
-
+#include "Allocator.h"
 #include "Context.h"
 #include "DescriptorPool.h"
 #include "RenderPass.h"
+#include "Window.h"
 
 #include <examples/imgui_impl_glfw.h>
 #include <examples/imgui_impl_vulkan.h>
@@ -33,37 +33,37 @@ struct PushConstant
 
 auto msaaSamples = vk::SampleCountFlagBits::e8;
 
-VulkanRenderer VulkanRenderer::s_Instance;
-uint32_t VulkanRenderer::s_ImageIndex = 0;
-uint32_t VulkanRenderer::s_CurrentFrame = 0;
+Neon::VulkanRenderer Neon::VulkanRenderer::s_Instance;
+uint32_t Neon::VulkanRenderer::s_ImageIndex = 0;
+uint32_t Neon::VulkanRenderer::s_CurrentFrame = 0;
 
 static std::vector<const char*> instanceExtensions;
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "modernize-use-equals-default"
-VulkanRenderer::VulkanRenderer() noexcept { }
+Neon::VulkanRenderer::VulkanRenderer() noexcept { }
 #pragma clang diagnostic pop
 
-void VulkanRenderer::Init(Window* window)
+void Neon::VulkanRenderer::Init(Window* window)
 {
 	instanceExtensions.push_back({VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME});
 	s_Instance.InitRenderer(window);
 }
 
-void VulkanRenderer::Shutdown()
+void Neon::VulkanRenderer::Shutdown()
 {
-	Context::GetInstance().GetLogicalDevice().GetHandle().waitIdle();
+	Neon::Context::GetInstance().GetLogicalDevice().GetHandle().waitIdle();
 }
 
-void VulkanRenderer::CreateSwapChainDependencies()
+void Neon::VulkanRenderer::CreateSwapChainDependencies()
 {
 	s_Instance.CreateOffscreenGraphicsPipeline();
 	s_Instance.IntegrateImGui();
 }
 
-void VulkanRenderer::Begin()
+void Neon::VulkanRenderer::Begin()
 {
-	auto& logicalDevice = Context::GetInstance().GetLogicalDevice().GetHandle();
+	auto& logicalDevice = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	logicalDevice.waitForFences(s_Instance.m_InFlightFences[s_CurrentFrame].get(), VK_TRUE,
 								UINT64_MAX);
 	auto result = logicalDevice.acquireNextImageKHR(
@@ -92,9 +92,9 @@ void VulkanRenderer::Begin()
 	s_Instance.m_CommandBuffers[s_ImageIndex].get().begin(beginInfo);
 }
 
-void VulkanRenderer::End()
+void Neon::VulkanRenderer::End()
 {
-	const auto& logicalDevice = Context::GetInstance().GetLogicalDevice();
+	const auto& logicalDevice = Neon::Context::GetInstance().GetLogicalDevice();
 	s_Instance.m_CommandBuffers[s_ImageIndex].get().end();
 
 	vk::Semaphore waitSemaphores[] = {s_Instance.m_ImageAvailableSemaphores[s_CurrentFrame].get()};
@@ -129,7 +129,8 @@ void VulkanRenderer::End()
 	//s_CurrentFrame = (s_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void VulkanRenderer::BeginScene(const PerspectiveCamera& camera, const glm::vec4& clearColor)
+void Neon::VulkanRenderer::BeginScene(const Neon::PerspectiveCamera& camera,
+									  const glm::vec4& clearColor)
 {
 	s_Instance.UpdateCameraMatrices(camera);
 	std::array<vk::ClearValue, 3> clearValues = {};
@@ -145,15 +146,15 @@ void VulkanRenderer::BeginScene(const PerspectiveCamera& camera, const glm::vec4
 																	vk::SubpassContents::eInline);
 }
 
-void VulkanRenderer::EndScene()
+void Neon::VulkanRenderer::EndScene()
 {
 	s_Instance.m_CommandBuffers[s_ImageIndex].get().endRenderPass();
 }
 
-void VulkanRenderer::Render(const TransformComponent& transformComponent,
-							const MeshComponent& meshComponent,
-							const MaterialComponent& materialComponent,
-							const glm::vec3& lightPosition)
+void Neon::VulkanRenderer::Render(const TransformComponent& transformComponent,
+								  const MeshComponent& meshComponent,
+								  const MaterialComponent& materialComponent,
+								  const glm::vec3& lightPosition)
 {
 	s_Instance.m_CommandBuffers[s_ImageIndex].get().bindPipeline(
 		vk::PipelineBindPoint::eGraphics, s_Instance.m_OffscreenGraphicsPipeline);
@@ -177,7 +178,7 @@ void VulkanRenderer::Render(const TransformComponent& transformComponent,
 		static_cast<uint32_t>(meshComponent.m_IndicesCount), 1, 0, 0, 0);
 }
 
-void VulkanRenderer::DrawImGui()
+void Neon::VulkanRenderer::DrawImGui()
 {
 	vk::RenderPassBeginInfo renderPassInfo{s_Instance.m_ImGuiRenderPass.get(),
 										   s_Instance.m_ImGuiFrameBuffers[s_ImageIndex].get(),
@@ -190,9 +191,9 @@ void VulkanRenderer::DrawImGui()
 	s_Instance.m_CommandBuffers[s_ImageIndex].get().endRenderPass();
 }
 
-vk::CommandBuffer VulkanRenderer::BeginSingleTimeCommands()
+vk::CommandBuffer Neon::VulkanRenderer::BeginSingleTimeCommands()
 {
-	auto& logicalDevice = Context::GetInstance().GetLogicalDevice().GetHandle();
+	auto& logicalDevice = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	vk::CommandBufferAllocateInfo allocInfo{s_Instance.m_CommandPool.get(),
 											vk::CommandBufferLevel::ePrimary, 1};
 	vk::CommandBuffer commandBuffer = logicalDevice.allocateCommandBuffers(allocInfo)[0];
@@ -201,9 +202,9 @@ vk::CommandBuffer VulkanRenderer::BeginSingleTimeCommands()
 	return commandBuffer;
 }
 
-void VulkanRenderer::EndSingleTimeCommands(vk::CommandBuffer commandBuffer)
+void Neon::VulkanRenderer::EndSingleTimeCommands(vk::CommandBuffer commandBuffer)
 {
-	const auto& logicalDevice = Context::GetInstance().GetLogicalDevice();
+	const auto& logicalDevice = Neon::Context::GetInstance().GetLogicalDevice();
 	commandBuffer.end();
 	vk::SubmitInfo submitInfo{0, nullptr, nullptr, 1, &commandBuffer};
 	logicalDevice.GetGraphicsQueue().submit(submitInfo, nullptr);
@@ -211,39 +212,40 @@ void VulkanRenderer::EndSingleTimeCommands(vk::CommandBuffer commandBuffer)
 	logicalDevice.GetHandle().freeCommandBuffers(s_Instance.m_CommandPool.get(), commandBuffer);
 }
 
-vk::ImageView VulkanRenderer::CreateImageView(vk::Image image, vk::Format format,
-											  const vk::ImageAspectFlags& aspectFlags)
+vk::ImageView Neon::VulkanRenderer::CreateImageView(vk::Image image, vk::Format format,
+													const vk::ImageAspectFlags& aspectFlags)
 {
-	auto& logicalDevice = Context::GetInstance().GetLogicalDevice().GetHandle();
+	auto& logicalDevice = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	vk::ImageSubresourceRange subResourceRange(aspectFlags, 0, 1, 0, 1);
 	vk::ImageViewCreateInfo imageViewCreateInfo{{},		image, vk::ImageViewType::e2D,
 												format, {},	   subResourceRange};
 	return logicalDevice.createImageView(imageViewCreateInfo);
 }
 
-vk::UniqueImageView VulkanRenderer::CreateImageViewUnique(vk::Image image, vk::Format format,
-														  const vk::ImageAspectFlags& aspectFlags)
+vk::UniqueImageView
+Neon::VulkanRenderer::CreateImageViewUnique(vk::Image image, vk::Format format,
+											const vk::ImageAspectFlags& aspectFlags)
 {
-	auto& logicalDevice = Context::GetInstance().GetLogicalDevice().GetHandle();
+	auto& logicalDevice = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	vk::ImageSubresourceRange subResourceRange(aspectFlags, 0, 1, 0, 1);
 	vk::ImageViewCreateInfo imageViewCreateInfo{{},		image, vk::ImageViewType::e2D,
 												format, {},	   subResourceRange};
 	return logicalDevice.createImageViewUnique(imageViewCreateInfo);
 }
 
-vk::Sampler VulkanRenderer::CreateSampler(const vk::SamplerCreateInfo& createInfo)
+vk::Sampler Neon::VulkanRenderer::CreateSampler(const vk::SamplerCreateInfo& createInfo)
 {
-	return Context::GetInstance().GetLogicalDevice().GetHandle().createSampler(createInfo);
+	return Neon::Context::GetInstance().GetLogicalDevice().GetHandle().createSampler(createInfo);
 }
 
-void VulkanRenderer::InitRenderer(Window* window)
+void Neon::VulkanRenderer::InitRenderer(Window* window)
 {
 	//TODO: swap chain image size should not effect number of descriptor sets and uniform buffers
 	m_Window = window;
-	Context::GetInstance().Init();
+	Neon::Context::GetInstance().Init();
 	CreateSurface();
-	Context::GetInstance().CreateDevice(m_Surface.get(), {vk::QueueFlagBits::eGraphics});
-	Context::GetInstance().InitAllocator();
+	Neon::Context::GetInstance().CreateDevice(m_Surface.get(), {vk::QueueFlagBits::eGraphics});
+	Neon::Context::GetInstance().InitAllocator();
 	CreateSwapChain();
 	CreateSwapChainImageViews();
 	CreateCommandPool();
@@ -253,22 +255,22 @@ void VulkanRenderer::InitRenderer(Window* window)
 	CreateSyncObjects();
 	s_Instance.CreateUniformBuffers(s_Instance.m_CameraBufferAllocations, sizeof(CameraMatrices));
 	CreateSwapChainDependencies();
-	Context::GetInstance().GetLogicalDevice().GetHandle().waitIdle();
+	Neon::Context::GetInstance().GetLogicalDevice().GetHandle().waitIdle();
 }
 
-void VulkanRenderer::CreateSurface()
+void Neon::VulkanRenderer::CreateSurface()
 {
 	VkSurfaceKHR surface;
-	glfwCreateWindowSurface(Context::GetInstance().GetVkInstance(), m_Window->GetNativeWindow(),
-							nullptr, &surface);
+	glfwCreateWindowSurface(Neon::Context::GetInstance().GetVkInstance(),
+							m_Window->GetNativeWindow(), nullptr, &surface);
 	m_Surface =
-		vk::UniqueSurfaceKHR(vk::SurfaceKHR(surface), Context::GetInstance().GetVkInstance());
+		vk::UniqueSurfaceKHR(vk::SurfaceKHR(surface), Neon::Context::GetInstance().GetVkInstance());
 }
 
-void VulkanRenderer::CreateSwapChain()
+void Neon::VulkanRenderer::CreateSwapChain()
 {
-	const auto& physicalDevice = Context::GetInstance().GetPhysicalDevice();
-	const auto& logicalDevice = Context::GetInstance().GetLogicalDevice();
+	const auto& physicalDevice = Neon::Context::GetInstance().GetPhysicalDevice();
+	const auto& logicalDevice = Neon::Context::GetInstance().GetLogicalDevice();
 	auto deviceSurfaceProperties = physicalDevice.GetDeviceSurfaceProperties(m_Surface.get());
 	std::vector<vk::SurfaceFormatKHR> availableSurfaceFormats = deviceSurfaceProperties.formats;
 	assert(!availableSurfaceFormats.empty());
@@ -296,14 +298,12 @@ void VulkanRenderer::CreateSwapChain()
 		int width, height;
 		glfwGetFramebufferSize(m_Window->GetNativeWindow(), &width, &height);
 		m_Extent = vk::Extent2D{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
-		m_Extent.width =
-			std::max(deviceSurfaceProperties.surfaceCapabilities.minImageExtent.width,
-					 std::min(deviceSurfaceProperties.surfaceCapabilities.maxImageExtent.width,
-							  m_Extent.width));
-		m_Extent.height =
-			std::max(deviceSurfaceProperties.surfaceCapabilities.minImageExtent.height,
-					 std::min(deviceSurfaceProperties.surfaceCapabilities.maxImageExtent.height,
-							  m_Extent.height));
+		m_Extent.width = max(
+			deviceSurfaceProperties.surfaceCapabilities.minImageExtent.width,
+			min(deviceSurfaceProperties.surfaceCapabilities.maxImageExtent.width, m_Extent.width));
+		m_Extent.height = max(deviceSurfaceProperties.surfaceCapabilities.minImageExtent.height,
+							  min(deviceSurfaceProperties.surfaceCapabilities.maxImageExtent.height,
+								  m_Extent.height));
 	}
 
 	uint32_t imageCount = deviceSurfaceProperties.surfaceCapabilities.minImageCount + 1;
@@ -331,9 +331,9 @@ void VulkanRenderer::CreateSwapChain()
 	m_SwapChainImages = logicalDevice.GetHandle().getSwapchainImagesKHR(m_SwapChain.get());
 }
 
-void VulkanRenderer::RecreateSwapChain()
+void Neon::VulkanRenderer::RecreateSwapChain()
 {
-	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	int width = 0, height = 0;
 	glfwGetFramebufferSize(m_Window->GetNativeWindow(), &width, &height);
 	while (width == 0 || height == 0)
@@ -352,10 +352,10 @@ void VulkanRenderer::RecreateSwapChain()
 	device.waitIdle();
 }
 
-void VulkanRenderer::IntegrateImGui()
+void Neon::VulkanRenderer::IntegrateImGui()
 {
-	const auto& device = Context::GetInstance().GetLogicalDevice();
-	const auto& physicalDevice = Context::GetInstance().GetPhysicalDevice();
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice();
+	const auto& physicalDevice = Neon::Context::GetInstance().GetPhysicalDevice();
 	ImGui_ImplVulkan_Shutdown();
 	std::vector<vk::DescriptorPoolSize> poolSizes = {
 		{vk::DescriptorType::eSampler, 1000},
@@ -371,12 +371,12 @@ void VulkanRenderer::IntegrateImGui()
 		{vk::DescriptorType::eInputAttachment, 1000}};
 
 	m_ImGuiDescriptorPool = vk::UniqueDescriptorPool(
-		util::CreateDescriptorPool(device.GetHandle(), poolSizes,
+		Neon::CreateDescriptorPool(device.GetHandle(), poolSizes,
 								   1000 * static_cast<uint32_t>(poolSizes.size())),
 		device.GetHandle());
 
 	ImGui_ImplVulkan_InitInfo imguiInfo = {};
-	imguiInfo.Instance = Context::GetInstance().GetVkInstance();
+	imguiInfo.Instance = Neon::Context::GetInstance().GetVkInstance();
 	imguiInfo.PhysicalDevice = physicalDevice.GetHandle();
 	imguiInfo.Device = device.GetHandle();
 	imguiInfo.QueueFamily = physicalDevice.GetGraphicsQueueFamily().m_Index;
@@ -400,7 +400,7 @@ void VulkanRenderer::IntegrateImGui()
 		(VkImageLayout)m_OffscreenImageAllocation.descriptor.imageLayout);
 }
 
-void VulkanRenderer::CreateSwapChainImageViews()
+void Neon::VulkanRenderer::CreateSwapChainImageViews()
 {
 	m_SwapChainImageViews.resize(m_SwapChainImages.size());
 	for (uint32_t i = 0; i < m_SwapChainImages.size(); i++)
@@ -410,51 +410,51 @@ void VulkanRenderer::CreateSwapChainImageViews()
 	}
 }
 
-void VulkanRenderer::CreateOffscreenRenderer()
+void Neon::VulkanRenderer::CreateOffscreenRenderer()
 {
-	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
-	m_SampledImage.textureAllocation = Allocator::CreateImage(
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
+	m_SampledImage.textureAllocation = Neon::Allocator::CreateImage(
 		m_Extent.width, m_Extent.height, msaaSamples, vk::Format::eR32G32B32A32Sfloat,
 		vk::ImageTiling::eOptimal,
 		vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
 		VMA_MEMORY_USAGE_GPU_ONLY);
-	Allocator::TransitionImageLayout(m_SampledImage.textureAllocation.image,
-									 vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eUndefined,
-									 vk::ImageLayout::eGeneral);
+	Neon::Allocator::TransitionImageLayout(m_SampledImage.textureAllocation.image,
+										   vk::ImageAspectFlagBits::eColor,
+										   vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
 	m_SampledImage.descriptor.imageView =
 		CreateImageView(m_SampledImage.textureAllocation.image, vk::Format::eR32G32B32A32Sfloat,
 						vk::ImageAspectFlagBits::eColor);
 
-	m_OffscreenImageAllocation.textureAllocation = Allocator::CreateImage(
+	m_OffscreenImageAllocation.textureAllocation = Neon::Allocator::CreateImage(
 		m_Extent.width, m_Extent.height, vk::SampleCountFlagBits::e1,
 		vk::Format::eR32G32B32A32Sfloat, vk::ImageTiling::eOptimal,
 		vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled |
 			vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eTransferSrc |
 			vk::ImageUsageFlagBits::eTransferDst,
 		VMA_MEMORY_USAGE_GPU_ONLY);
-	Allocator::TransitionImageLayout(m_OffscreenImageAllocation.textureAllocation.image,
-									 vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eUndefined,
-									 vk::ImageLayout::eGeneral);
+	Neon::Allocator::TransitionImageLayout(m_OffscreenImageAllocation.textureAllocation.image,
+										   vk::ImageAspectFlagBits::eColor,
+										   vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
 	m_OffscreenImageAllocation.descriptor.imageView =
 		CreateImageView(m_OffscreenImageAllocation.textureAllocation.image,
 						vk::Format::eR32G32B32A32Sfloat, vk::ImageAspectFlagBits::eColor);
 	m_OffscreenImageAllocation.descriptor.sampler = CreateSampler(vk::SamplerCreateInfo());
 	m_OffscreenImageAllocation.descriptor.imageLayout = vk::ImageLayout::eGeneral;
 
-	m_OffscreenDepthImageAllocation.textureAllocation = Allocator::CreateImage(
+	m_OffscreenDepthImageAllocation.textureAllocation = Neon::Allocator::CreateImage(
 		m_Extent.width, m_Extent.height, msaaSamples, vk::Format::eD32Sfloat,
 		vk::ImageTiling::eOptimal,
 		vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc |
 			vk::ImageUsageFlagBits::eTransferDst,
 		VMA_MEMORY_USAGE_GPU_ONLY);
-	Allocator::TransitionImageLayout(m_OffscreenDepthImageAllocation.textureAllocation.image,
-									 vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined,
-									 vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	Neon::Allocator::TransitionImageLayout(
+		m_OffscreenDepthImageAllocation.textureAllocation.image, vk::ImageAspectFlagBits::eDepth,
+		vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 	m_OffscreenDepthImageAllocation.descriptor.imageView =
 		CreateImageView(m_OffscreenDepthImageAllocation.textureAllocation.image,
 						vk::Format::eD32Sfloat, vk::ImageAspectFlagBits::eDepth);
 	m_OffscreenRenderPass = vk::UniqueRenderPass(
-		util::CreateRenderPass(device, vk::Format::eR32G32B32A32Sfloat, msaaSamples, true,
+		Neon::CreateRenderPass(device, vk::Format::eR32G32B32A32Sfloat, msaaSamples, true,
 							   vk::ImageLayout::eGeneral, vk::ImageLayout::eGeneral,
 							   vk::Format::eD32Sfloat, true,
 							   vk::ImageLayout::eDepthStencilAttachmentOptimal,
@@ -481,11 +481,11 @@ void VulkanRenderer::CreateOffscreenRenderer()
 	}
 }
 
-void VulkanRenderer::CreateImGuiRenderer()
+void Neon::VulkanRenderer::CreateImGuiRenderer()
 {
-	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	m_ImGuiRenderPass = vk::UniqueRenderPass(
-		util::CreateRenderPass(device, m_SwapChainImageFormat, vk::SampleCountFlagBits::e1, false,
+		Neon::CreateRenderPass(device, m_SwapChainImageFormat, vk::SampleCountFlagBits::e1, false,
 							   vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR),
 		device);
 
@@ -504,9 +504,9 @@ void VulkanRenderer::CreateImGuiRenderer()
 	}
 }
 
-void VulkanRenderer::CreateOffscreenGraphicsPipeline()
+void Neon::VulkanRenderer::CreateOffscreenGraphicsPipeline()
 {
-	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
 	bindings.emplace_back(0, vk::DescriptorType::eUniformBuffer, 1,
 						  vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
@@ -530,38 +530,38 @@ void VulkanRenderer::CreateOffscreenGraphicsPipeline()
 		{Vertex::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
 }
 
-void VulkanRenderer::CreateCommandPool()
+void Neon::VulkanRenderer::CreateCommandPool()
 {
-	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
-	const auto& physicalDevice = Context::GetInstance().GetPhysicalDevice();
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
+	const auto& physicalDevice = Neon::Context::GetInstance().GetPhysicalDevice();
 	vk::CommandPoolCreateInfo poolInfo{vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
 									   physicalDevice.GetGraphicsQueueFamily().m_Index};
 	m_CommandPool = device.createCommandPoolUnique(poolInfo);
 }
 
-void VulkanRenderer::CreateUniformBuffers(std::vector<BufferAllocation>& bufferAllocations,
-										  vk::DeviceSize bufferSize)
+void Neon::VulkanRenderer::CreateUniformBuffers(
+	std::vector<Neon::BufferAllocation>& bufferAllocations, vk::DeviceSize bufferSize)
 {
 	bufferAllocations.resize(m_SwapChainImages.size());
 	for (size_t i = 0; i < m_SwapChainImages.size(); i++)
 	{
-		bufferAllocations[i] = Allocator::CreateBuffer(
+		bufferAllocations[i] = Neon::Allocator::CreateBuffer(
 			bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 }
 
-void VulkanRenderer::CreateCommandBuffers()
+void Neon::VulkanRenderer::CreateCommandBuffers()
 {
-	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	m_CommandBuffers.resize(m_SwapChainImages.size());
 	vk::CommandBufferAllocateInfo allocInfo{m_CommandPool.get(), vk::CommandBufferLevel::ePrimary,
 											static_cast<uint32_t>(m_CommandBuffers.size())};
 	m_CommandBuffers = device.allocateCommandBuffersUnique(allocInfo);
 }
 
-void VulkanRenderer::CreateSyncObjects()
+void Neon::VulkanRenderer::CreateSyncObjects()
 {
-	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	m_ImagesInFlight.resize(m_SwapChainImages.size());
 
 	vk::SemaphoreCreateInfo semaphoreInfo{};
@@ -575,27 +575,27 @@ void VulkanRenderer::CreateSyncObjects()
 	}
 }
 
-void VulkanRenderer::UpdateCameraMatrices(const PerspectiveCamera& camera)
+void Neon::VulkanRenderer::UpdateCameraMatrices(const Neon::PerspectiveCamera& camera)
 {
 	auto view = camera.GetViewMatrix();
 	auto projection = camera.GetProjectionMatrix();
 	CameraMatrices m{camera.GetPosition(), view, projection};
-	Allocator::UpdateAllocation(m_CameraBufferAllocations[s_ImageIndex].allocation, m);
+	Neon::Allocator::UpdateAllocation(m_CameraBufferAllocations[s_ImageIndex].allocation, m);
 }
 
-vk::Extent2D VulkanRenderer::GetExtent2D()
+vk::Extent2D Neon::VulkanRenderer::GetExtent2D()
 {
 	return s_Instance.m_Extent;
 }
 
-void* VulkanRenderer::GetOffscreenImageID()
+void* Neon::VulkanRenderer::GetOffscreenImageID()
 {
 	return s_Instance.m_ImGuiOffscreenTextureDescSet;
 }
 
-void VulkanRenderer::CreateWavefrontDescriptorSet(MaterialComponent& materialComponent)
+void Neon::VulkanRenderer::CreateWavefrontDescriptorSet(MaterialComponent& materialComponent)
 {
-	const auto& device = Context::GetInstance().GetLogicalDevice().GetHandle();
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
 	bindings.emplace_back(0, vk::DescriptorType::eUniformBuffer, 1,
 						  vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
@@ -607,7 +607,7 @@ void VulkanRenderer::CreateWavefrontDescriptorSet(MaterialComponent& materialCom
 	if (s_Instance.m_DescriptorPools.empty())
 	{
 		s_Instance.m_DescriptorPools.emplace_back(
-			util::CreateDescriptorPool(device, bindings,
+			Neon::CreateDescriptorPool(device, bindings,
 									   MAX_SWAP_CHAIN_IMAGES * MAX_DESCRIPTOR_SETS_PER_POOL),
 			device);
 	}

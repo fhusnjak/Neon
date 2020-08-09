@@ -8,13 +8,14 @@
 #include <vector>
 #include <vulkan\vulkan.hpp>
 
+namespace Neon
+{
 struct DeviceSurfaceProperties
 {
 	vk::SurfaceCapabilitiesKHR surfaceCapabilities;
 	std::vector<vk::SurfaceFormatKHR> formats;
 	std::vector<vk::PresentModeKHR> presentModes;
 };
-
 struct QueueFamily
 {
 	uint32_t m_Index;
@@ -23,7 +24,6 @@ struct QueueFamily
 	explicit QueueFamily(uint32_t index)
 		: m_Index(index){};
 };
-
 class PhysicalDevice
 {
 public:
@@ -44,9 +44,11 @@ public:
 	{
 		return m_Properties;
 	}
-	[[nodiscard]] DeviceSurfaceProperties GetDeviceSurfaceProperties(const vk::SurfaceKHR& surface) const
+	[[nodiscard]] DeviceSurfaceProperties
+	GetDeviceSurfaceProperties(const vk::SurfaceKHR& surface) const
 	{
-		return QueryDeviceSurfaceProperties(m_Handle, surface);;
+		return QueryDeviceSurfaceProperties(m_Handle, surface);
+		;
 	}
 	[[nodiscard]] QueueFamily GetGraphicsQueueFamily() const
 	{
@@ -105,5 +107,6 @@ private:
 	QueueFamily m_TransferQueueFamily;
 	QueueFamily m_SparseBindingQueueFamily;
 };
+} // namespace Neon
 
 #endif //NEON_PHYSICALDEVICE_H

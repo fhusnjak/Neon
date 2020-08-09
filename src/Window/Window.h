@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Event.h"
 #include "Event/ApplicationEvent.h"
 #include "Event/Event.h"
 
@@ -9,6 +10,8 @@
 
 #define HEIGHT 1080
 
+namespace Neon
+{
 class Window
 {
 public:
@@ -63,3 +66,4 @@ private:
 
 	WindowData m_Data;
 };
+} // namespace Neon

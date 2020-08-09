@@ -5,13 +5,14 @@
 #include "Renderer/VulkanRenderer.h"
 
 #include "Application.h"
+#include "VulkanRenderer.h"
 
 #include <examples/imgui_impl_glfw.h>
 #include <examples/imgui_impl_vulkan.h>
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
-void ImGuiLayer::OnAttach()
+void Neon::ImGuiLayer::OnAttach()
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -24,21 +25,21 @@ void ImGuiLayer::OnAttach()
 }
 #pragma clang diagnostic pop
 
-void ImGuiLayer::OnDetach()
+void Neon::ImGuiLayer::OnDetach()
 {
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 }
 
-void ImGuiLayer::Begin()
+void Neon::ImGuiLayer::Begin()
 {
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 }
 
-void ImGuiLayer::End()
+void Neon::ImGuiLayer::End()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	const Application& app = Application::Get();

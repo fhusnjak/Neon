@@ -8,6 +8,8 @@
 #include "PhysicalDevice.h"
 #include <thread>
 
+namespace Neon
+{
 class LogicalDevice : public std::enable_shared_from_this<LogicalDevice>
 {
 public:
@@ -58,5 +60,6 @@ private:
 	vk::Queue m_ComputeQueue;
 	vk::Queue m_TransferQueue;
 };
+} // namespace Neon
 
 #endif //NEON_LOGICALDEVICE_H

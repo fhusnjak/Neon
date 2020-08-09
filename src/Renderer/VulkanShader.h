@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.hpp>
 
+namespace Neon
+{
 class VulkanShader
 {
 public:
@@ -16,3 +18,4 @@ private:
 	vk::UniqueShaderModule m_Module;
 	vk::ShaderStageFlagBits m_Stage;
 };
+} // namespace Neon

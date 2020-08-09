@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+namespace Neon
+{
 class PerspectiveCamera
 {
 public:
@@ -92,3 +94,4 @@ private:
 	glm::vec3 m_Front{};
 	glm::vec3 m_Up = {0.0f, 1.0f, 0.0f};
 };
+} // namespace Neon

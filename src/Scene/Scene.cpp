@@ -5,7 +5,9 @@
 #include "Scene.h"
 #include "VulkanRenderer.h"
 
+#include "Allocator.h"
 #include "Core/Core.h"
+#include "PerspectiveCameraController.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -19,7 +21,7 @@ static inline std::string GetPath(const std::string& file)
 	return dir;
 }
 
-Entity Scene::CreateEntity(const std::string& name)
+Neon::Entity Neon::Scene::CreateEntity(const std::string& name)
 {
 	Entity entity = {m_Registry.create(), this};
 	auto& tag = entity.AddComponent<TagComponent>();
@@ -27,7 +29,8 @@ Entity Scene::CreateEntity(const std::string& name)
 	return entity;
 }
 
-Entity Scene::CreateWavefrontEntity(const std::string& filename, const std::string& name)
+Neon::Entity Neon::Scene::CreateWavefrontEntity(const std::string& filename,
+												const std::string& name)
 {
 	Entity entity = CreateEntity(name);
 	std::vector<Material> materials;
@@ -138,66 +141,66 @@ Entity Scene::CreateWavefrontEntity(const std::string& filename, const std::stri
 		}
 	}
 
-	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
+	auto cmdBuff = Neon::VulkanRenderer::BeginSingleTimeCommands();
 	auto& meshComponent = entity.AddComponent<MeshComponent>();
 	meshComponent.m_VerticesCount = (uint32_t)vertices.size();
 	meshComponent.m_IndicesCount = (uint32_t)indices.size();
-	meshComponent.m_VertexBuffer = Allocator::CreateDeviceLocalBuffer(
+	meshComponent.m_VertexBuffer = Neon::Allocator::CreateDeviceLocalBuffer(
 		cmdBuff, vertices,
 		vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
-	meshComponent.m_IndexBuffer = Allocator::CreateDeviceLocalBuffer(
+	meshComponent.m_IndexBuffer = Neon::Allocator::CreateDeviceLocalBuffer(
 		cmdBuff, indices,
 		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
 
 	auto& materialComponent = entity.AddComponent<MaterialComponent>();
-	materialComponent.m_MaterialBuffer = Allocator::CreateDeviceLocalBuffer(
+	materialComponent.m_MaterialBuffer = Neon::Allocator::CreateDeviceLocalBuffer(
 		cmdBuff, materials, vk::BufferUsageFlagBits::eStorageBuffer);
 	for (auto& texturePath : textures)
 	{
-		ImageAllocation imgAllocation = Allocator::CreateTextureImage(texturePath);
-		vk::ImageView textureImageView = VulkanRenderer::CreateImageView(
+		Neon::ImageAllocation imgAllocation = Neon::Allocator::CreateTextureImage(texturePath);
+		vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
 			imgAllocation.image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 		vk::SamplerCreateInfo samplerInfo = {
 			{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
 		samplerInfo.setMaxLod(FLT_MAX);
-		vk::Sampler sampler = VulkanRenderer::CreateSampler(samplerInfo);
+		vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
 		vk::DescriptorImageInfo desc{sampler, textureImageView,
 									 vk::ImageLayout::eShaderReadOnlyOptimal};
 		materialComponent.m_TextureImages.push_back({desc, imgAllocation});
 	}
 	if (textures.empty())
 	{
-		ImageAllocation imgAllocation = Allocator::CreateTextureImage("");
-		vk::ImageView textureImageView = VulkanRenderer::CreateImageView(
+		Neon::ImageAllocation imgAllocation = Neon::Allocator::CreateTextureImage("");
+		vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
 			imgAllocation.image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 		vk::SamplerCreateInfo samplerInfo = {
 			{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
 		samplerInfo.setMaxLod(FLT_MAX);
-		vk::Sampler sampler = VulkanRenderer::CreateSampler(samplerInfo);
+		vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
 		vk::DescriptorImageInfo desc{sampler, textureImageView,
 									 vk::ImageLayout::eShaderReadOnlyOptimal};
 		materialComponent.m_TextureImages.push_back({desc, imgAllocation});
 	}
 
-	VulkanRenderer::EndSingleTimeCommands(cmdBuff);
+	Neon::VulkanRenderer::EndSingleTimeCommands(cmdBuff);
 
-	VulkanRenderer::CreateWavefrontDescriptorSet(materialComponent);
+	Neon::VulkanRenderer::CreateWavefrontDescriptorSet(materialComponent);
 
-	Allocator::FlushStaging();
+	Neon::Allocator::FlushStaging();
 
 	return entity;
 }
 
-void Scene::OnUpdate(float ts, PerspectiveCameraController controller, glm::vec4 clearColor,
-					 glm::vec3 lightPosition)
+void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controller,
+						   glm::vec4 clearColor, glm::vec3 lightPosition)
 {
-	VulkanRenderer::BeginScene(controller.GetCamera(), clearColor);
+	Neon::VulkanRenderer::BeginScene(controller.GetCamera(), clearColor);
 	auto group = m_Registry.group<TransformComponent>(entt::get<MeshComponent, MaterialComponent>);
 	for (auto entity : group)
 	{
 		const auto& [transform, mesh, material] =
 			group.get<TransformComponent, MeshComponent, MaterialComponent>(entity);
-		VulkanRenderer::Render(transform, mesh, material, lightPosition);
+		Neon::VulkanRenderer::Render(transform, mesh, material, lightPosition);
 	}
-	VulkanRenderer::EndScene();
+	Neon::VulkanRenderer::EndScene();
 }

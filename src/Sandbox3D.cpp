@@ -1,6 +1,10 @@
 #include "Sandbox3D.h"
 
+#include "Event.h"
+#include "Layer.h"
+#include "PerspectiveCameraController.h"
 #include "Renderer/VulkanRenderer.h"
+#include "VulkanRenderer.h"
 
 #include <examples/imgui_impl_glfw.h>
 
@@ -12,7 +16,7 @@ Sandbox3D::Sandbox3D()
 	: Layer("Sandbox3D")
 	, m_CameraController((float)WIDTH / HEIGHT)
 {
-	m_ActiveScene = std::make_shared<Scene>();
+	m_ActiveScene = std::make_shared<Neon::Scene>();
 	auto model = glm::translate(glm::mat4(1.0), glm::vec3(-5.0, 0.0, 0.0));
 	auto handgun = m_ActiveScene->CreateWavefrontEntity("models/Handgun_obj.obj", "Handgun");
 	handgun.AddComponent<TransformComponent>(model);
@@ -96,15 +100,15 @@ void Sandbox3D::OnImGuiRender()
 	ImGui::End();
 
 	ImGui::Begin("Viewport");
-	vk::Extent2D extent = VulkanRenderer::GetExtent2D();
-	ImGui::Image(VulkanRenderer::GetOffscreenImageID(),
+	vk::Extent2D extent = Neon::VulkanRenderer::GetExtent2D();
+	ImGui::Image(Neon::VulkanRenderer::GetOffscreenImageID(),
 				 ImVec2{(float)extent.width, (float)extent.height});
 	ImGui::End();
 
 	ImGui::End();
 }
 
-void Sandbox3D::OnEvent(Event& e)
+void Sandbox3D::OnEvent(Neon::Event& e)
 {
 	m_CameraController.OnEvent(e);
 }
