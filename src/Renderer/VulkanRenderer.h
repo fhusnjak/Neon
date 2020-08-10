@@ -13,7 +13,9 @@
 #include "Window/Window.h"
 
 #include "Allocator.h"
+#include "DescriptorPool.h"
 #include "PhysicalDevice.h"
+#include "SwapChain.h"
 #include "Window.h"
 
 namespace Neon
@@ -52,9 +54,8 @@ private:
 	void InitRenderer(Window* window);
 	void CreateSurface();
 	void CreateSwapChain();
-	void RecreateSwapChain();
+	void WindowResized();
 	void IntegrateImGui();
-	void CreateSwapChainImageViews();
 	void CreateOffscreenRenderer();
 	void CreateImGuiRenderer();
 	void CreateOffscreenGraphicsPipeline();
@@ -76,11 +77,8 @@ private:
 
 	vk::UniqueSurfaceKHR m_Surface;
 
-	vk::UniqueSwapchainKHR m_SwapChain;
-	std::vector<vk::Image> m_SwapChainImages;
-	std::vector<vk::UniqueImageView> m_SwapChainImageViews;
+	std::unique_ptr<SwapChain> m_SwapChain;
 
-	vk::Format m_SwapChainImageFormat = vk::Format::eUndefined;
 	vk::Extent2D m_Extent;
 
 	vk::UniqueRenderPass m_OffscreenRenderPass;
@@ -101,10 +99,10 @@ private:
 
 	std::vector<BufferAllocation> m_CameraBufferAllocations;
 
-	std::vector<vk::UniqueDescriptorPool> m_DescriptorPools;
+	std::vector<std::shared_ptr<DescriptorPool>> m_DescriptorPools;
 	vk::DescriptorSetLayout m_WavefrontLayout;
 
-	vk::UniqueDescriptorPool m_ImGuiDescriptorPool;
+	std::shared_ptr<DescriptorPool> m_ImGuiDescriptorPool;
 
 	std::vector<vk::UniqueCommandBuffer> m_CommandBuffers;
 
