@@ -4,11 +4,33 @@
 
 namespace Neon
 {
-vk::DescriptorPool CreateDescriptorPool(const vk::Device device,
-										const std::vector<vk::DescriptorSetLayoutBinding>& bindings,
-										const uint32_t maxSets);
+class DescriptorPool : public std::enable_shared_from_this<DescriptorPool>
+{
+public:
+	DescriptorPool(const DescriptorPool&) = delete;
+	DescriptorPool(DescriptorPool&&) = delete;
+	DescriptorPool& operator=(const DescriptorPool&) = delete;
+	DescriptorPool& operator=(DescriptorPool&&) = delete;
 
-vk::DescriptorPool CreateDescriptorPool(const vk::Device device,
-										const std::vector<vk::DescriptorPoolSize>& sizes,
-										const uint32_t maxSets);
+	const vk::DescriptorPool& GetHandle() const
+	{
+		return m_Handle.get();
+	}
+
+	static std::shared_ptr<DescriptorPool> Create(vk::Device device,
+												 const std::vector<vk::DescriptorSetLayoutBinding>& bindings,
+												 uint32_t maxSets);
+
+	static std::shared_ptr<DescriptorPool> Create(vk::Device device,
+											const std::vector<vk::DescriptorPoolSize>& sizes,
+											uint32_t maxSets);
+
+private:
+	explicit DescriptorPool(vk::Device device,
+							const std::vector<vk::DescriptorPoolSize>& sizes,
+							uint32_t maxSets);
+
+private:
+	vk::UniqueDescriptorPool m_Handle;
+};
 } // namespace Neon
