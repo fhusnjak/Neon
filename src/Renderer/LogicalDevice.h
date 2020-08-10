@@ -13,7 +13,6 @@ namespace Neon
 class LogicalDevice : public std::enable_shared_from_this<LogicalDevice>
 {
 public:
-	~LogicalDevice();
 	LogicalDevice(const LogicalDevice&) = delete;
 	LogicalDevice(LogicalDevice&&) = delete;
 	LogicalDevice& operator=(const LogicalDevice&) = delete;
@@ -31,7 +30,7 @@ public:
 	}
 	[[nodiscard]] const vk::Device& GetHandle() const
 	{
-		return m_Handle;
+		return m_Handle.get();
 	}
 	[[nodiscard]] vk::Queue GetGraphicsQueue() const
 	{
@@ -54,7 +53,7 @@ private:
 	explicit LogicalDevice(const PhysicalDevice& physicalDevice);
 
 private:
-	vk::Device m_Handle;
+	vk::UniqueDevice m_Handle;
 	vk::Queue m_GraphicsQueue;
 	vk::Queue m_PresentQueue;
 	vk::Queue m_ComputeQueue;

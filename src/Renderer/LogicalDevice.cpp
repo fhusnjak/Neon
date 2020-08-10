@@ -4,12 +4,6 @@
 
 #include "LogicalDevice.h"
 #include "Context.h"
-#include "PhysicalDevice.h"
-
-Neon::LogicalDevice::~LogicalDevice()
-{
-	m_Handle.destroy();
-}
 
 std::shared_ptr<Neon::LogicalDevice>
 Neon::LogicalDevice::Create(const PhysicalDevice& physicalDevice)
@@ -62,8 +56,8 @@ Neon::LogicalDevice::LogicalDevice(const PhysicalDevice& physicalDevice)
 		nullptr};
 #endif
 	deviceCreateInfo.pNext = &deviceFeatures2;
-	m_Handle = physicalDevice.GetHandle().createDevice(deviceCreateInfo);
+	m_Handle = physicalDevice.GetHandle().createDeviceUnique(deviceCreateInfo);
 
-	m_GraphicsQueue = m_Handle.getQueue(physicalDevice.GetGraphicsQueueFamily().m_Index, 0);
-	m_PresentQueue = m_Handle.getQueue(physicalDevice.GetComputeQueueFamily().m_Index, 0);
+	m_GraphicsQueue = m_Handle.get().getQueue(physicalDevice.GetGraphicsQueueFamily().m_Index, 0);
+	m_PresentQueue = m_Handle.get().getQueue(physicalDevice.GetComputeQueueFamily().m_Index, 0);
 }

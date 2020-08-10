@@ -8,8 +8,8 @@ class DescriptorSet
 {
 public:
 	void Init(vk::Device device);
-	void CreateDescriptorSet(vk::DescriptorPool pool,
-							 const std::vector<vk::DescriptorSetLayoutBinding>& bindings);
+	void Create(vk::DescriptorPool pool,
+				const std::vector<vk::DescriptorSetLayoutBinding>& bindings);
 
 	vk::WriteDescriptorSet CreateWrite(size_t binding, const vk::DescriptorBufferInfo* info,
 									   uint32_t arrayElement);
@@ -26,13 +26,13 @@ public:
 
 	[[nodiscard]] const vk::DescriptorSetLayout& GetLayout() const
 	{
-		return m_Layout;
+		return m_Layout.get();
 	}
 
 private:
 	vk::Device m_Device;
 	std::vector<vk::DescriptorSetLayoutBinding> m_Bindings;
-	vk::DescriptorSetLayout m_Layout;
+	vk::UniqueDescriptorSetLayout m_Layout;
 	vk::DescriptorSet m_Set;
 };
 } // namespace Neon
