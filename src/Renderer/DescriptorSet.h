@@ -7,6 +7,8 @@ namespace Neon
 class DescriptorSet
 {
 public:
+	DescriptorSet() = default;
+
 	void Init(vk::Device device);
 	void Create(vk::DescriptorPool pool,
 				const std::vector<vk::DescriptorSetLayoutBinding>& bindings);

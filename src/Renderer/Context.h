@@ -7,6 +7,7 @@
 
 #include "LogicalDevice.h"
 #include "PhysicalDevice.h"
+#include <Window/Window.h>
 #include <utility>
 #include <vulkan/vulkan.hpp>
 
@@ -24,6 +25,24 @@ public:
 	{
 		return m_VkInstance.get();
 	}
+	[[nodiscard]] const vk::SurfaceKHR& GetSurface() const
+	{
+		return m_Surface.get();
+	}
+	[[nodiscard]] const Window& GetWindow() const
+	{
+		return *m_Window;
+	}
+	[[nodiscard]] const PhysicalDevice& GetPhysicalDevice() const
+	{
+		assert(m_PhysicalDevice != nullptr);
+		return *m_PhysicalDevice;
+	}
+	[[nodiscard]] const LogicalDevice& GetLogicalDevice() const
+	{
+		assert(m_LogicalDevice != nullptr);
+		return *m_LogicalDevice;
+	}
 	[[nodiscard]] const std::vector<const char*>& GetValidationLayers() const
 	{
 		return m_ValidationLayers;
@@ -32,10 +51,8 @@ public:
 	{
 		return m_DeviceExtensions;
 	}
-	void CreateDevice(const vk::SurfaceKHR& surface,
-					  const std::vector<vk::QueueFlagBits>& queueFlags);
-	PhysicalDevice& GetPhysicalDevice();
-	LogicalDevice& GetLogicalDevice();
+	void CreateSurface(Window* window);
+	void CreateDevice(const std::vector<vk::QueueFlagBits>& queueFlags);
 	void InitAllocator();
 
 private:
@@ -50,8 +67,10 @@ private:
 private:
 	static Context s_Instance;
 	vk::UniqueInstance m_VkInstance;
+	Window* m_Window = nullptr;
 	std::unique_ptr<PhysicalDevice> m_PhysicalDevice;
 	std::shared_ptr<LogicalDevice> m_LogicalDevice;
+	vk::UniqueSurfaceKHR m_Surface;
 	const std::vector<const char*> m_ValidationLayers = {"VK_LAYER_KHRONOS_validation"};
 	const std::vector<const char*> m_DeviceExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,

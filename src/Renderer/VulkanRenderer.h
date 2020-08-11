@@ -52,8 +52,6 @@ public:
 private:
 	VulkanRenderer() noexcept;
 	void InitRenderer(Window* window);
-	void CreateSurface();
-	void CreateSwapChain();
 	void WindowResized();
 	void IntegrateImGui();
 	void CreateOffscreenRenderer();
@@ -63,23 +61,14 @@ private:
 	void CreateUniformBuffers(std::vector<BufferAllocation>& bufferAllocations,
 							  vk::DeviceSize bufferSize);
 	void CreateCommandBuffers();
-	void CreateSyncObjects();
 	void UpdateCameraMatrices(const PerspectiveCamera& camera);
 
 private:
 	static VulkanRenderer s_Instance;
-	static uint32_t s_ImageIndex;
-	static uint32_t s_CurrentFrame;
-
-	Window* m_Window = nullptr;
 
 	size_t m_DynamicAlignment = -1;
 
-	vk::UniqueSurfaceKHR m_Surface;
-
 	std::unique_ptr<SwapChain> m_SwapChain;
-
-	vk::Extent2D m_Extent;
 
 	vk::UniqueRenderPass m_OffscreenRenderPass;
 	vk::UniqueRenderPass m_ImGuiRenderPass;
@@ -99,17 +88,12 @@ private:
 
 	std::vector<BufferAllocation> m_CameraBufferAllocations;
 
-	std::vector<std::shared_ptr<DescriptorPool>> m_DescriptorPools;
+	std::vector<std::unique_ptr<DescriptorPool>> m_DescriptorPools;
 	vk::DescriptorSetLayout m_WavefrontLayout;
 
 	std::shared_ptr<DescriptorPool> m_ImGuiDescriptorPool;
 
 	std::vector<vk::UniqueCommandBuffer> m_CommandBuffers;
-
-	std::vector<vk::UniqueSemaphore> m_ImageAvailableSemaphores;
-	std::vector<vk::UniqueSemaphore> m_RenderFinishedSemaphores;
-	std::vector<vk::UniqueFence> m_InFlightFences;
-	std::vector<vk::Fence> m_ImagesInFlight;
 
 	VkDescriptorSet m_ImGuiOffscreenTextureDescSet = nullptr;
 };

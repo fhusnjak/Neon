@@ -4,9 +4,6 @@
 
 #include "Context.h"
 #include "Allocator.h"
-#include "LogicalDevice.h"
-#include "PhysicalDevice.h"
-#include <GLFW/glfw3.h>
 
 Neon::Context Neon::Context::s_Instance;
 
@@ -41,12 +38,20 @@ void Neon::Context::Init()
 	m_VkInstance = vk::createInstanceUnique(instanceCreateInfo);
 }
 
-void Neon::Context::CreateDevice(const vk::SurfaceKHR& surface,
-								 const std::vector<vk::QueueFlagBits>& queueFlags)
+void Neon::Context::CreateSurface(Window* window)
 {
+	m_Window = window;
+	VkSurfaceKHR surface;
+	glfwCreateWindowSurface(m_VkInstance.get(), m_Window->GetNativeWindow(), nullptr, &surface);
+	m_Surface = vk::UniqueSurfaceKHR(vk::SurfaceKHR(surface), m_VkInstance.get());
+}
+
+void Neon::Context::CreateDevice(const std::vector<vk::QueueFlagBits>& queueFlags)
+{
+	assert(m_Surface.get());
 	assert(m_PhysicalDevice == nullptr);
 	assert(m_LogicalDevice == nullptr);
-	m_PhysicalDevice = PhysicalDevice::Create(surface, m_DeviceExtensions, queueFlags);
+	m_PhysicalDevice = PhysicalDevice::Create(m_Surface.get(), m_DeviceExtensions, queueFlags);
 	m_LogicalDevice = LogicalDevice::Create(*m_PhysicalDevice);
 }
 
@@ -89,17 +94,6 @@ bool Neon::Context::CheckValidationLayerSupport()
 	return true;
 }
 
-Neon::PhysicalDevice& Neon::Context::GetPhysicalDevice()
-{
-	assert(m_PhysicalDevice != nullptr);
-	return *m_PhysicalDevice;
-}
-
-Neon::LogicalDevice& Neon::Context::GetLogicalDevice()
-{
-	assert(m_LogicalDevice != nullptr);
-	return *m_LogicalDevice;
-}
 void Neon::Context::InitAllocator()
 {
 	Neon::Allocator::Init(m_PhysicalDevice->GetHandle(), m_LogicalDevice->GetHandle());
