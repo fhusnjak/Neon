@@ -1,6 +1,6 @@
 #include "DescriptorPool.h"
 
-std::shared_ptr<Neon::DescriptorPool>
+std::unique_ptr<Neon::DescriptorPool>
 Neon::DescriptorPool::Create(const vk::Device device,
 							 const std::vector<vk::DescriptorSetLayoutBinding>& bindings,
 							 const uint32_t maxSets)
@@ -14,13 +14,13 @@ Neon::DescriptorPool::Create(const vk::Device device,
 	return Create(device, sizes, maxSets);
 }
 
-std::shared_ptr<Neon::DescriptorPool>
+std::unique_ptr<Neon::DescriptorPool>
 Neon::DescriptorPool::Create(const vk::Device device,
 							 const std::vector<vk::DescriptorPoolSize>& sizes,
 							 const uint32_t maxSets)
 {
 	auto descriptorPool = new DescriptorPool(device, sizes, maxSets);
-	return std::shared_ptr<DescriptorPool>(descriptorPool);
+	return std::unique_ptr<DescriptorPool>(descriptorPool);
 }
 
 Neon::DescriptorPool::DescriptorPool(const vk::Device device,

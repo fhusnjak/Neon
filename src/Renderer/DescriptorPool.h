@@ -4,7 +4,7 @@
 
 namespace Neon
 {
-class DescriptorPool : public std::enable_shared_from_this<DescriptorPool>
+class DescriptorPool
 {
 public:
 	DescriptorPool(const DescriptorPool&) = delete;
@@ -12,16 +12,16 @@ public:
 	DescriptorPool& operator=(const DescriptorPool&) = delete;
 	DescriptorPool& operator=(DescriptorPool&&) = delete;
 
-	const vk::DescriptorPool& GetHandle() const
+	[[nodiscard]] const vk::DescriptorPool& GetHandle() const
 	{
 		return m_Handle.get();
 	}
 
-	static std::shared_ptr<DescriptorPool> Create(vk::Device device,
+	static std::unique_ptr<DescriptorPool> Create(vk::Device device,
 												 const std::vector<vk::DescriptorSetLayoutBinding>& bindings,
 												 uint32_t maxSets);
 
-	static std::shared_ptr<DescriptorPool> Create(vk::Device device,
+	static std::unique_ptr<DescriptorPool> Create(vk::Device device,
 											const std::vector<vk::DescriptorPoolSize>& sizes,
 											uint32_t maxSets);
 
