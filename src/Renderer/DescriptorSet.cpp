@@ -5,8 +5,8 @@ void Neon::DescriptorSet::Init(vk::Device device)
 	m_Device = device;
 }
 
-void Neon::DescriptorSet::Create(
-	vk::DescriptorPool pool, const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
+void Neon::DescriptorSet::Create(vk::DescriptorPool pool,
+								 const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
 {
 	vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(bindings.size()),
 												 bindings.data());

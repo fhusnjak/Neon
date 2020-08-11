@@ -6,16 +6,16 @@
 
 std::unique_ptr<Neon::PhysicalDevice>
 Neon::PhysicalDevice::Create(const vk::SurfaceKHR& surface,
-					   const std::vector<const char*>& requiredExtensions,
-					   const std::vector<vk::QueueFlagBits>& queueFlags)
+							 const std::vector<const char*>& requiredExtensions,
+							 const std::vector<vk::QueueFlagBits>& queueFlags)
 {
 	auto physicalDevice = new Neon::PhysicalDevice(surface, requiredExtensions, queueFlags);
 	return std::unique_ptr<Neon::PhysicalDevice>(physicalDevice);
 }
 
 Neon::PhysicalDevice::PhysicalDevice(const vk::SurfaceKHR& surface,
-							   const std::vector<const char*>& requiredExtensions,
-							   const std::vector<vk::QueueFlagBits>& queueFlags)
+									 const std::vector<const char*>& requiredExtensions,
+									 const std::vector<vk::QueueFlagBits>& queueFlags)
 {
 	std::multimap<int, VkPhysicalDevice> candidates;
 	std::vector<vk::PhysicalDevice> devices =
@@ -36,9 +36,9 @@ Neon::PhysicalDevice::PhysicalDevice(const vk::SurfaceKHR& surface,
 }
 
 int Neon::PhysicalDevice::IsDeviceSuitable(const vk::PhysicalDevice& physicalDevice,
-									 const vk::SurfaceKHR& surface,
-									 const std::vector<const char*>& requiredExtensions,
-									 const std::vector<vk::QueueFlagBits>& queueFlags)
+										   const vk::SurfaceKHR& surface,
+										   const std::vector<const char*>& requiredExtensions,
+										   const std::vector<vk::QueueFlagBits>& queueFlags)
 {
 	if (!CheckExtensionSupport(physicalDevice, requiredExtensions)) return -1;
 	Neon::DeviceSurfaceProperties surfaceProperties =
@@ -52,7 +52,7 @@ int Neon::PhysicalDevice::IsDeviceSuitable(const vk::PhysicalDevice& physicalDev
 }
 
 bool Neon::PhysicalDevice::CheckExtensionSupport(const vk::PhysicalDevice& physicalDevice,
-										   std::vector<const char*> requiredExtensions)
+												 std::vector<const char*> requiredExtensions)
 {
 	auto supportedExtensions = physicalDevice.enumerateDeviceExtensionProperties();
 	std::set<std::string> requiredExtensionsSet(requiredExtensions.begin(),
@@ -66,7 +66,7 @@ bool Neon::PhysicalDevice::CheckExtensionSupport(const vk::PhysicalDevice& physi
 
 Neon::DeviceSurfaceProperties
 Neon::PhysicalDevice::QueryDeviceSurfaceProperties(const vk::PhysicalDevice& physicalDevice,
-											 const vk::SurfaceKHR& surface)
+												   const vk::SurfaceKHR& surface)
 {
 	Neon::DeviceSurfaceProperties surfaceProperties{};
 	surfaceProperties.surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
@@ -76,8 +76,8 @@ Neon::PhysicalDevice::QueryDeviceSurfaceProperties(const vk::PhysicalDevice& phy
 }
 
 bool Neon::PhysicalDevice::CheckQueueFamilySupport(const vk::PhysicalDevice& physicalDevice,
-											 const vk::SurfaceKHR& surface,
-											 const std::vector<vk::QueueFlagBits>& queueFlags)
+												   const vk::SurfaceKHR& surface,
+												   const std::vector<vk::QueueFlagBits>& queueFlags)
 {
 	std::vector<vk::QueueFamilyProperties> queueFamilyProperties =
 		physicalDevice.getQueueFamilyProperties();

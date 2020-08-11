@@ -17,17 +17,15 @@ public:
 		return m_Handle.get();
 	}
 
-	static std::unique_ptr<DescriptorPool> Create(vk::Device device,
-												 const std::vector<vk::DescriptorSetLayoutBinding>& bindings,
-												 uint32_t maxSets);
+	static std::unique_ptr<DescriptorPool>
+	Create(vk::Device device, const std::vector<vk::DescriptorSetLayoutBinding>& bindings,
+		   uint32_t maxSets);
 
-	static std::unique_ptr<DescriptorPool> Create(vk::Device device,
-											const std::vector<vk::DescriptorPoolSize>& sizes,
-											uint32_t maxSets);
+	static std::unique_ptr<DescriptorPool>
+	Create(vk::Device device, const std::vector<vk::DescriptorPoolSize>& sizes, uint32_t maxSets);
 
 private:
-	explicit DescriptorPool(vk::Device device,
-							const std::vector<vk::DescriptorPoolSize>& sizes,
+	explicit DescriptorPool(vk::Device device, const std::vector<vk::DescriptorPoolSize>& sizes,
 							uint32_t maxSets);
 
 private:

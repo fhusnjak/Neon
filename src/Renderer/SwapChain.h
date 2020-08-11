@@ -19,7 +19,9 @@ public:
 	SwapChain(SwapChain&&) = delete;
 	SwapChain& operator=(const SwapChain&) = delete;
 	SwapChain& operator=(SwapChain&&) = delete;
-	static std::unique_ptr<SwapChain> Create(Window& window, const vk::Instance& instance, const vk::SurfaceKHR& surface, const PhysicalDevice& physicalDevice,
+	static std::unique_ptr<SwapChain> Create(Window& window, const vk::Instance& instance,
+											 const vk::SurfaceKHR& surface,
+											 const PhysicalDevice& physicalDevice,
 											 const LogicalDevice& logicalDevice);
 	[[nodiscard]] vk::Result AcquireNextImage();
 	[[nodiscard]] vk::Result Present(const vk::CommandBuffer& commandBuffer);
@@ -30,11 +32,6 @@ public:
 	[[nodiscard]] size_t GetImageViewSize() const
 	{
 		return m_SwapChainImageViews.size();
-	}
-	[[nodiscard]] const vk::ImageView& GetImageView() const
-	{
-		assert(m_ImageIndex > -1 && m_ImageIndex < m_SwapChainImageViews.size());
-		return m_SwapChainImageViews[m_ImageIndex].get();
 	}
 	[[nodiscard]] const vk::ImageView& GetImageView(size_t index) const
 	{
@@ -55,7 +52,8 @@ public:
 	}
 
 private:
-	SwapChain(Window& window, const vk::Instance& instance, const vk::SurfaceKHR& surface, const PhysicalDevice& physicalDevice, const LogicalDevice& logicalDevice);
+	SwapChain(Window& window, const vk::Instance& instance, const vk::SurfaceKHR& surface,
+			  const PhysicalDevice& physicalDevice, const LogicalDevice& logicalDevice);
 	void CreateSwapChainHandle();
 
 private:

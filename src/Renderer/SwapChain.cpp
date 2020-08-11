@@ -67,6 +67,40 @@ vk::Result Neon::SwapChain::AcquireNextImage()
 	return result.result;
 }
 
+vk::Result Neon::SwapChain::Present(const vk::CommandBuffer& commandBuffer)
+{
+	vk::Semaphore waitSemaphores[] = {m_ImageAcquiredSemaphores[m_FrameIndex].get()};
+	vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
+	vk::Semaphore signalSemaphores[] = {m_RenderFinishedSemaphores[m_FrameIndex].get()};
+	vk::SubmitInfo submitInfo{1, waitSemaphores,  waitStages, 1, &commandBuffer,
+							  1, signalSemaphores};
+
+	m_LogicalDevice.GetHandle().resetFences({m_FrameFences[m_FrameIndex].get()});
+
+	m_LogicalDevice.GetGraphicsQueue().submit({submitInfo}, m_FrameFences[m_FrameIndex].get());
+
+	vk::PresentInfoKHR presentInfo{1, signalSemaphores, 1, &m_Handle.get(), &m_ImageIndex};
+
+	auto result = m_LogicalDevice.GetPresentQueue().presentKHR(&presentInfo);
+
+	if (m_Window.Resized())
+	{
+		CreateSwapChainHandle();
+		result = vk::Result::eErrorOutOfDateKHR;
+	}
+	else if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+	{
+		CreateSwapChainHandle();
+	}
+	else
+	{
+		assert(result == vk::Result::eSuccess);
+	}
+	m_Window.ResetResized();
+	//s_CurrentFrame = (s_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	return result;
+}
+
 void Neon::SwapChain::CreateSwapChainHandle()
 {
 	// FIXME: This sometimes does not work properly, because deviceSurfaceProperties.surfaceCapabilities.currentExtent
@@ -150,37 +184,4 @@ void Neon::SwapChain::CreateSwapChainHandle()
 		m_SwapChainImageViews.push_back(
 			m_LogicalDevice.GetHandle().createImageViewUnique(imageViewCreateInfo));
 	}
-}
-vk::Result Neon::SwapChain::Present(const vk::CommandBuffer& commandBuffer)
-{
-	vk::Semaphore waitSemaphores[] = {m_ImageAcquiredSemaphores[m_FrameIndex].get()};
-	vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
-	vk::Semaphore signalSemaphores[] = {m_RenderFinishedSemaphores[m_FrameIndex].get()};
-	vk::SubmitInfo submitInfo{1, waitSemaphores,  waitStages, 1, &commandBuffer,
-							  1, signalSemaphores};
-
-	m_LogicalDevice.GetHandle().resetFences({m_FrameFences[m_FrameIndex].get()});
-
-	m_LogicalDevice.GetGraphicsQueue().submit({submitInfo}, m_FrameFences[m_FrameIndex].get());
-
-	vk::PresentInfoKHR presentInfo{1, signalSemaphores, 1, &m_Handle.get(), &m_ImageIndex};
-
-	auto result = m_LogicalDevice.GetPresentQueue().presentKHR(&presentInfo);
-
-	if (m_Window.Resized())
-	{
-		CreateSwapChainHandle();
-		result = vk::Result::eErrorOutOfDateKHR;
-	}
-	else if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
-	{
-		CreateSwapChainHandle();
-	}
-	else
-	{
-		assert(result == vk::Result::eSuccess);
-	}
-	m_Window.ResetResized();
-	//s_CurrentFrame = (s_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-	return result;
 }
