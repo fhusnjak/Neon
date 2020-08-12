@@ -15,17 +15,17 @@ layout(location = 4) flat in int fragMatID;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 0, scalar) uniform CameraMatrices
+layout(set = 0, binding = 0, scalar) uniform CameraMatrices
 {
     vec3 cameraPos;
     mat4 view;
     mat4 projection;
 } cameraMatrices;
-layout(binding = 1, scalar) readonly buffer MaterialBufferObject
+layout(set = 1, binding = 0, scalar) readonly buffer MaterialBufferObject
 {
     Material materials[];
 };
-layout(binding = 2) uniform sampler2D textureSamplers[];
+layout(set = 1, binding = 1) uniform sampler2D textureSamplers[];
 
 layout(push_constant, scalar) uniform PushConstant
 {

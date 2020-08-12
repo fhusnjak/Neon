@@ -17,7 +17,7 @@ layout(location = 2) out vec3 fragPos;
 layout(location = 3) out vec2 fragTexCoord;
 layout(location = 4) flat out int fragMatID;
 
-layout(binding = 0, scalar) uniform CameraMatrices
+layout(set = 0, binding = 0, scalar) uniform CameraMatrices
 {
     vec3 cameraPos;
     mat4 view;
