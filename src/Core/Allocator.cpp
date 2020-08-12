@@ -1,15 +1,14 @@
-#include "neopch.h"
-
 #define VMA_IMPLEMENTATION
 #include "Allocator.h"
 
 #include "Renderer/VulkanRenderer.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "VulkanRenderer.h"
 #include "stb_image.h"
 
 Neon::Allocator Neon::Allocator::s_Allocator;
+
+Neon::Allocator::Allocator() noexcept { }
 
 void Neon::Allocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device)
 {
@@ -238,10 +237,6 @@ Neon::ImageAllocation Neon::Allocator::CreateHdrTextureImage(const std::string& 
 	s_Allocator.m_StagingBuffers.push(stagingBufferAllocation);
 	return imageAllocation;
 }
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "modernize-use-equals-default"
-Neon::Allocator::Allocator() noexcept { }
-#pragma clang diagnostic pop
 
 void Neon::Allocator::FreeMemory(VmaAllocation allocation)
 {

@@ -1,17 +1,12 @@
-#include "neopch.h"
-
 #include "ImGuiLayer.h"
 
 #include "Renderer/VulkanRenderer.h"
 
 #include "Application.h"
-#include "VulkanRenderer.h"
 
 #include <examples/imgui_impl_glfw.h>
 #include <examples/imgui_impl_vulkan.h>
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
 void Neon::ImGuiLayer::OnAttach()
 {
 	IMGUI_CHECKVERSION();
@@ -23,7 +18,6 @@ void Neon::ImGuiLayer::OnAttach()
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForVulkan(Application::Get().GetWindow().GetNativeWindow(), true);
 }
-#pragma clang diagnostic pop
 
 void Neon::ImGuiLayer::OnDetach()
 {
