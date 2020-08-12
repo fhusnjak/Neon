@@ -176,7 +176,7 @@ Neon::Entity Neon::Scene::CreateWavefrontEntity(const std::string& filename,
 		texWidth = texHeight = 1;
 		auto* color = new glm::u8vec4(255, 255, 255, 128);
 		auto* pixels = reinterpret_cast<stbi_uc*>(color);
-		std::unique_ptr<ImageAllocation> imageAllocation = Neon::Allocator::CreateTextureImage(pixels, texWidth, texHeight, 4);
+		std::unique_ptr<ImageAllocation> imageAllocation = Neon::Allocator::CreateTextureImage(pixels, texWidth, texHeight);
 		vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
 			imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 		vk::SamplerCreateInfo samplerInfo = {
