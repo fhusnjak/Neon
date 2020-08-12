@@ -23,6 +23,7 @@ struct TagComponent
 
 	TagComponent() = default;
 	TagComponent(const TagComponent&) = default;
+	TagComponent& operator=(const TagComponent&) = default;
 	explicit TagComponent(std::string tag)
 		: Tag(std::move(tag))
 	{
@@ -34,6 +35,7 @@ struct TransformComponent
 
 	TransformComponent() = default;
 	TransformComponent(const TransformComponent&) = default;
+	TransformComponent& operator=(const TransformComponent&) = default;
 	explicit TransformComponent(const glm::mat4& transform)
 		: Transform(transform)
 	{
@@ -52,14 +54,14 @@ struct MeshComponent
 {
 	uint32_t m_VerticesCount{0};
 	uint32_t m_IndicesCount{0};
-	BufferAllocation m_VertexBuffer{};
-	BufferAllocation m_IndexBuffer{};
+	std::shared_ptr<BufferAllocation> m_VertexBuffer{};
+	std::shared_ptr<BufferAllocation> m_IndexBuffer{};
 
 	MeshComponent() = default;
 	MeshComponent(const MeshComponent&) = default;
+	MeshComponent& operator=(const MeshComponent&) = default;
 	MeshComponent(const uint32_t indicesCount, const uint32_t verticesCount,
-				  const BufferAllocation& vertexBuffer,
-				  const BufferAllocation indexBuffer)
+				  BufferAllocation* vertexBuffer, BufferAllocation* indexBuffer)
 		: m_VerticesCount(verticesCount)
 		, m_IndicesCount(indicesCount)
 		, m_VertexBuffer(vertexBuffer)
@@ -69,14 +71,13 @@ struct MeshComponent
 };
 struct MaterialComponent
 {
-	BufferAllocation m_MaterialBuffer{};
-	std::vector<TextureImage> m_TextureImages;
+	std::shared_ptr<BufferAllocation> m_MaterialBuffer{};
+	std::vector<std::shared_ptr<TextureImage>> m_TextureImages;
 	std::vector<DescriptorSet> m_DescriptorSets;
 	GraphicsPipeline graphicsPipeline;
 
 	MaterialComponent() = default;
-	MaterialComponent(const BufferAllocation& materialBuffer,
-					  std::vector<TextureImage> textureImages)
+	MaterialComponent(BufferAllocation* materialBuffer, std::vector<std::shared_ptr<TextureImage>> textureImages)
 		: m_MaterialBuffer(materialBuffer)
 		, m_TextureImages(std::move(textureImages))
 	{
