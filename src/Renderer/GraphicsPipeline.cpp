@@ -1,5 +1,3 @@
-#include "neopch.h"
-
 #include "GraphicsPipeline.h"
 
 void Neon::GraphicsPipeline::Init(vk::Device device)
@@ -87,6 +85,11 @@ void Neon::GraphicsPipeline::CreatePipeline(
 		shaderStages.push_back(shader.GetShaderStageCreateInfo());
 	}
 
+	std::vector<vk::DynamicState> dynamicStates = {vk::DynamicState::eViewport,
+												   vk::DynamicState::eScissor};
+	vk::PipelineDynamicStateCreateInfo dynamicStateCreateInfo{
+		{}, static_cast<uint32_t>(dynamicStates.size()), dynamicStates.data()};
+
 	vk::GraphicsPipelineCreateInfo pipelineInfo{{},
 												static_cast<uint32_t>(shaderStages.size()),
 												shaderStages.data(),
@@ -98,7 +101,7 @@ void Neon::GraphicsPipeline::CreatePipeline(
 												&multisampling,
 												&depthStencil,
 												&colorBlending,
-												{},
+												&dynamicStateCreateInfo,
 												m_Layout.get(),
 												renderPass,
 												0};
