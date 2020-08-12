@@ -59,7 +59,7 @@ vk::RenderPass Neon::CreateRenderPass(const vk::Device& device, vk::Format color
 			{},
 			colorAttachmentFormat,
 			vk::SampleCountFlagBits::e1,
-			clearColor ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare,
+			vk::AttachmentLoadOp::eDontCare,
 			vk::AttachmentStoreOp::eStore,
 			vk::AttachmentLoadOp::eDontCare,
 			vk::AttachmentStoreOp::eDontCare,

@@ -10,13 +10,13 @@ namespace Neon
 {
 struct BufferAllocation
 {
-	VkBuffer buffer;
-	VmaAllocation allocation;
+	VkBuffer buffer{};
+	VmaAllocation allocation{};
 };
 struct ImageAllocation
 {
-	VkImage image;
-	VmaAllocation allocation;
+	VkImage image{};
+	VmaAllocation allocation{};
 };
 struct TextureImage
 {
@@ -27,9 +27,9 @@ class Allocator
 {
 public:
 	Allocator(const Allocator&) = delete;
+	Allocator(Allocator&&) = delete;
 	Allocator& operator=(const Allocator&) = delete;
-	Allocator(const Allocator&&) = delete;
-	Allocator& operator=(const Allocator&&) = delete;
+	Allocator& operator=(Allocator&&) = delete;
 
 	static void Init(vk::PhysicalDevice physicalDevice, vk::Device device);
 	static void FlushStaging();

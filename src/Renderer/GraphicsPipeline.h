@@ -11,13 +11,10 @@ class GraphicsPipeline
 {
 public:
 	GraphicsPipeline() = default;
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "google-explicit-constructor"
-	operator vk::Pipeline()
+	operator vk::Pipeline() const
 	{
 		return m_Pipeline.get();
 	}
-#pragma clang diagnostic pop
 	void Init(vk::Device device);
 	void LoadVertexShader(const std::string& file);
 	void LoadFragmentShader(const std::string& file);

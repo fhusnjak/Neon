@@ -4,11 +4,8 @@
 #include "Layer.h"
 #include "PerspectiveCameraController.h"
 #include "Renderer/VulkanRenderer.h"
-#include "VulkanRenderer.h"
 
 #include <examples/imgui_impl_glfw.h>
-
-#include <entt.h>
 
 #define AVG_FRAME_COUNT 100
 
@@ -19,11 +16,11 @@ Sandbox3D::Sandbox3D()
 	m_ActiveScene = std::make_shared<Neon::Scene>();
 	auto model = glm::translate(glm::mat4(1.0), glm::vec3(-5.0, 0.0, 0.0));
 	auto handgun = m_ActiveScene->CreateWavefrontEntity("models/Handgun_obj.obj", "Handgun");
-	handgun.AddComponent<TransformComponent>(model);
+	handgun.AddComponent<Neon::TransformComponent>(model);
 
 	auto plane = m_ActiveScene->CreateWavefrontEntity("models/plane.obj", "Plane");
 	model = glm::translate(glm::mat4(1.0), glm::vec3(0.0, -1.1, 0.0));
-	plane.AddComponent<TransformComponent>(model);
+	plane.AddComponent<Neon::TransformComponent>(model);
 }
 
 void Sandbox3D::OnAttach() { }
@@ -95,7 +92,7 @@ void Sandbox3D::OnImGuiRender()
 	}
 
 	ImGui::Begin("Settings");
-	ImGui::Text("FPS %.0f", 1000.0f * m_FrameCount / m_TimePassed);
+	ImGui::Text("FPS %.0f", 1000.0f * static_cast<float>(m_FrameCount) / m_TimePassed);
 	ImGui::SliderFloat3("Light Position", &lightPosition.x, -20.f, 20.f);
 	ImGui::End();
 

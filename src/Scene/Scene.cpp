@@ -6,6 +6,7 @@
 #include "VulkanRenderer.h"
 
 #include "Allocator.h"
+#include "Components.h"
 #include "Core/Core.h"
 #include "PerspectiveCameraController.h"
 
@@ -184,7 +185,7 @@ Neon::Entity Neon::Scene::CreateWavefrontEntity(const std::string& filename,
 
 	Neon::VulkanRenderer::EndSingleTimeCommands(cmdBuff);
 
-	Neon::VulkanRenderer::CreateWavefrontDescriptorSet(materialComponent);
+	Neon::VulkanRenderer::CreateWavefrontEntity(materialComponent);
 
 	Neon::Allocator::FlushStaging();
 
