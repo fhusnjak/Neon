@@ -79,7 +79,7 @@ Neon::Entity Neon::Scene::CreateWavefrontEntity(const std::string& filename,
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 
-	for (const auto& shape : shapes)
+	for (auto& shape : shapes)
 	{
 		uint32_t faceID = 0;
 		int indexCount = 0;
@@ -157,7 +157,8 @@ Neon::Entity Neon::Scene::CreateWavefrontEntity(const std::string& filename,
 		cmdBuff, materials, vk::BufferUsageFlagBits::eStorageBuffer);
 	for (auto& texturePath : textures)
 	{
-		std::unique_ptr<ImageAllocation> imageAllocation = Neon::Allocator::CreateTextureImage(texturePath);
+		std::unique_ptr<ImageAllocation> imageAllocation =
+			Neon::Allocator::CreateTextureImage(texturePath);
 		vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
 			imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 		vk::SamplerCreateInfo samplerInfo = {
@@ -171,7 +172,11 @@ Neon::Entity Neon::Scene::CreateWavefrontEntity(const std::string& filename,
 	}
 	if (textures.empty())
 	{
-		std::unique_ptr<ImageAllocation> imageAllocation = Neon::Allocator::CreateTextureImage("");
+		int texWidth, texHeight;
+		texWidth = texHeight = 1;
+		auto* color = new glm::u8vec4(255, 255, 255, 128);
+		auto* pixels = reinterpret_cast<stbi_uc*>(color);
+		std::unique_ptr<ImageAllocation> imageAllocation = Neon::Allocator::CreateTextureImage(pixels, texWidth, texHeight, 4);
 		vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
 			imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 		vk::SamplerCreateInfo samplerInfo = {
