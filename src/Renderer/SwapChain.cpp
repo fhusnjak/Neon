@@ -4,7 +4,7 @@
 
 #include "SwapChain.h"
 
-#define MAX_FRAMES_IN_FLIGHT 1
+#define MAX_FRAMES_IN_FLIGHT 2
 
 std::unique_ptr<Neon::SwapChain> Neon::SwapChain::Create(Window& window,
 														 const vk::Instance& instance,
@@ -97,7 +97,7 @@ vk::Result Neon::SwapChain::Present(const vk::CommandBuffer& commandBuffer)
 		assert(result == vk::Result::eSuccess);
 	}
 	m_Window.ResetResized();
-	//s_CurrentFrame = (s_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	m_FrameIndex = (m_FrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 	return result;
 }
 
