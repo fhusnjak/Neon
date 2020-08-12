@@ -56,13 +56,15 @@ private:
 	void CreateOffscreenRenderer();
 	void CreateImGuiRenderer();
 	void CreateCommandPool();
-	void CreateUniformBuffers(std::vector<BufferAllocation>& bufferAllocations,
+	void CreateUniformBuffers(std::vector<std::unique_ptr<BufferAllocation>>& bufferAllocations,
 							  vk::DeviceSize bufferSize);
 	void CreateCommandBuffers();
 	void UpdateCameraMatrices(const PerspectiveCamera& camera);
 
 private:
 	static VulkanRenderer s_Instance;
+
+	std::vector<DescriptorSet> m_CameraDescriptorSets;
 
 	size_t m_DynamicAlignment = -1;
 
@@ -71,18 +73,19 @@ private:
 	vk::UniqueRenderPass m_OffscreenRenderPass;
 	vk::UniqueRenderPass m_ImGuiRenderPass;
 
+	TextureImage m_SampledImage;
+
 	TextureImage m_OffscreenImageAllocation;
 	TextureImage m_OffscreenDepthImageAllocation;
 
-	ImageAllocation m_DepthImageAllocation{};
-	TextureImage m_SampledImage;
+	std::unique_ptr<ImageAllocation> m_DepthImageAllocation{};
 
 	std::vector<vk::UniqueFramebuffer> m_OffscreenFrameBuffers;
 	std::vector<vk::UniqueFramebuffer> m_ImGuiFrameBuffers;
 
 	vk::UniqueCommandPool m_CommandPool;
 
-	std::vector<BufferAllocation> m_CameraBufferAllocations;
+	std::vector<std::unique_ptr<BufferAllocation>> m_CameraBufferAllocations;
 
 	std::vector<std::unique_ptr<DescriptorPool>> m_DescriptorPools;
 
