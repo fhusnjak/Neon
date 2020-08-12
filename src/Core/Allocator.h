@@ -4,6 +4,7 @@
 
 #include <vk_mem_alloc.h>
 
+#include <stb_image.h>
 #include <vulkan/vulkan.hpp>
 
 namespace Neon
@@ -50,6 +51,7 @@ public:
 									  vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 
 	static std::unique_ptr<ImageAllocation> CreateTextureImage(const std::string& filename);
+	static std::unique_ptr<ImageAllocation> CreateTextureImage(stbi_uc* pixels, int texWidth, int texHeight);
 
 	static std::unique_ptr<ImageAllocation> CreateHdrTextureImage(const std::string& filename);
 

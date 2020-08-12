@@ -1,10 +1,8 @@
 #define VMA_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
 #include "Allocator.h"
 
 #include "Renderer/VulkanRenderer.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
 Neon::Allocator Neon::Allocator::s_Allocator;
 
@@ -151,10 +149,16 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateTextureImage(const
 	{
 		texWidth = texHeight = 1;
 		texChannels = 4;
-		auto* color = new glm::u8vec4(255, 128, 0, 128);
+		auto* color = new glm::u8vec4(255, 0, 255, 128);
 		pixels = reinterpret_cast<stbi_uc*>(color);
 	}
 
+	return CreateTextureImage(pixels, texWidth, texHeight);
+}
+
+std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateTextureImage(stbi_uc* pixels, int texWidth,
+																		   int texHeight)
+{
 	vk::DeviceSize imageSize =
 		static_cast<uint64_t>(texWidth) * static_cast<uint64_t>(texHeight) * sizeof(glm::u8vec4);
 
