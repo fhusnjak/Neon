@@ -25,7 +25,7 @@ layout(binding = 1, scalar) readonly buffer MaterialBufferObject
 {
     Material materials[];
 };
-layout(binding = 2) uniform sampler2D textureSampler;
+layout(binding = 2) uniform sampler2D textureSamplers[];
 
 layout(push_constant, scalar) uniform PushConstant
 {
@@ -52,7 +52,7 @@ void main()
     vec3 diffuse = computeDiffuse(mat, lightDir, normal);
     if (mat.textureId >= 0)
     {
-        vec3 diffuseTxt = texture(textureSampler, fragTexCoord).xyz;
+        vec3 diffuseTxt = texture(textureSamplers[mat.textureId], fragTexCoord).xyz;
         diffuse *= diffuseTxt;
     }
 
