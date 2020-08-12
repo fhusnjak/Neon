@@ -6,7 +6,6 @@
 #include "VulkanRenderer.h"
 
 #include "Allocator.h"
-#include "Components.h"
 #include "Core/Core.h"
 #include "PerspectiveCameraController.h"
 
@@ -158,29 +157,31 @@ Neon::Entity Neon::Scene::CreateWavefrontEntity(const std::string& filename,
 		cmdBuff, materials, vk::BufferUsageFlagBits::eStorageBuffer);
 	for (auto& texturePath : textures)
 	{
-		Neon::ImageAllocation imgAllocation = Neon::Allocator::CreateTextureImage(texturePath);
+		std::unique_ptr<ImageAllocation> imageAllocation = Neon::Allocator::CreateTextureImage(texturePath);
 		vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
-			imgAllocation.image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+			imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 		vk::SamplerCreateInfo samplerInfo = {
 			{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
 		samplerInfo.setMaxLod(FLT_MAX);
 		vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
 		vk::DescriptorImageInfo desc{sampler, textureImageView,
 									 vk::ImageLayout::eShaderReadOnlyOptimal};
-		materialComponent.m_TextureImages.push_back({desc, imgAllocation});
+		auto* textureImage = new TextureImage{desc, std::move(imageAllocation)};
+		materialComponent.m_TextureImages.push_back(std::shared_ptr<TextureImage>(textureImage));
 	}
 	if (textures.empty())
 	{
-		Neon::ImageAllocation imgAllocation = Neon::Allocator::CreateTextureImage("");
+		std::unique_ptr<ImageAllocation> imageAllocation = Neon::Allocator::CreateTextureImage("");
 		vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
-			imgAllocation.image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+			imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 		vk::SamplerCreateInfo samplerInfo = {
 			{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
 		samplerInfo.setMaxLod(FLT_MAX);
 		vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
 		vk::DescriptorImageInfo desc{sampler, textureImageView,
 									 vk::ImageLayout::eShaderReadOnlyOptimal};
-		materialComponent.m_TextureImages.push_back({desc, imgAllocation});
+		auto* textureImage = new TextureImage{desc, std::move(imageAllocation)};
+		materialComponent.m_TextureImages.push_back(std::shared_ptr<TextureImage>(textureImage));
 	}
 
 	Neon::VulkanRenderer::EndSingleTimeCommands(cmdBuff);

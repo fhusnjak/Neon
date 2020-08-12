@@ -9,8 +9,8 @@ Neon::PhysicalDevice::Create(const vk::SurfaceKHR& surface,
 							 const std::vector<const char*>& requiredExtensions,
 							 const std::vector<vk::QueueFlagBits>& queueFlags)
 {
-	auto physicalDevice = new Neon::PhysicalDevice(surface, requiredExtensions, queueFlags);
-	return std::unique_ptr<Neon::PhysicalDevice>(physicalDevice);
+	auto physicalDevice = new PhysicalDevice(surface, requiredExtensions, queueFlags);
+	return std::unique_ptr<PhysicalDevice>(physicalDevice);
 }
 
 Neon::PhysicalDevice::PhysicalDevice(const vk::SurfaceKHR& surface,
@@ -19,7 +19,7 @@ Neon::PhysicalDevice::PhysicalDevice(const vk::SurfaceKHR& surface,
 {
 	std::multimap<int, VkPhysicalDevice> candidates;
 	std::vector<vk::PhysicalDevice> devices =
-		Neon::Context::GetInstance().GetVkInstance().enumeratePhysicalDevices();
+		Context::GetInstance().GetVkInstance().enumeratePhysicalDevices();
 	for (auto& device : devices)
 	{
 		if (int score = IsDeviceSuitable(device, surface, requiredExtensions, queueFlags) > -1)
