@@ -15,6 +15,8 @@
 #include <string>
 #include <utility>
 
+namespace Neon
+{
 struct TagComponent
 {
 	std::string Tag;
@@ -26,7 +28,6 @@ struct TagComponent
 	{
 	}
 };
-
 struct TransformComponent
 {
 	glm::mat4 Transform{1.0f};
@@ -47,19 +48,18 @@ struct TransformComponent
 		return Transform;
 	}
 };
-
 struct MeshComponent
 {
 	uint32_t m_VerticesCount{0};
 	uint32_t m_IndicesCount{0};
-	Neon::BufferAllocation m_VertexBuffer{};
-	Neon::BufferAllocation m_IndexBuffer{};
+	BufferAllocation m_VertexBuffer{};
+	BufferAllocation m_IndexBuffer{};
 
 	MeshComponent() = default;
 	MeshComponent(const MeshComponent&) = default;
 	MeshComponent(const uint32_t indicesCount, const uint32_t verticesCount,
-				  const Neon::BufferAllocation& vertexBuffer,
-				  const Neon::BufferAllocation indexBuffer)
+				  const BufferAllocation& vertexBuffer,
+				  const BufferAllocation indexBuffer)
 		: m_VerticesCount(verticesCount)
 		, m_IndicesCount(indicesCount)
 		, m_VertexBuffer(vertexBuffer)
@@ -67,21 +67,21 @@ struct MeshComponent
 	{
 	}
 };
-
 struct MaterialComponent
 {
-	Neon::BufferAllocation m_MaterialBuffer{};
-	std::vector<Neon::TextureImage> m_TextureImages;
-	std::vector<Neon::DescriptorSet> m_DescriptorSets;
-	Neon::GraphicsPipeline graphicsPipeline;
+	BufferAllocation m_MaterialBuffer{};
+	std::vector<TextureImage> m_TextureImages;
+	std::vector<DescriptorSet> m_DescriptorSets;
+	GraphicsPipeline graphicsPipeline;
 
 	MaterialComponent() = default;
-	MaterialComponent(const Neon::BufferAllocation& materialBuffer,
-					  std::vector<Neon::TextureImage> textureImages)
+	MaterialComponent(const BufferAllocation& materialBuffer,
+					  std::vector<TextureImage> textureImages)
 		: m_MaterialBuffer(materialBuffer)
 		, m_TextureImages(std::move(textureImages))
 	{
 	}
 };
+} // namespace Neon
 
 #endif //NEON_COMPONENTS_H
