@@ -11,6 +11,7 @@ include_directories(src/Event)
 include_directories(src/Renderer)
 include_directories(src/Tools)
 include_directories(src/Window)
+include_directories(vendor)
 include_directories(vendor/allocator)
 include_directories(vendor/glfw-3.3.2/include)
 include_directories(vendor/glm-0.9.9.7)
@@ -51,6 +52,9 @@ add_executable(Neon
         vendor/imgui/imgui_draw.cpp
         vendor/imgui/imgui_widgets.cpp)
 
-target_link_libraries(Neon $ENV{VULKAN_SDK}/lib/vulkan-1.lib ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glfw-3.3.2/lib-vc2019/glfw3.lib ${CMAKE_CURRENT_SOURCE_DIR}/vendor/assimp/assimp-vc142-mt.lib)
+target_link_libraries(Neon
+        $ENV{VULKAN_SDK}/lib/vulkan-1.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glfw-3.3.2/lib-vc2019/glfw3.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/vendor/assimp/assimp-vc142-mt.lib)
 
 target_precompile_headers(Neon PUBLIC src/neopch.h)
