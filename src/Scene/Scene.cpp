@@ -11,6 +11,9 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 static inline std::string GetPath(const std::string& file)
 {
@@ -32,6 +35,13 @@ Neon::Entity Neon::Scene::CreateEntity(const std::string& name)
 Neon::Entity Neon::Scene::CreateWavefrontEntity(const std::string& filename,
 												const std::string& name)
 {
+	Assimp::Importer importer;
+	const aiScene *scene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_FlipUVs);
+	if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	{
+		std::cout << "ERROR::ASSIMP::" << importer.GetErrorString();
+	}
+
 	Entity entity = CreateEntity(name);
 	std::vector<Material> materials;
 	std::vector<std::string> textures;
