@@ -16,7 +16,7 @@ include_directories(vendor/allocator)
 include_directories(vendor/glfw-3.3.2/include)
 include_directories(vendor/glm-0.9.9.7)
 include_directories(vendor/imgui)
-include_directories(vendor/loader)
+include_directories(vendor/stb_image)
 include_directories(vendor/entt)
 include_directories(vendor/assimp)
 
