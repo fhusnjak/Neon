@@ -6,6 +6,7 @@
 #define NEON_SCENE_H
 
 #include "Core/Allocator.h"
+#include <assimp/scene.h>
 
 #include "PerspectiveCameraController.h"
 #include "entt.h"
@@ -20,7 +21,7 @@ struct Vertex
 	glm::vec3 norm;
 	glm::vec3 color;
 	glm::vec2 texCoord;
-	int matID;
+	uint32_t matID;
 
 	static vk::VertexInputBindingDescription getBindingDescription()
 	{
@@ -70,6 +71,14 @@ public:
 
 	void OnUpdate(float ts, Neon::PerspectiveCameraController controller, glm::vec4 clearColor,
 				  glm::vec3 lightPosition);
+
+private:
+	static void ProcessNode(aiNode* node, const aiScene* scene, std::vector<Vertex>& vertices,
+							std::vector<uint32_t>& indices, std::vector<Material>& materials,
+							std::vector<std::shared_ptr<TextureImage>>& textureImages);
+	static void ProcessMesh(aiMesh* mesh, const aiScene* scene, std::vector<Vertex>& vertices,
+							std::vector<uint32_t>& indices, std::vector<Material>& materials,
+							std::vector<std::shared_ptr<TextureImage>>& textureImages);
 
 private:
 	entt::registry m_Registry;
