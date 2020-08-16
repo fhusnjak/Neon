@@ -62,9 +62,9 @@ void Neon::GraphicsPipeline::CreatePipeline(
 	vk::PipelineMultisampleStateCreateInfo multisampling{{},	  samples,	VK_FALSE, 1.0f,
 														 nullptr, VK_FALSE, VK_FALSE};
 
-	vk::PipelineColorBlendAttachmentState colorBlendAttachment{VK_FALSE,
-															   vk::BlendFactor::eOne,
-															   vk::BlendFactor::eZero,
+	vk::PipelineColorBlendAttachmentState colorBlendAttachment{VK_TRUE,
+															   vk::BlendFactor::eSrcAlpha,
+															   vk::BlendFactor::eOneMinusSrcAlpha,
 															   vk::BlendOp::eAdd,
 															   vk::BlendFactor::eOne,
 															   vk::BlendFactor::eZero,
