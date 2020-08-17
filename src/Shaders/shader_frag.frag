@@ -60,5 +60,6 @@ void main()
     vec3 specular = computeSpecular(mat, viewDir, lightDir, normal);
 
     float gamma = 1. / 2.2;
-    outColor = pow(vec4(lightIntensity * (diffuse + specular), 1.0f), vec4(gamma));
+    //outColor = pow(vec4(lightIntensity * (diffuse + specular), 1.0f), vec4(gamma));
+    outColor = texture(textureSamplers[mat.textureId], fragTexCoord);
 }
