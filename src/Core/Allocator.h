@@ -65,6 +65,15 @@ public:
 	}
 
 	template<typename T>
+	static void UpdateAllocation(const VmaAllocation& allocation, const std::vector<T>& data)
+	{
+		void* mappedData;
+		vmaMapMemory(s_Allocator.m_Allocator, allocation, &mappedData);
+		memcpy(mappedData, data.data(), data.size() * sizeof(T));
+		vmaUnmapMemory(s_Allocator.m_Allocator, allocation);
+	}
+
+	template<typename T>
 	static std::unique_ptr<BufferAllocation> CreateDeviceLocalBuffer(const vk::CommandBuffer& commandBuffer,
 													const std::vector<T>& data,
 													const vk::BufferUsageFlags& usage)

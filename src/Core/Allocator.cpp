@@ -149,7 +149,7 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateTextureImage(const
 	{
 		texWidth = texHeight = 1;
 		texChannels = 4;
-		auto* color = new glm::u8vec4(255, 0, 255, 128);
+		auto* color = new glm::u8vec4(255, 0, 255, 255);
 		pixels = reinterpret_cast<stbi_uc*>(color);
 	}
 
