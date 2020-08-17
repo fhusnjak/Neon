@@ -2,7 +2,6 @@
 
 #include "Event.h"
 #include "Layer.h"
-#include "PerspectiveCameraController.h"
 #include "Renderer/VulkanRenderer.h"
 
 #include <examples/imgui_impl_glfw.h>
@@ -14,13 +13,7 @@ Sandbox3D::Sandbox3D()
 	, m_CameraController((float)WIDTH / HEIGHT)
 {
 	m_ActiveScene = std::make_shared<Neon::Scene>();
-	auto model = glm::translate(glm::mat4(1.0), glm::vec3(-5.0, 0.0, 0.0));
-	auto handgun = m_ActiveScene->CreateWavefrontEntity("models/Handgun_obj.obj", "Handgun");
-	handgun.AddComponent<Neon::TransformComponent>(model);
-
-	auto plane = m_ActiveScene->CreateWavefrontEntity("models/plane.obj", "Plane");
-	model = glm::translate(glm::mat4(1.0), glm::vec3(0.0, -1.1, 0.0));
-	plane.AddComponent<Neon::TransformComponent>(model);
+	m_ActiveScene->LoadAnimatedModel("models/rp_nathan_animated_003_walking.fbx", "AnimatedModel");
 }
 
 void Sandbox3D::OnAttach() { }
