@@ -115,11 +115,12 @@ void Neon::VulkanRenderer::Render(const TransformComponent& transformComponent,
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
 							   static_cast<vk::Pipeline>(materialComponent.graphicsPipeline));
 
-	std::vector<vk::DescriptorSet> descriptorSets = {s_Instance.m_CameraDescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get(), materialComponent.m_DescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get()};
-	commandBuffer.bindDescriptorSets(
-		vk::PipelineBindPoint::eGraphics, materialComponent.graphicsPipeline.GetLayout(), 0, descriptorSets.size(),
-		descriptorSets.data(), 0,
-		nullptr);
+	std::vector<vk::DescriptorSet> descriptorSets = {
+		s_Instance.m_CameraDescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get(),
+		materialComponent.m_DescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get()};
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+									 materialComponent.graphicsPipeline.GetLayout(), 0,
+									 descriptorSets.size(), descriptorSets.data(), 0, nullptr);
 
 	PushConstant pushConstant{transformComponent, lightPosition, {1, 0, 1}};
 	commandBuffer.pushConstants(materialComponent.graphicsPipeline.GetLayout(),
@@ -225,31 +226,34 @@ void Neon::VulkanRenderer::InitRenderer(Window* window)
 	CreateCommandBuffers();
 	CreateUniformBuffers(m_CameraBufferAllocations, sizeof(CameraMatrices));
 
-    ///////////////////////////
-    std::vector<vk::DescriptorPoolSize> sizes;
-	sizes.emplace_back(vk::DescriptorType::eUniformBuffer, 1 * MAX_SWAP_CHAIN_IMAGES * MAX_DESCRIPTOR_SETS_PER_POOL);
-    sizes.emplace_back(vk::DescriptorType::eStorageBuffer, 1 * MAX_SWAP_CHAIN_IMAGES * MAX_DESCRIPTOR_SETS_PER_POOL);
-    sizes.emplace_back(vk::DescriptorType::eCombinedImageSampler, 10 * MAX_SWAP_CHAIN_IMAGES * MAX_DESCRIPTOR_SETS_PER_POOL);
-    m_DescriptorPools.push_back(DescriptorPool::Create(
-            logicalDevice.GetHandle(), sizes, MAX_SWAP_CHAIN_IMAGES * MAX_DESCRIPTOR_SETS_PER_POOL));
-    std::vector<vk::DescriptorSetLayoutBinding> bindings;
-    bindings.emplace_back(0, vk::DescriptorType::eUniformBuffer, 1,
-                          vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
-    m_CameraDescriptorSets.resize(m_SwapChain->GetImageViewSize());
-    for (int i = 0; i < m_SwapChain->GetImageViewSize(); i++)
-    {
-        vk::DescriptorBufferInfo cameraBufferInfo{m_CameraBufferAllocations[i]->buffer, 0,
-                                                  sizeof(CameraMatrices)};
-        auto& cameraDescriptorSet = m_CameraDescriptorSets[i];
-        cameraDescriptorSet.Init(logicalDevice.GetHandle());
-        cameraDescriptorSet.Create(
-                s_Instance.m_DescriptorPools[s_Instance.m_DescriptorPools.size() - 1]->GetHandle(),
-                bindings);
-        std::vector<vk::WriteDescriptorSet> descriptorWrites = {
-                cameraDescriptorSet.CreateWrite(0, &cameraBufferInfo, 0)};
-        cameraDescriptorSet.Update(descriptorWrites);
-    }
-    ////////////////////////
+	///////////////////////////
+	std::vector<vk::DescriptorPoolSize> sizes;
+	sizes.emplace_back(vk::DescriptorType::eUniformBuffer,
+					   1 * MAX_SWAP_CHAIN_IMAGES * MAX_DESCRIPTOR_SETS_PER_POOL);
+	sizes.emplace_back(vk::DescriptorType::eStorageBuffer,
+					   1 * MAX_SWAP_CHAIN_IMAGES * MAX_DESCRIPTOR_SETS_PER_POOL);
+	sizes.emplace_back(vk::DescriptorType::eCombinedImageSampler,
+					   10 * MAX_SWAP_CHAIN_IMAGES * MAX_DESCRIPTOR_SETS_PER_POOL);
+	m_DescriptorPools.push_back(DescriptorPool::Create(
+		logicalDevice.GetHandle(), sizes, MAX_SWAP_CHAIN_IMAGES * MAX_DESCRIPTOR_SETS_PER_POOL));
+	std::vector<vk::DescriptorSetLayoutBinding> bindings;
+	bindings.emplace_back(0, vk::DescriptorType::eUniformBuffer, 1,
+						  vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
+	m_CameraDescriptorSets.resize(m_SwapChain->GetImageViewSize());
+	for (int i = 0; i < m_SwapChain->GetImageViewSize(); i++)
+	{
+		vk::DescriptorBufferInfo cameraBufferInfo{m_CameraBufferAllocations[i]->buffer, 0,
+												  sizeof(CameraMatrices)};
+		auto& cameraDescriptorSet = m_CameraDescriptorSets[i];
+		cameraDescriptorSet.Init(logicalDevice.GetHandle());
+		cameraDescriptorSet.Create(
+			s_Instance.m_DescriptorPools[s_Instance.m_DescriptorPools.size() - 1]->GetHandle(),
+			bindings);
+		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
+			cameraDescriptorSet.CreateWrite(0, &cameraBufferInfo, 0)};
+		cameraDescriptorSet.Update(descriptorWrites);
+	}
+	////////////////////////
 
 	Neon::Context::GetInstance().GetLogicalDevice().GetHandle().waitIdle();
 }
@@ -382,7 +386,6 @@ void Neon::VulkanRenderer::CreateOffscreenRenderer()
 void Neon::VulkanRenderer::CreateImGuiRenderer()
 {
 	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
-
 	m_ImGuiFrameBuffers.clear();
 	m_ImGuiFrameBuffers.reserve(m_SwapChain->GetImageViewSize());
 	const auto& extent = s_Instance.m_SwapChain->GetExtent();
@@ -415,7 +418,7 @@ void Neon::VulkanRenderer::CreateUniformBuffers(
 	bufferAllocations.resize(m_SwapChain->GetImageViewSize());
 	for (size_t i = 0; i < m_SwapChain->GetImageViewSize(); i++)
 	{
-		bufferAllocations[i] = Neon::Allocator::CreateBuffer(
+		bufferAllocations[i] = Allocator::CreateBuffer(
 			bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 }
@@ -448,7 +451,8 @@ void* Neon::VulkanRenderer::GetOffscreenImageID()
 	return s_Instance.m_ImGuiOffscreenTextureDescSet;
 }
 
-void Neon::VulkanRenderer::CreateWavefrontEntity(MaterialComponent& materialComponent)
+void Neon::VulkanRenderer::CreateWavefrontEntity(MeshComponent& meshComponent,
+												 MaterialComponent& materialComponent)
 {
 	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 
@@ -458,6 +462,11 @@ void Neon::VulkanRenderer::CreateWavefrontEntity(MaterialComponent& materialComp
 	bindings.emplace_back(1, vk::DescriptorType::eCombinedImageSampler,
 						  static_cast<uint32_t>(materialComponent.m_TextureImages.size()),
 						  vk::ShaderStageFlagBits::eFragment);
+	if (meshComponent.m_BoneBuffer)
+	{
+		bindings.emplace_back(2, vk::DescriptorType::eStorageBuffer, 1,
+							  vk::ShaderStageFlagBits::eVertex);
+	}
 
 	vk::DescriptorBufferInfo materialBufferInfo{materialComponent.m_MaterialBuffer->buffer, 0,
 												VK_WHOLE_SIZE};
@@ -480,17 +489,30 @@ void Neon::VulkanRenderer::CreateWavefrontEntity(MaterialComponent& materialComp
 		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
 			wavefrontDescriptorSet.CreateWrite(0, &materialBufferInfo, 0),
 			wavefrontDescriptorSet.CreateWrite(1, texturesBufferInfo.data(), 0)};
+		if (meshComponent.m_BoneBuffer)
+		{
+			vk::DescriptorBufferInfo boneBufferInfo{meshComponent.m_BoneBuffer->buffer, 0, VK_WHOLE_SIZE};
+			descriptorWrites.push_back(wavefrontDescriptorSet.CreateWrite(2, &boneBufferInfo, 0));
+		}
 		wavefrontDescriptorSet.Update(descriptorWrites);
 	}
 	auto& pipeline = materialComponent.graphicsPipeline;
 	pipeline.Init(device);
-	pipeline.LoadVertexShader("src/Shaders/vert.spv");
+	if (meshComponent.m_BoneBuffer)
+	{
+		pipeline.LoadVertexShader("src/Shaders/animation_vert.spv");
+	}
+	else
+	{
+		pipeline.LoadVertexShader("src/Shaders/vert.spv");
+	}
 	pipeline.LoadFragmentShader("src/Shaders/frag.spv");
 
 	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
 												   vk::ShaderStageFlagBits::eFragment,
 											   0, sizeof(PushConstant)};
-	pipeline.CreatePipelineLayout({s_Instance.m_CameraDescriptorSets[0].GetLayout(), materialComponent.m_DescriptorSets[0].GetLayout()},
+	pipeline.CreatePipelineLayout({s_Instance.m_CameraDescriptorSets[0].GetLayout(),
+								   materialComponent.m_DescriptorSets[0].GetLayout()},
 								  {pushConstantRange});
 	pipeline.CreatePipeline(s_Instance.m_OffscreenRenderPass.get(), msaaSamples,
 							s_Instance.m_SwapChain->GetExtent(), {Vertex::getBindingDescription()},

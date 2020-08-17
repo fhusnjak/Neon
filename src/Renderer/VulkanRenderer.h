@@ -46,7 +46,7 @@ public:
 	static vk::Sampler CreateSampler(const vk::SamplerCreateInfo& createInfo);
 	static void* GetOffscreenImageID();
 	static vk::Extent2D GetExtent2D();
-	static void CreateWavefrontEntity(MaterialComponent& materialComponent);
+	static void CreateWavefrontEntity(MeshComponent& meshComponent, MaterialComponent& materialComponent);
 
 private:
 	VulkanRenderer() noexcept;
