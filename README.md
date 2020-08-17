@@ -3,8 +3,8 @@ C++ Vulkan engine.
 
 Personal project for practicing Vulkan and graphics programming principles.
 
-Current features:
-Basic Phong lighting
+Current features:<br/>
+Basic Phong lighting<br/>
 
-Skeletal animation:\\
-![Skeletal Animation Demo](resources/skeletalAnimation.gif)
+Skeletal animation:<br/>
+![Skeletal Animation Demo](resources/skeletalAnimation.gif)<br/>
