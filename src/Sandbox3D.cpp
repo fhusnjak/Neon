@@ -27,6 +27,8 @@ Sandbox3D::Sandbox3D()
 		glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * transformComponent2.m_Transform;
 	transformComponent2.m_Transform =
 		glm::translate(glm::mat4(1.0), {-3, -1.0, 0}) * transformComponent2.m_Transform;
+
+	m_ActiveScene->LoadModel("models/plane.obj", glm::translate(glm::mat4(1.0), {0, -1, 0}));
 }
 
 void Sandbox3D::OnAttach() { }
