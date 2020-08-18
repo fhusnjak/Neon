@@ -21,6 +21,7 @@ layout(set = 0, binding = 0, scalar) uniform CameraMatrices
     mat4 view;
     mat4 projection;
 } cameraMatrices;
+
 layout(set = 1, binding = 0, scalar) readonly buffer MaterialBufferObject
 {
     Material materials[];
