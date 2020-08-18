@@ -84,22 +84,26 @@ public:
 
 	Entity CreateEntity(const std::string& name = std::string());
 
+	void LoadModel(const std::string& filename, const glm::mat4& worldTransform);
+
 	Entity LoadAnimatedModel(const std::string& filename);
 
 	void OnUpdate(float ts, Neon::PerspectiveCameraController controller, glm::vec4 clearColor,
 				  glm::vec3 lightPosition);
 
 private:
-	static void ProcessNode(const aiScene* scene, aiNode* node, glm::mat4 parentTransform,
-					 std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, std::vector<Material>& materials,
-					 std::vector<std::shared_ptr<TextureImage>>& textureImages,
-					 std::unordered_map<std::string, uint32_t>& boneMap,
-					 std::vector<glm::mat4>& boneOffsets);
-	static void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 transform,
-					 std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, std::vector<Material>& materials,
-					 std::vector<std::shared_ptr<TextureImage>>& textureImages,
-					 std::unordered_map<std::string, uint32_t>& boneMap,
-					 std::vector<glm::mat4>& boneOffsets);
+	void ProcessNode(const aiScene* scene, aiNode* node, glm::mat4 parentTransform, const glm::mat4& worldTransform);
+	void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform, const glm::mat4& worldTransform);
+	static void ProcessNode(const aiScene* scene, aiNode* node, std::vector<Vertex>& vertices,
+							std::vector<uint32_t>& indices, std::vector<Material>& materials,
+							std::vector<std::shared_ptr<TextureImage>>& textureImages,
+							std::unordered_map<std::string, uint32_t>& boneMap,
+							std::vector<glm::mat4>& boneOffsets);
+	static void ProcessMesh(const aiScene* scene, aiMesh* mesh, std::vector<Vertex>& vertices,
+							std::vector<uint32_t>& indices, std::vector<Material>& materials,
+							std::vector<std::shared_ptr<TextureImage>>& textureImages,
+							std::unordered_map<std::string, uint32_t>& boneMap,
+							std::vector<glm::mat4>& boneOffsets);
 
 private:
 	entt::registry m_Registry;

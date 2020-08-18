@@ -28,6 +28,16 @@ Neon::Entity Neon::Scene::CreateEntity(const std::string& name)
 	return entity;
 }
 
+void Neon::Scene::LoadModel(const std::string& filename, const glm::mat4& worldTransform)
+{
+	Assimp::Importer importer;
+	const aiScene* scene =
+		importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_GenSmoothNormals |
+										aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices);
+	assert(scene && !(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) && scene->mRootNode);
+	ProcessNode(scene, scene->mRootNode, glm::mat4(1.0f), worldTransform);
+}
+
 Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 {
 	Assimp::Importer importer;
@@ -43,8 +53,8 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	std::unordered_map<std::string, uint32_t> boneMap;
 	std::vector<glm::mat4> boneOffsets;
 
-	ProcessNode(scene, scene->mRootNode, glm::mat4(1.0f), vertices, indices, materials,
-				textureImages, boneMap, boneOffsets);
+	ProcessNode(scene, scene->mRootNode, vertices, indices, materials, textureImages, boneMap,
+				boneOffsets);
 
 	Entity entity = CreateEntity(scene->mRootNode->mName.C_Str());
 	auto& skinnedMeshRenderer =
@@ -55,8 +65,8 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
 
 	skinnedMeshRenderer.m_BoneBuffer = Neon::Allocator::CreateBuffer(
-		sizeof(boneOffsets[0]) * skinnedMeshRenderer.m_BoneSize, vk::BufferUsageFlagBits::eStorageBuffer,
-		VMA_MEMORY_USAGE_CPU_TO_GPU);
+		sizeof(boneOffsets[0]) * skinnedMeshRenderer.m_BoneSize,
+		vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	skinnedMeshRenderer.m_Mesh.m_VerticesCount = (uint32_t)vertices.size();
 	skinnedMeshRenderer.m_Mesh.m_IndicesCount = (uint32_t)indices.size();
@@ -79,30 +89,144 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	return entity;
 }
 
-void Neon::Scene::ProcessNode(const aiScene* scene, aiNode* node, glm::mat4 parentTransform,
-							  std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-							  std::vector<Material>& materials,
-							  std::vector<std::shared_ptr<TextureImage>>& textureImages,
-							  std::unordered_map<std::string, uint32_t>& boneMap,
-							  std::vector<glm::mat4>& boneOffsets)
+void Neon::Scene::ProcessNode(const aiScene* scene, aiNode* node, glm::mat4 parentTransform, const glm::mat4& worldTransform)
 {
 	glm::mat4 nodeTransform = parentTransform * glm::transpose(*(glm::mat4*)&node->mTransformation);
 	for (int i = 0; i < node->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(scene, mesh, nodeTransform, vertices, indices, materials, textureImages,
-					boneMap, boneOffsets);
+		ProcessMesh(scene, mesh, nodeTransform, worldTransform);
 	}
 	for (int i = 0; i < node->mNumChildren; i++)
 	{
-		ProcessNode(scene, node->mChildren[i], nodeTransform, vertices, indices, materials,
-					textureImages, boneMap, boneOffsets);
+		ProcessNode(scene, node->mChildren[i], nodeTransform, worldTransform);
 	}
 }
 
-void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 transform,
-							  std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-							  std::vector<Material>& materials,
+void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform, const glm::mat4& worldTransform)
+{
+	std::vector<uint32_t> indices;
+	for (int i = 0; i < mesh->mNumFaces; i++)
+	{
+		// FIXME: for now just ignore faces with number of indices not equal to 3
+		aiFace face = mesh->mFaces[i];
+		if (face.mNumIndices != 3) { continue; }
+		for (int j = 0; j < face.mNumIndices; j++)
+		{
+			indices.push_back(face.mIndices[j]);
+		}
+	}
+
+	if (indices.empty()) { return; }
+
+	std::vector<Vertex> vertices;
+	for (int i = 0; i < mesh->mNumVertices; i++)
+	{
+		Vertex vertex{};
+		vertex.pos = {mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z};
+		vertex.norm = {mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z};
+		vertex.matID = 0;
+		// TODO: for now just use first texture coordinate
+		if (mesh->mTextureCoords[0])
+		{ vertex.texCoord = {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}; }
+		else
+		{
+			vertex.texCoord = {0.0f, 0.0f};
+		}
+		vertices.push_back(vertex);
+	}
+
+	Entity entity = CreateEntity(mesh->mName.C_Str());
+	auto& meshRenderer = entity.AddComponent<MeshRenderer>();
+	auto& transform = entity.AddComponent<Transform>(worldTransform * parentTransform);
+
+	std::vector<Material> materials;
+	aiMaterial* aiMaterial = scene->mMaterials[mesh->mMaterialIndex];
+	Material material{};
+	aiColor3D ambientColor(0.f, 0.f, 0.f);
+	aiMaterial->Get(AI_MATKEY_COLOR_AMBIENT, ambientColor);
+	material.ambient = {ambientColor.r, ambientColor.g, ambientColor.b};
+	aiColor3D diffuseColor(0.f, 0.f, 0.f);
+	aiMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
+	material.diffuse = {diffuseColor.r, diffuseColor.g, diffuseColor.b};
+	aiColor3D specularColor(0.f, 0.f, 0.f);
+	aiMaterial->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
+	material.specular = {specularColor.r, specularColor.g, specularColor.b};
+	float shininess;
+	aiMaterial->Get(AI_MATKEY_SHININESS, shininess);
+	material.shininess = shininess;
+	material.textureID = 0;
+	materials.push_back(material);
+
+	std::unique_ptr<ImageAllocation> imageAllocation;
+	if (aiMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+	{
+		// TODO: for now just load first diffuse texture
+		aiString txt;
+		aiMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &txt);
+		std::string texturePath = "textures/" + GetFileName(txt.C_Str());
+		imageAllocation = Neon::Allocator::CreateTextureImage(texturePath);
+	}
+	else
+	{
+		int texWidth = 1, texHeight = 1;
+		auto* color = new glm::u8vec4(255, 255, 255, 255);
+		auto* pixels = reinterpret_cast<stbi_uc*>(color);
+		imageAllocation = Neon::Allocator::CreateTextureImage(pixels, texWidth, texHeight);
+	}
+	assert(imageAllocation);
+	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
+		imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+	vk::SamplerCreateInfo samplerInfo = {
+		{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
+	samplerInfo.setMaxLod(FLT_MAX);
+	vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
+	vk::DescriptorImageInfo desc{sampler, textureImageView,
+								 vk::ImageLayout::eShaderReadOnlyOptimal};
+	auto* textureImage = new TextureImage{desc, std::move(imageAllocation)};
+	meshRenderer.m_TextureImages.push_back(std::shared_ptr<TextureImage>(textureImage));
+
+	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
+
+	meshRenderer.m_Mesh.m_VerticesCount = (uint32_t)vertices.size();
+	meshRenderer.m_Mesh.m_IndicesCount = (uint32_t)indices.size();
+	meshRenderer.m_Mesh.m_VertexBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, vertices,
+		vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
+	meshRenderer.m_Mesh.m_IndexBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, indices,
+		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
+
+	meshRenderer.m_MaterialBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, materials, vk::BufferUsageFlagBits::eStorageBuffer);
+
+	VulkanRenderer::EndSingleTimeCommands(cmdBuff);
+
+	VulkanRenderer::LoadModel(meshRenderer);
+
+	Allocator::FlushStaging();
+}
+
+void Neon::Scene::ProcessNode(const aiScene* scene, aiNode* node, std::vector<Vertex>& vertices,
+							  std::vector<uint32_t>& indices, std::vector<Material>& materials,
+							  std::vector<std::shared_ptr<TextureImage>>& textureImages,
+							  std::unordered_map<std::string, uint32_t>& boneMap,
+							  std::vector<glm::mat4>& boneOffsets)
+{
+	for (int i = 0; i < node->mNumMeshes; i++)
+	{
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		ProcessMesh(scene, mesh, vertices, indices, materials, textureImages, boneMap, boneOffsets);
+	}
+	for (int i = 0; i < node->mNumChildren; i++)
+	{
+		ProcessNode(scene, node->mChildren[i], vertices, indices, materials, textureImages, boneMap,
+					boneOffsets);
+	}
+}
+
+void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, std::vector<Vertex>& vertices,
+							  std::vector<uint32_t>& indices, std::vector<Material>& materials,
 							  std::vector<std::shared_ptr<TextureImage>>& textureImages,
 							  std::unordered_map<std::string, uint32_t>& boneMap,
 							  std::vector<glm::mat4>& boneOffsets)
@@ -218,12 +342,18 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 tran
 void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controller,
 						   glm::vec4 clearColor, glm::vec3 lightPosition)
 {
-	VulkanRenderer::BeginScene(controller.GetCamera(), clearColor);R
-	auto group = m_Registry.group<Transform>(entt::get<SkinnedMeshRenderer>);
-	for (auto entity : group)
+	VulkanRenderer::BeginScene(controller.GetCamera(), clearColor);
+	auto group1 = m_Registry.group<MeshRenderer>(entt::get<Transform>);
+	for (auto entity : group1)
 	{
-		const auto& [transform, skinnedMeshRenderer] =
-			group.get<Transform, SkinnedMeshRenderer>(entity);
+		const auto& [meshRenderer, transform] = group1.get<MeshRenderer, Transform>(entity);
+		VulkanRenderer::Render(transform, meshRenderer, lightPosition);
+	}
+	auto group2 = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);
+	for (auto entity : group2)
+	{
+		const auto& [skinnedMeshRenderer, transform] =
+		group2.get<SkinnedMeshRenderer, Transform>(entity);
 		skinnedMeshRenderer.Update(ts / 1000.0f);
 		VulkanRenderer::Render(transform, skinnedMeshRenderer, lightPosition);
 	}
