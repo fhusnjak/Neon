@@ -20,6 +20,21 @@
 
 namespace Neon
 {
+
+struct CameraMatrices
+{
+	glm::vec3 cameraPos;
+	glm::mat4 view;
+	glm::mat4 projection;
+};
+
+struct PushConstant
+{
+	glm::mat4 transformComponent;
+	[[maybe_unused]] glm::vec3 lightPosition;
+	[[maybe_unused]] glm::vec3 lightColor;
+};
+
 class VulkanRenderer
 {
 public:
@@ -33,9 +48,6 @@ public:
 	static void End();
 	static void BeginScene(const PerspectiveCamera& camera, const glm::vec4& clearColor);
 	static void EndScene();
-	static void Render(const TransformComponent& transformComponent,
-					   const MeshComponent& meshComponent,
-					   const MaterialComponent& materialComponent, const glm::vec3& lightPosition);
 	static void DrawImGui();
 	static vk::CommandBuffer BeginSingleTimeCommands();
 	static void EndSingleTimeCommands(vk::CommandBuffer commandBuffer);
@@ -46,7 +58,44 @@ public:
 	static vk::Sampler CreateSampler(const vk::SamplerCreateInfo& createInfo);
 	static void* GetOffscreenImageID();
 	static vk::Extent2D GetExtent2D();
-	static void CreateWavefrontEntity(MeshComponent& meshComponent, MaterialComponent& materialComponent);
+	static void LoadModel(MeshRenderer& meshComponent);
+	static void LoadAnimatedModel(SkinnedMeshRenderer& meshComponent);
+
+	template <typename T>
+	static void Render(const Transform& transformComponent,
+					   const T& renderer, const glm::vec3& lightPosition)
+	{
+		auto& commandBuffer =
+			s_Instance.m_CommandBuffers[s_Instance.m_SwapChain->GetImageIndex()].get();
+		const auto& extent = s_Instance.m_SwapChain->GetExtent();
+		vk::Viewport viewport{
+			0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height),
+			0.0f, 1.0f};
+		commandBuffer.setViewport(0, 1, &viewport);
+		vk::Rect2D scissor{{0, 0}, extent};
+		commandBuffer.setScissor(0, 1, &scissor);
+
+		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
+								   static_cast<vk::Pipeline>(renderer.m_GraphicsPipeline));
+
+		std::vector<vk::DescriptorSet> descriptorSets = {
+			s_Instance.m_CameraDescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get(),
+			renderer.m_DescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get()};
+		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+										 renderer.m_GraphicsPipeline.GetLayout(), 0,
+										 descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+
+		PushConstant pushConstant{transformComponent.m_Transform, lightPosition, {1, 0, 1}};
+		commandBuffer.pushConstants(renderer.m_GraphicsPipeline.GetLayout(),
+									vk::ShaderStageFlagBits::eVertex |
+									vk::ShaderStageFlagBits::eFragment,
+									0, sizeof(PushConstant), &pushConstant);
+
+		commandBuffer.bindVertexBuffers(0, {renderer.m_Mesh.m_VertexBuffer->buffer}, {0});
+		commandBuffer.bindIndexBuffer(renderer.m_Mesh.m_IndexBuffer->buffer, 0, vk::IndexType::eUint32);
+
+		commandBuffer.drawIndexed(static_cast<uint32_t>(renderer.m_Mesh.m_IndicesCount), 1, 0, 0, 0);
+	}
 
 private:
 	VulkanRenderer() noexcept;

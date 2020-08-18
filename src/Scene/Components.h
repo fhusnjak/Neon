@@ -6,12 +6,14 @@
 #define NEON_COMPONENTS_H
 
 #include "Allocator.h"
+#include "Animation.h"
 #include "DescriptorSet.h"
 #include "GraphicsPipeline.h"
 #include <Core/Allocator.h>
 #include <Renderer/DescriptorSet.h>
 #include <Renderer/GraphicsPipeline.h>
 #include <glm/glm.hpp>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -26,79 +28,135 @@ struct TagComponent
 	std::string Tag;
 
 	TagComponent() = default;
-	TagComponent(const TagComponent&) = default;
-	TagComponent& operator=(const TagComponent&) = default;
 	explicit TagComponent(std::string tag)
 		: Tag(std::move(tag))
 	{
 	}
 };
-struct TransformComponent
+
+struct Transform
 {
 	glm::mat4 m_Transform{1.0f};
 
-	TransformComponent() = default;
-	TransformComponent(const TransformComponent&) = default;
-	TransformComponent& operator=(const TransformComponent&) = default;
-	explicit TransformComponent(const glm::mat4& transform)
+	Transform() = default;
+	explicit Transform(const glm::mat4& transform)
 		: m_Transform(transform)
 	{
 	}
-
-	operator glm::mat4&()
-	{
-		return m_Transform;
-	}
-	operator const glm::mat4&() const
-	{
-		return m_Transform;
-	}
 };
 
-struct MeshComponent
+struct Mesh
 {
-	// TODO: Create special component for these
-	const aiScene* m_Scene;
-	std::unordered_map<std::string, uint32_t> m_BoneMapping;
-	std::vector<glm::mat4> m_BoneOffsets;
-	std::shared_ptr<BufferAllocation> m_BoneBuffer{};
-
 	uint32_t m_VerticesCount{0};
 	uint32_t m_IndicesCount{0};
 	std::shared_ptr<BufferAllocation> m_VertexBuffer{};
 	std::shared_ptr<BufferAllocation> m_IndexBuffer{};
+};
 
-	MeshComponent(const aiScene* scene)
-		: m_Scene(scene)
+struct SkinnedMeshRenderer
+{
+	Mesh m_Mesh;
+
+	Bone m_RootBone;
+	uint32_t m_BoneSize;
+	std::shared_ptr<BufferAllocation> m_BoneBuffer{};
+
+	std::unique_ptr<Animation> m_Animation = nullptr;
+
+	GraphicsPipeline m_GraphicsPipeline;
+	std::vector<DescriptorSet> m_DescriptorSets;
+
+	std::shared_ptr<BufferAllocation> m_MaterialBuffer{};
+	std::vector<std::shared_ptr<TextureImage>> m_TextureImages;
+
+	SkinnedMeshRenderer(const aiScene* scene, int index,
+						std::unordered_map<std::string, uint32_t>& boneMap,
+						const std::vector<glm::mat4>& offsetMatrices)
+		: m_BoneSize(offsetMatrices.size())
 	{
+		CreateBoneTree(scene, scene->mRootNode, m_RootBone, glm::mat4(1.0), index, boneMap,
+					   offsetMatrices, m_BoneSize);
+		assert(m_RootBone.GetID() >= 0);
+		m_Animation = std::make_unique<Animation>(scene, index, boneMap, m_BoneSize);
 	}
-	MeshComponent(const MeshComponent&) = default;
-	MeshComponent& operator=(const MeshComponent&) = default;
-	MeshComponent(const aiScene* scene, const uint32_t indicesCount, const uint32_t verticesCount,
-				  BufferAllocation* vertexBuffer, BufferAllocation* indexBuffer)
-		: m_Scene(scene)
-		, m_VerticesCount(verticesCount)
-		, m_IndicesCount(indicesCount)
-		, m_VertexBuffer(vertexBuffer)
-		, m_IndexBuffer(indexBuffer)
+
+	void Update(float seconds)
 	{
+		std::vector<glm::mat4> transforms(m_BoneSize);
+		m_Animation->Update(seconds, transforms, m_RootBone);
+		Allocator::UpdateAllocation(m_BoneBuffer->allocation, transforms);
+	}
+
+	void CreateBoneTree(const aiScene* scene, const aiNode* node, Bone& parentBone,
+						glm::mat4 parentTransform, int animationIndex,
+						std::unordered_map<std::string, uint32_t>& boneMap,
+						const std::vector<glm::mat4>& offsetMatrices, uint32_t& bonesCount)
+	{
+		std::string nodeName = node->mName.data;
+
+		const aiAnimation* animation = scene->mAnimations[animationIndex];
+
+		const aiNodeAnim* nodeAnim = nullptr;
+		for (int i = 0; i < animation->mNumChannels; i++)
+		{
+			const aiNodeAnim* nodeAnimTemp = animation->mChannels[i];
+			if (std::string(nodeAnimTemp->mNodeName.data) == nodeName)
+			{
+				nodeAnim = nodeAnimTemp;
+				break;
+			}
+		}
+
+		glm::mat4 localTransform = glm::transpose(*(glm::mat4*)&node->mTransformation);
+		glm::mat4 newParentTransform = parentTransform * localTransform;
+
+		Bone* newParentBone = &parentBone;
+		if (nodeAnim || boneMap.find(nodeName) != boneMap.end())
+		{
+			newParentTransform = glm::mat4(1.0);
+			Bone newBone;
+			if (boneMap.find(nodeName) == boneMap.end())
+			{
+				newBone = Bone(bonesCount, glm::mat4(1.0), parentTransform, localTransform);
+				boneMap[nodeName] = bonesCount++;
+			}
+			else
+			{
+				newBone = Bone(boneMap[nodeName], offsetMatrices[boneMap[nodeName]],
+							   parentTransform, localTransform);
+			}
+			newBone.m_Animated = nodeAnim;
+			if (parentBone.GetID() == -1)
+			{
+				parentBone = newBone;
+				newParentBone = &parentBone;
+			}
+			else
+			{
+				parentBone.GetChildren().push_back(newBone);
+				newParentBone = &parentBone.GetChildren().back();
+			}
+		}
+
+		for (int i = 0; i < node->mNumChildren; i++)
+		{
+			CreateBoneTree(scene, node->mChildren[i], *newParentBone, newParentTransform,
+						   animationIndex, boneMap, offsetMatrices, bonesCount);
+		}
 	}
 };
 
-struct MaterialComponent
+struct MeshRenderer
 {
+	Mesh m_Mesh;
+
+	GraphicsPipeline m_GraphicsPipeline;
+	std::vector<DescriptorSet> m_DescriptorSets;
+
 	std::shared_ptr<BufferAllocation> m_MaterialBuffer{};
 	std::vector<std::shared_ptr<TextureImage>> m_TextureImages;
-	std::vector<DescriptorSet> m_DescriptorSets;
-	GraphicsPipeline graphicsPipeline;
 
-	MaterialComponent() = default;
-	MaterialComponent(BufferAllocation* materialBuffer,
-					  std::vector<std::shared_ptr<TextureImage>> textureImages)
-		: m_MaterialBuffer(materialBuffer)
-		, m_TextureImages(std::move(textureImages))
-	{
-	}
+	MeshRenderer() = default;
 };
 } // namespace Neon
 

@@ -43,13 +43,15 @@ struct Vertex
 			{4, 0, vk::Format::eR32Sint, static_cast<uint32_t>(offsetof(Vertex, matID))}};
 		for (uint32_t i = 0; i < MAX_BONES_PER_VERTEX; i++)
 		{
-			result.emplace_back(i + 5, 0, vk::Format::eR32Uint,
-								static_cast<uint32_t>(offsetof(Vertex, boneIDs) + i * sizeof(uint32_t)));
+			result.emplace_back(
+				i + 5, 0, vk::Format::eR32Uint,
+				static_cast<uint32_t>(offsetof(Vertex, boneIDs) + i * sizeof(uint32_t)));
 		}
 		for (uint32_t i = 0; i < MAX_BONES_PER_VERTEX; i++)
 		{
-			result.emplace_back(i + 5 + MAX_BONES_PER_VERTEX, 0, vk::Format::eR32Sfloat,
-								static_cast<uint32_t>(offsetof(Vertex, boneWeights) + i * sizeof(float)));
+			result.emplace_back(
+				i + 5 + MAX_BONES_PER_VERTEX, 0, vk::Format::eR32Sfloat,
+				static_cast<uint32_t>(offsetof(Vertex, boneWeights) + i * sizeof(float)));
 		}
 		return result;
 	}
@@ -74,11 +76,6 @@ struct Material
 	int textureID = 0;
 };
 
-struct AnimatedModel
-{
-	std::vector<Entity> parts;
-};
-
 class Scene
 {
 public:
@@ -87,19 +84,25 @@ public:
 
 	Entity CreateEntity(const std::string& name = std::string());
 
-	void LoadAnimatedModel(const std::string& filename, const std::string& name = std::string());
+	Entity LoadAnimatedModel(const std::string& filename);
 
 	void OnUpdate(float ts, Neon::PerspectiveCameraController controller, glm::vec4 clearColor,
 				  glm::vec3 lightPosition);
 
 private:
-	void ProcessNode(const aiScene* scene, aiNode* node, glm::mat4 parentTransform);
-	void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 transform);
+	static void ProcessNode(const aiScene* scene, aiNode* node, glm::mat4 parentTransform,
+					 std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, std::vector<Material>& materials,
+					 std::vector<std::shared_ptr<TextureImage>>& textureImages,
+					 std::unordered_map<std::string, uint32_t>& boneMap,
+					 std::vector<glm::mat4>& boneOffsets);
+	static void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 transform,
+					 std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, std::vector<Material>& materials,
+					 std::vector<std::shared_ptr<TextureImage>>& textureImages,
+					 std::unordered_map<std::string, uint32_t>& boneMap,
+					 std::vector<glm::mat4>& boneOffsets);
 
 private:
 	entt::registry m_Registry;
-	Assimp::Importer m_Importer;
-	AnimatedModel m_AnimatedModel;
 	friend class Entity;
 };
 } // namespace Neon

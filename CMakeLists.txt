@@ -37,6 +37,7 @@ add_executable(Neon
         src/Renderer/RenderPass.cpp
         src/Renderer/VulkanRenderer.cpp
         src/Renderer/VulkanShader.cpp
+        src/Renderer/SwapChain.cpp
         src/Tools/FileTools.cpp
         src/Window/Window.cpp
         src/Application.cpp
@@ -44,7 +45,8 @@ add_executable(Neon
         src/Sandbox3D.cpp
         src/Scene/Scene.cpp
         src/Scene/Entity.cpp
-        src/Renderer/SwapChain.cpp
+        src/Scene/Animation.cpp
+        src/Scene/Bone.cpp
 
         vendor/imgui/examples/imgui_impl_glfw.cpp
         vendor/imgui/examples/imgui_impl_vulkan.cpp
