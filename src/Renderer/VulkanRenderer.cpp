@@ -63,6 +63,8 @@ void Neon::VulkanRenderer::End()
 void Neon::VulkanRenderer::BeginScene(const Neon::PerspectiveCamera& camera,
 									  const glm::vec4& clearColor)
 {
+	auto& commandBuffer =
+		s_Instance.m_CommandBuffers[s_Instance.m_SwapChain->GetImageIndex()].get();
 	s_Instance.UpdateCameraMatrices(camera);
 	std::array<vk::ClearValue, 3> clearValues = {};
 	memcpy(&clearValues[0].color.float32, &clearColor, sizeof(clearValues[0].color.float32));
@@ -74,7 +76,7 @@ void Neon::VulkanRenderer::BeginScene(const Neon::PerspectiveCamera& camera,
 		{{0, 0}, s_Instance.m_SwapChain->GetExtent()},
 		static_cast<uint32_t>(clearValues.size()),
 		clearValues.data()};
-	s_Instance.m_CommandBuffers[s_Instance.m_SwapChain->GetImageIndex()].get().beginRenderPass(
+	commandBuffer.beginRenderPass(
 		renderPassInfo, vk::SubpassContents::eInline);
 }
 

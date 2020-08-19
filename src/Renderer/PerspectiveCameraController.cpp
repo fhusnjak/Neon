@@ -17,7 +17,7 @@ Neon::PerspectiveCameraController::PerspectiveCameraController(float aspectRatio
 	, m_AspectRatio(aspectRatio)
 	, m_Rotation(rotation)
 {
-	m_Camera.SetPosition({-6, 0, -5}, {-5, 0, 0});
+	m_Camera.SetPosition({-9, 2, -8}, {-5, 0, 0});
 }
 
 void Neon::PerspectiveCameraController::OnUpdate(float ts)

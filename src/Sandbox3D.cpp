@@ -40,7 +40,7 @@ void Sandbox3D::OnUpdate(float ts)
 {
 	m_CameraController.OnUpdate(ts);
 
-	m_ActiveScene->OnUpdate(ts, m_CameraController, clearColor, lightPosition);
+	m_ActiveScene->OnUpdate(ts, m_CameraController, clearColor, lightIntensity, lightPosition);
 
 	m_Times.push(ts);
 	m_TimePassed += ts;
@@ -103,6 +103,7 @@ void Sandbox3D::OnImGuiRender()
 	ImGui::Begin("Settings");
 	ImGui::Text("FPS %.0f", 1000.0f * static_cast<float>(m_FrameCount) / m_TimePassed);
 	ImGui::SliderFloat3("Light Position", &lightPosition.x, -20.f, 20.f);
+	ImGui::SliderFloat("Light Intensity", &lightIntensity, 20.0f, 1000.0f);
 	ImGui::End();
 
 	ImGui::Begin("Viewport");

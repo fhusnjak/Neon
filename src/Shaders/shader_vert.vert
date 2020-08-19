@@ -13,7 +13,7 @@ layout(location = 4) in int matID;
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragNorm;
-layout(location = 2) out vec3 fragPos;
+layout(location = 2) out vec3 fragWorldPos;
 layout(location = 3) out vec2 fragTexCoord;
 layout(location = 4) flat out int fragMatID;
 
@@ -27,6 +27,7 @@ layout(set = 0, binding = 0, scalar) uniform CameraMatrices
 layout(push_constant, scalar) uniform PushConstant
 {
     mat4 model;
+    float lightIntensity;
     vec3 lightPosition;
     vec3 lightColor;
 }
@@ -36,7 +37,7 @@ void main()
 {
     fragColor = color;
     fragNorm = normalize(norm);
-    fragPos = pos;
+    fragWorldPos = (pushConstant.model * vec4(pos, 1)).xyz;
     fragTexCoord = texCoord;
     fragMatID = matID;
 

@@ -330,7 +330,8 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	material.ambient = {ambientColor.r, ambientColor.g, ambientColor.b};
 	aiColor3D diffuseColor(0.f, 0.f, 0.f);
 	aiMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
-	material.diffuse = {diffuseColor.r, diffuseColor.g, diffuseColor.b};
+	//material.diffuse = {diffuseColor.r, diffuseColor.g, diffuseColor.b};
+	material.diffuse = {0.8fI, 0.8f, 0.8f};
 	aiColor3D specularColor(0.f, 0.f, 0.f);
 	aiMaterial->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
 	material.specular = {specularColor.r, specularColor.g, specularColor.b};
@@ -370,7 +371,7 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 }
 
 void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controller,
-						   glm::vec4 clearColor, glm::vec3 lightPosition)
+						   glm::vec4 clearColor, float lightIntensity, glm::vec3 lightPosition)
 {
 	VulkanRenderer::BeginScene(controller.GetCamera(), clearColor);
 	auto group1 = m_Registry.group<SkyDomeRenderer>(entt::get<Transform>);
@@ -381,13 +382,13 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 		transformMatrix = glm::translate(glm::mat4(1.0), controller.GetCamera().GetPosition()) * transform.m_Transform;
 		transformMatrix = glm::translate(glm::mat4(1.0), {0, -1000, 0}) * transform.m_Transform;
 		Transform newTransform(transformMatrix);
-		VulkanRenderer::Render(newTransform, skyDomeRenderer, lightPosition);
+		VulkanRenderer::Render(newTransform, skyDomeRenderer, lightIntensity, lightPosition);
 	}
 	auto group2 = m_Registry.group<MeshRenderer>(entt::get<Transform>);
 	for (auto entity : group2)
 	{
 		const auto& [meshRenderer, transform] = group2.get<MeshRenderer, Transform>(entity);
-		VulkanRenderer::Render(transform, meshRenderer, lightPosition);
+		VulkanRenderer::Render(transform, meshRenderer, lightIntensity, lightPosition);
 	}
 	auto group3 = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);
 	for (auto entity : group3)
@@ -395,7 +396,7 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 		const auto& [skinnedMeshRenderer, transform] =
 		group3.get<SkinnedMeshRenderer, Transform>(entity);
 		skinnedMeshRenderer.Update(ts / 1000.0f);
-		VulkanRenderer::Render(transform, skinnedMeshRenderer, lightPosition);
+		VulkanRenderer::Render(transform, skinnedMeshRenderer, lightIntensity, lightPosition);
 	}
 	VulkanRenderer::EndScene();
 }

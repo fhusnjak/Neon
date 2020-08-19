@@ -32,5 +32,6 @@ private:
 	int m_FrameCount = 0;
 
 	glm::vec4 clearColor{1, 1, 1, 1.00f};
-	glm::vec3 lightPosition = {-20, 20, 9.88};
+	float lightIntensity = 100.0f;
+	glm::vec3 lightPosition = {-0.896, 15.821, -12.353};
 };

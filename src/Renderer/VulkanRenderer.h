@@ -31,6 +31,7 @@ struct CameraMatrices
 struct PushConstant
 {
 	glm::mat4 transformComponent;
+	float lightIntensity;
 	[[maybe_unused]] glm::vec3 lightPosition;
 	[[maybe_unused]] glm::vec3 lightColor;
 };
@@ -64,7 +65,7 @@ public:
 
 	template <typename T>
 	static void Render(const Transform& transformComponent,
-					   const T& renderer, const glm::vec3& lightPosition)
+					   const T& renderer, float lightIntensity, const glm::vec3& lightPosition)
 	{
 		auto& commandBuffer =
 			s_Instance.m_CommandBuffers[s_Instance.m_SwapChain->GetImageIndex()].get();
@@ -90,7 +91,7 @@ public:
 										 renderer.m_GraphicsPipeline.GetLayout(), 0,
 										 descriptorSets.size(), descriptorSets.data(), 0, nullptr);
 
-		PushConstant pushConstant{transformComponent.m_Transform, lightPosition, {1, 0, 1}};
+		PushConstant pushConstant{transformComponent.m_Transform, lightIntensity, lightPosition, {1, 0, 1}};
 		commandBuffer.pushConstants(renderer.m_GraphicsPipeline.GetLayout(),
 									vk::ShaderStageFlagBits::eVertex |
 									vk::ShaderStageFlagBits::eFragment,

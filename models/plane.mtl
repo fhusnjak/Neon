@@ -5,5 +5,5 @@ Ns 8.0
 Ni 0 
 Ka 0.1 0.1 0.1
 Kd 0.8 0.8 0.8
-Ks 1 1 1
+Ks 0.1 0.1 0.1
 map_Kd textures/floor_tiles_06_diff_8k.jpg

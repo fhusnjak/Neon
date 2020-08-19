@@ -17,7 +17,7 @@ layout(location = 5 + MAX_BONES_PER_VERTEX) in float boneWeights[MAX_BONES_PER_V
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragNorm;
-layout(location = 2) out vec3 fragPos;
+layout(location = 2) out vec3 fragWorldPos;
 layout(location = 3) out vec2 fragTexCoord;
 layout(location = 4) flat out int fragMatID;
 
@@ -36,6 +36,7 @@ layout(set = 1, binding = 2, scalar) readonly buffer BoneBuffer
 layout(push_constant, scalar) uniform PushConstant
 {
     mat4 model;
+    float lightIntensity;
     vec3 lightPosition;
     vec3 lightColor;
 }
@@ -43,16 +44,17 @@ pushConstant;
 
 void main()
 {
-    fragColor = color;
-    fragNorm = normalize(norm);
-    fragPos = pos;
-    fragTexCoord = texCoord;
-    fragMatID = matID;
-
     mat4 boneTransform = mat4(0.0);
     for (int i = 0; i < MAX_BONES_PER_VERTEX; i++)
     {
         boneTransform += boneTransforms[boneIDs[i]] * boneWeights[i];
     }
-    gl_Position = cameraMatrices.projection * cameraMatrices.view * pushConstant.model * boneTransform * vec4(pos, 1.0);
+    fragColor = color;
+    mat4 worldTransform = pushConstant.model * boneTransform;
+    fragNorm = normalize((worldTransform * vec4(norm, 0)).xyz);
+    vec4 worldPos = worldTransform * vec4(pos, 1);
+    fragWorldPos = worldPos.xyz;
+    fragTexCoord = texCoord;
+    fragMatID = matID;
+    gl_Position = cameraMatrices.projection * cameraMatrices.view * worldPos;
 }
