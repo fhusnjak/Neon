@@ -84,6 +84,8 @@ public:
 
 	Entity CreateEntity(const std::string& name = std::string());
 
+	void LoadSkyDome();
+
 	void LoadModel(const std::string& filename, const glm::mat4& worldTransform);
 
 	Entity LoadAnimatedModel(const std::string& filename);
@@ -92,15 +94,28 @@ public:
 				  glm::vec3 lightPosition);
 
 private:
-	void ProcessNode(const aiScene* scene, aiNode* node, glm::mat4 parentTransform, const glm::mat4& worldTransform);
-	void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform, const glm::mat4& worldTransform);
-	static void ProcessNode(const aiScene* scene, aiNode* node, std::vector<Vertex>& vertices,
-							std::vector<uint32_t>& indices, std::vector<Material>& materials,
-							std::vector<std::shared_ptr<TextureImage>>& textureImages,
-							std::unordered_map<std::string, uint32_t>& boneMap,
-							std::vector<glm::mat4>& boneOffsets);
-	static void ProcessMesh(const aiScene* scene, aiMesh* mesh, std::vector<Vertex>& vertices,
-							std::vector<uint32_t>& indices, std::vector<Material>& materials,
+	template<typename... Args>
+	void ProcessNode(const aiScene* scene, aiNode* node, glm::mat4 parentTransform, Args&&... args)
+	{
+		glm::mat4 nodeTransform =
+			parentTransform * glm::transpose(*(glm::mat4*)&node->mTransformation);
+		for (int i = 0; i < node->mNumMeshes; i++)
+		{
+			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+			ProcessMesh(scene, mesh, nodeTransform, std::forward<Args>(args)...);
+		}
+		for (int i = 0; i < node->mNumChildren; i++)
+		{
+			ProcessNode(scene, node->mChildren[i], nodeTransform, std::forward<Args>(args)...);
+		}
+	}
+	static void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
+							std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
+	void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
+					 const glm::mat4& worldTransform);
+	static void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
+							std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+							std::vector<Material>& materials,
 							std::vector<std::shared_ptr<TextureImage>>& textureImages,
 							std::unordered_map<std::string, uint32_t>& boneMap,
 							std::vector<glm::mat4>& boneOffsets);

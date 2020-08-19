@@ -400,7 +400,28 @@ void* Neon::VulkanRenderer::GetOffscreenImageID()
 	return s_Instance.m_ImGuiOffscreenTextureDescSet;
 }
 
-void Neon::VulkanRenderer::LoadModel(Neon::MeshRenderer& meshComponent)
+void Neon::VulkanRenderer::LoadSkyDome(Neon::SkyDomeRenderer& skyDomeRenderer)
+{
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
+
+	std::vector<vk::DescriptorSetLayoutBinding> bindings;
+
+	auto& pipeline = skyDomeRenderer.m_GraphicsPipeline;
+	pipeline.Init(device);
+	pipeline.LoadVertexShader("src/Shaders/vert_skydome.spv");
+	pipeline.LoadFragmentShader("src/Shaders/frag_skydome.spv");
+
+	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
+											   vk::ShaderStageFlagBits::eFragment,
+											   0, sizeof(PushConstant)};
+	pipeline.CreatePipelineLayout({s_Instance.m_CameraDescriptorSets[0].GetLayout()},
+								  {pushConstantRange});
+	pipeline.CreatePipeline(s_Instance.m_OffscreenRenderPass.get(), msaaSamples,
+							s_Instance.m_SwapChain->GetExtent(), {Vertex::getBindingDescription()},
+							{Vertex::getAttributeDescriptions()}, vk::CullModeFlagBits::eFront);
+}
+
+void Neon::VulkanRenderer::LoadModel(Neon::MeshRenderer& meshRenderer)
 {
 	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 
@@ -408,23 +429,23 @@ void Neon::VulkanRenderer::LoadModel(Neon::MeshRenderer& meshComponent)
 	bindings.emplace_back(0, vk::DescriptorType::eStorageBuffer, 1,
 						  vk::ShaderStageFlagBits::eFragment);
 	bindings.emplace_back(1, vk::DescriptorType::eCombinedImageSampler,
-						  static_cast<uint32_t>(meshComponent.m_TextureImages.size()),
+						  static_cast<uint32_t>(meshRenderer.m_TextureImages.size()),
 						  vk::ShaderStageFlagBits::eFragment);
 
-	vk::DescriptorBufferInfo materialBufferInfo{meshComponent.m_MaterialBuffer->buffer, 0,
+	vk::DescriptorBufferInfo materialBufferInfo{meshRenderer.m_MaterialBuffer->buffer, 0,
 												VK_WHOLE_SIZE};
 
 	std::vector<vk::DescriptorImageInfo> texturesBufferInfo;
-	texturesBufferInfo.reserve(meshComponent.m_TextureImages.size());
-	for (auto& textureImage : meshComponent.m_TextureImages)
+	texturesBufferInfo.reserve(meshRenderer.m_TextureImages.size());
+	for (auto& textureImage : meshRenderer.m_TextureImages)
 	{
 		texturesBufferInfo.push_back(textureImage->descriptor);
 	}
 
-	meshComponent.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
+	meshRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
 	for (int i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
 	{
-		auto& wavefrontDescriptorSet = meshComponent.m_DescriptorSets[i];
+		auto& wavefrontDescriptorSet = meshRenderer.m_DescriptorSets[i];
 		wavefrontDescriptorSet.Init(device);
 		wavefrontDescriptorSet.Create(
 			s_Instance.m_DescriptorPools[s_Instance.m_DescriptorPools.size() - 1]->GetHandle(),
@@ -434,7 +455,7 @@ void Neon::VulkanRenderer::LoadModel(Neon::MeshRenderer& meshComponent)
 			wavefrontDescriptorSet.CreateWrite(1, texturesBufferInfo.data(), 0)};
 		wavefrontDescriptorSet.Update(descriptorWrites);
 	}
-	auto& pipeline = meshComponent.m_GraphicsPipeline;
+	auto& pipeline = meshRenderer.m_GraphicsPipeline;
 	pipeline.Init(device);
 	pipeline.LoadVertexShader("src/Shaders/vert.spv");
 	pipeline.LoadFragmentShader("src/Shaders/frag.spv");
@@ -443,7 +464,7 @@ void Neon::VulkanRenderer::LoadModel(Neon::MeshRenderer& meshComponent)
 											   vk::ShaderStageFlagBits::eFragment,
 											   0, sizeof(PushConstant)};
 	pipeline.CreatePipelineLayout({s_Instance.m_CameraDescriptorSets[0].GetLayout(),
-								   meshComponent.m_DescriptorSets[0].GetLayout()},
+								   meshRenderer.m_DescriptorSets[0].GetLayout()},
 								  {pushConstantRange});
 	pipeline.CreatePipeline(s_Instance.m_OffscreenRenderPass.get(), msaaSamples,
 							s_Instance.m_SwapChain->GetExtent(), {Vertex::getBindingDescription()},

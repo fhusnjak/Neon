@@ -13,6 +13,7 @@ Sandbox3D::Sandbox3D()
 	, m_CameraController((float)WIDTH / HEIGHT)
 {
 	m_ActiveScene = std::make_shared<Neon::Scene>();
+	m_ActiveScene->LoadSkyDome();
 	auto human = m_ActiveScene->LoadAnimatedModel("models/rp_nathan_animated_003_walking.fbx");
 	auto& transformComponent1 = human.GetComponent<Neon::Transform>();
 	transformComponent1.m_Transform = glm::scale(glm::mat4(1.0f), {0.01, 0.01, 0.01});

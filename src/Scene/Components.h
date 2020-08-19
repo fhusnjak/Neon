@@ -53,6 +53,16 @@ struct Mesh
 	std::shared_ptr<BufferAllocation> m_IndexBuffer{};
 };
 
+struct SkyDomeRenderer
+{
+	Mesh m_Mesh;
+
+	GraphicsPipeline m_GraphicsPipeline;
+	std::vector<DescriptorSet> m_DescriptorSets;
+
+	SkyDomeRenderer() = default;
+};
+
 struct SkinnedMeshRenderer
 {
 	Mesh m_Mesh;

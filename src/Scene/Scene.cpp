@@ -28,6 +28,40 @@ Neon::Entity Neon::Scene::CreateEntity(const std::string& name)
 	return entity;
 }
 
+void Neon::Scene::LoadSkyDome()
+{
+	Assimp::Importer importer;
+	const aiScene* scene =
+		importer.ReadFile("models/dome.obj", aiProcess_Triangulate | aiProcess_GenSmoothNormals |
+									aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices);
+	assert(scene && !(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) && scene->mRootNode);
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+	ProcessNode(scene, scene->mRootNode, glm::mat4(1.0), vertices, indices);
+	Entity entity = CreateEntity(scene->mRootNode->mName.C_Str());
+	auto& skyDomeRenderer =
+		entity.AddComponent<SkyDomeRenderer>();
+	auto& transformComponent = entity.AddComponent<Transform>(glm::mat4(1.0));
+	transformComponent.m_Transform = glm::scale(transformComponent.m_Transform, {5000, 5000, 5000});
+
+	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
+
+	skyDomeRenderer.m_Mesh.m_VerticesCount = (uint32_t)vertices.size();
+	skyDomeRenderer.m_Mesh.m_IndicesCount = (uint32_t)indices.size();
+	skyDomeRenderer.m_Mesh.m_VertexBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, vertices,
+		vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
+	skyDomeRenderer.m_Mesh.m_IndexBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, indices,
+		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
+
+	Neon::VulkanRenderer::EndSingleTimeCommands(cmdBuff);
+
+	Neon::VulkanRenderer::LoadSkyDome(skyDomeRenderer);
+
+	Neon::Allocator::FlushStaging();
+}
+
 void Neon::Scene::LoadModel(const std::string& filename, const glm::mat4& worldTransform)
 {
 	Assimp::Importer importer;
@@ -37,6 +71,7 @@ void Neon::Scene::LoadModel(const std::string& filename, const glm::mat4& worldT
 	assert(scene && !(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) && scene->mRootNode);
 	ProcessNode(scene, scene->mRootNode, glm::mat4(1.0f), worldTransform);
 }
+
 
 Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 {
@@ -53,7 +88,7 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	std::unordered_map<std::string, uint32_t> boneMap;
 	std::vector<glm::mat4> boneOffsets;
 
-	ProcessNode(scene, scene->mRootNode, vertices, indices, materials, textureImages, boneMap,
+	ProcessNode(scene, scene->mRootNode, glm::mat4(1.0), vertices, indices, materials, textureImages, boneMap,
 				boneOffsets);
 
 	Entity entity = CreateEntity(scene->mRootNode->mName.C_Str());
@@ -89,17 +124,30 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	return entity;
 }
 
-void Neon::Scene::ProcessNode(const aiScene* scene, aiNode* node, glm::mat4 parentTransform, const glm::mat4& worldTransform)
+void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
+							  std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)
 {
-	glm::mat4 nodeTransform = parentTransform * glm::transpose(*(glm::mat4*)&node->mTransformation);
-	for (int i = 0; i < node->mNumMeshes; i++)
+	int meshSizeBefore = vertices.size();
+	int newIndicesCount = 0;
+	for (int i = 0; i < mesh->mNumFaces; i++)
 	{
-		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(scene, mesh, nodeTransform, worldTransform);
+		// FIXME: for now just ignore faces with number of indices not equal to 3
+		aiFace face = mesh->mFaces[i];
+		if (face.mNumIndices != 3) { continue; }
+		for (int j = 0; j < face.mNumIndices; j++)
+		{
+			indices.push_back(face.mIndices[j] + meshSizeBefore);
+			newIndicesCount++;
+		}
 	}
-	for (int i = 0; i < node->mNumChildren; i++)
+	if (newIndicesCount == 0) { return; }
+
+	for (int i = 0; i < mesh->mNumVertices; i++)
 	{
-		ProcessNode(scene, node->mChildren[i], nodeTransform, worldTransform);
+		Vertex vertex{};
+		vertex.pos = {mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z};
+		vertex.norm = {mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z};
+		vertices.push_back(vertex);
 	}
 }
 
@@ -207,25 +255,7 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	Allocator::FlushStaging();
 }
 
-void Neon::Scene::ProcessNode(const aiScene* scene, aiNode* node, std::vector<Vertex>& vertices,
-							  std::vector<uint32_t>& indices, std::vector<Material>& materials,
-							  std::vector<std::shared_ptr<TextureImage>>& textureImages,
-							  std::unordered_map<std::string, uint32_t>& boneMap,
-							  std::vector<glm::mat4>& boneOffsets)
-{
-	for (int i = 0; i < node->mNumMeshes; i++)
-	{
-		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		ProcessMesh(scene, mesh, vertices, indices, materials, textureImages, boneMap, boneOffsets);
-	}
-	for (int i = 0; i < node->mNumChildren; i++)
-	{
-		ProcessNode(scene, node->mChildren[i], vertices, indices, materials, textureImages, boneMap,
-					boneOffsets);
-	}
-}
-
-void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, std::vector<Vertex>& vertices,
+void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform, std::vector<Vertex>& vertices,
 							  std::vector<uint32_t>& indices, std::vector<Material>& materials,
 							  std::vector<std::shared_ptr<TextureImage>>& textureImages,
 							  std::unordered_map<std::string, uint32_t>& boneMap,
@@ -343,17 +373,27 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 						   glm::vec4 clearColor, glm::vec3 lightPosition)
 {
 	VulkanRenderer::BeginScene(controller.GetCamera(), clearColor);
-	auto group1 = m_Registry.group<MeshRenderer>(entt::get<Transform>);
+	auto group1 = m_Registry.group<SkyDomeRenderer>(entt::get<Transform>);
 	for (auto entity : group1)
 	{
-		const auto& [meshRenderer, transform] = group1.get<MeshRenderer, Transform>(entity);
-		VulkanRenderer::Render(transform, meshRenderer, lightPosition);
+		auto [skyDomeRenderer, transform] = group1.get<SkyDomeRenderer, Transform>(entity);
+		glm::mat4 transformMatrix = transform.m_Transform;
+		transformMatrix = glm::translate(glm::mat4(1.0), controller.GetCamera().GetPosition()) * transform.m_Transform;
+		transformMatrix = glm::translate(glm::mat4(1.0), {0, -1000, 0}) * transform.m_Transform;
+		Transform newTransform(transformMatrix);
+		VulkanRenderer::Render(newTransform, skyDomeRenderer, lightPosition);
 	}
-	auto group2 = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);
+	auto group2 = m_Registry.group<MeshRenderer>(entt::get<Transform>);
 	for (auto entity : group2)
 	{
+		const auto& [meshRenderer, transform] = group2.get<MeshRenderer, Transform>(entity);
+		VulkanRenderer::Render(transform, meshRenderer, lightPosition);
+	}
+	auto group3 = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);
+	for (auto entity : group3)
+	{
 		const auto& [skinnedMeshRenderer, transform] =
-		group2.get<SkinnedMeshRenderer, Transform>(entity);
+		group3.get<SkinnedMeshRenderer, Transform>(entity);
 		skinnedMeshRenderer.Update(ts / 1000.0f);
 		VulkanRenderer::Render(transform, skinnedMeshRenderer, lightPosition);
 	}

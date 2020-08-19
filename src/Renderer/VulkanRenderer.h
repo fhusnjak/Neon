@@ -58,7 +58,8 @@ public:
 	static vk::Sampler CreateSampler(const vk::SamplerCreateInfo& createInfo);
 	static void* GetOffscreenImageID();
 	static vk::Extent2D GetExtent2D();
-	static void LoadModel(MeshRenderer& meshComponent);
+	static void LoadSkyDome(SkyDomeRenderer& skyDomeRenderer);
+	static void LoadModel(MeshRenderer& meshRenderer);
 	static void LoadAnimatedModel(SkinnedMeshRenderer& meshComponent);
 
 	template <typename T>
@@ -79,8 +80,12 @@ public:
 								   static_cast<vk::Pipeline>(renderer.m_GraphicsPipeline));
 
 		std::vector<vk::DescriptorSet> descriptorSets = {
-			s_Instance.m_CameraDescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get(),
-			renderer.m_DescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get()};
+			s_Instance.m_CameraDescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get()};
+		if (s_Instance.m_SwapChain->GetImageIndex() < renderer.m_DescriptorSets.size())
+		{
+			descriptorSets.push_back(renderer.m_DescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get());
+		}
+
 		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
 										 renderer.m_GraphicsPipeline.GetLayout(), 0,
 										 descriptorSets.size(), descriptorSets.data(), 0, nullptr);

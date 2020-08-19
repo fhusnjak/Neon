@@ -13,7 +13,7 @@
 
 Neon::PerspectiveCameraController::PerspectiveCameraController(float aspectRatio,
 															   bool rotation) noexcept
-	: m_Camera(glm::radians(45.0f), aspectRatio, 0.1f, 500.0f)
+	: m_Camera(glm::radians(45.0f), aspectRatio, 0.1f, 15000.0f)
 	, m_AspectRatio(aspectRatio)
 	, m_Rotation(rotation)
 {
@@ -64,7 +64,7 @@ bool Neon::PerspectiveCameraController::OnWindowResize(Neon::WindowResizeEvent& 
 	if (e.GetWidth() == 0 || e.GetHeight() == 0) return false;
 	m_AspectRatio = (float)e.GetWidth() / (float)e.GetHeight();
 	m_Camera.SetProjection(glm::radians(45.0f), (float)e.GetWidth() / (float)e.GetHeight(), 0.1f,
-						   100.0f);
+						   15000.0f);
 	return false;
 }
 
