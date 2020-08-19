@@ -69,7 +69,7 @@ struct Material
 	glm::vec3 specular = glm::vec3(0.2f, 0.2f, 0.2f);
 	glm::vec3 transmittance = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 emission = glm::vec3(0.0f, 0.0f, 0.1f);
-	float shininess = 0.f;
+	float shininess = 1.f;
 	float ior = 1.0f; // index of refraction
 	float dissolve = 1.f; // 1 == opaque; 0 == fully transparent
 	int illum = 1;
@@ -87,6 +87,8 @@ public:
 	void LoadSkyDome();
 
 	void LoadModel(const std::string& filename, const glm::mat4& worldTransform);
+
+	void LoadTerrain(float width, float height, float density);
 
 	Entity LoadAnimatedModel(const std::string& filename);
 

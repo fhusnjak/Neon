@@ -331,7 +331,7 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	aiColor3D diffuseColor(0.f, 0.f, 0.f);
 	aiMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
 	//material.diffuse = {diffuseColor.r, diffuseColor.g, diffuseColor.b};
-	material.diffuse = {0.8fI, 0.8f, 0.8f};
+	material.diffuse = {0.8f, 0.8f, 0.8f};
 	aiColor3D specularColor(0.f, 0.f, 0.f);
 	aiMaterial->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
 	material.specular = {specularColor.r, specularColor.g, specularColor.b};
@@ -399,4 +399,126 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 		VulkanRenderer::Render(transform, skinnedMeshRenderer, lightIntensity, lightPosition);
 	}
 	VulkanRenderer::EndScene();
+}
+
+float GetHeight(unsigned char* pixels, int texWidth, int texHeight, int texX, int texZ, float maxHeight)
+{
+	if (texX < 0 || texZ < 0 || texX >= texWidth || texZ >= texHeight)
+	{
+		return 0.0f;
+	}
+	unsigned char *valuePtr = pixels + static_cast<int>((texX * texHeight + texZ) * 4);
+	uint32_t value = (uint32_t)*valuePtr + (uint32_t)*(valuePtr + 1) + (uint32_t)*(valuePtr + 2);
+	return static_cast<float>(value) / 765.0f * maxHeight;
+}
+
+glm::vec3 CalculateNormal(unsigned char* pixels, int texWidth, int texHeight, int texX, int texZ, float maxHeight)
+{
+	float heightL = GetHeight(pixels, texWidth, texHeight, texX - 1, texZ, maxHeight);
+	float heightR = GetHeight(pixels, texWidth, texHeight, texX + 1, texZ, maxHeight);
+	float heightD = GetHeight(pixels, texWidth, texHeight, texX, texZ - 1, maxHeight);
+	float heightU = GetHeight(pixels, texWidth, texHeight, texX, texZ + 1, maxHeight);
+	glm::vec3 normal = {heightL - heightR, 2.0f, heightD - heightU};
+	return glm::normalize(normal);
+}
+
+void Neon::Scene::LoadTerrain(float width, float height, float density)
+{
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+	int widthCount = static_cast<int>(density * width * 2.0f) + 1;
+	int heightCount = static_cast<int>(density * height * 2.0f) + 1;
+	float widthIncrement = 1.0f / (density);
+	float heightIncrement = 1.0f / (density);
+	float xValue = -width;
+	float zValue = -height;
+
+	int texWidth, texHeight, texChannels;
+	stbi_uc* pixels =
+		stbi_load("textures/heightmap.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
+	assert(pixels);
+
+	float texCoordX = 0;
+	float texCoordY = 0;
+	for (int i = 0; i < heightCount; i++)
+	{
+		for (int j = 0; j < widthCount; j++)
+		{
+			Vertex vertex{};
+			int texX = static_cast<int>((xValue + width) / (width * 2 + 1) * static_cast<float>(texWidth));
+			int texZ = static_cast<int>((zValue + height) / (height * 2 + 1) * static_cast<float>(texHeight));
+			vertex.pos = {xValue, GetHeight(pixels, texWidth, texHeight, texX, texZ, 7.0f), zValue};
+			vertex.norm = CalculateNormal(pixels, texWidth, texHeight, texX, texZ, 10.0f);
+			vertex.matID = 0;
+			vertex.texCoord = {texCoordX, texCoordY};
+			vertices.push_back(vertex);
+			xValue += widthIncrement;
+			texCoordX += 0.5f;
+		}
+		xValue = -width;
+		zValue += heightIncrement;
+		texCoordX = 0;
+		texCoordY += 0.5f;
+	}
+
+	uint32_t index = 0;
+	for (int i = 0; i < heightCount - 1; i++)
+	{
+		for (int j = 0; j < widthCount - 1; j++)
+		{
+			indices.push_back(index);
+			indices.push_back(index + widthCount);
+			indices.push_back(index + 1);
+			indices.push_back(index + 1);
+			indices.push_back(index + widthCount);
+			indices.push_back(index + widthCount + 1);
+			index++;
+		}
+		index++;
+	}
+
+	Entity entity = CreateEntity("terrain");
+	auto& meshRenderer = entity.AddComponent<MeshRenderer>();
+	auto& transform = entity.AddComponent<Transform>(glm::translate(glm::mat4(1.0), {0, -2, 0}));
+
+	std::vector<Material> materials;
+	Material material{};
+	material.ambient = {0.1, 0.1, 0.1};
+	material.diffuse = {0.8, 0.8, 0.8};
+	material.specular = {0.0, 0.0, 0.0};
+	material.textureID = 0;
+	materials.push_back(material);
+
+	std::unique_ptr<ImageAllocation> imageAllocation = Neon::Allocator::CreateTextureImage("textures/grass.jpg");;
+	assert(imageAllocation);
+	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
+		imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+	vk::SamplerCreateInfo samplerInfo = {
+		{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
+	samplerInfo.setMaxLod(FLT_MAX);
+	vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
+	vk::DescriptorImageInfo desc{sampler, textureImageView,
+								 vk::ImageLayout::eShaderReadOnlyOptimal};
+	auto* textureImage = new TextureImage{desc, std::move(imageAllocation)};
+	meshRenderer.m_TextureImages.push_back(std::shared_ptr<TextureImage>(textureImage));
+
+	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
+
+	meshRenderer.m_Mesh.m_VerticesCount = (uint32_t)vertices.size();
+	meshRenderer.m_Mesh.m_IndicesCount = (uint32_t)indices.size();
+	meshRenderer.m_Mesh.m_VertexBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, vertices,
+		vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
+	meshRenderer.m_Mesh.m_IndexBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, indices,
+		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
+	meshRenderer.m_MaterialBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, materials, vk::BufferUsageFlagBits::eStorageBuffer);
+
+	VulkanRenderer::EndSingleTimeCommands(cmdBuff);
+
+	VulkanRenderer::LoadModel(meshRenderer);
+
+	Allocator::FlushStaging();
 }

@@ -14,7 +14,7 @@ Sandbox3D::Sandbox3D()
 {
 	m_ActiveScene = std::make_shared<Neon::Scene>();
 	m_ActiveScene->LoadSkyDome();
-	auto human = m_ActiveScene->LoadAnimatedModel("models/rp_nathan_animated_003_walking.fbx");
+	/*auto human = m_ActiveScene->LoadAnimatedModel("models/rp_nathan_animated_003_walking.fbx");
 	auto& transformComponent1 = human.GetComponent<Neon::Transform>();
 	transformComponent1.m_Transform = glm::scale(glm::mat4(1.0f), {0.01, 0.01, 0.01});
 	transformComponent1.m_Transform =
@@ -27,9 +27,12 @@ Sandbox3D::Sandbox3D()
 	transformComponent2.m_Transform =
 		glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * transformComponent2.m_Transform;
 	transformComponent2.m_Transform =
-		glm::translate(glm::mat4(1.0), {-3, -1.0, 0}) * transformComponent2.m_Transform;
+		glm::translate(glm::mat4(1.0), {-3, -1.0, 0}) * transformComponent2.m_Transform;*/
 
-	m_ActiveScene->LoadModel("models/plane.obj", glm::translate(glm::mat4(1.0), {0, -1, 0}));
+	glm::mat4 planeTransform = glm::scale(glm::mat4(1.0), {0.1, 0.1, 0.1});
+	planeTransform = glm::translate(glm::mat4(1.0), {-3, 0, 0}) * planeTransform;
+	m_ActiveScene->LoadModel("models/plane.obj", planeTransform);
+	m_ActiveScene->LoadTerrain(30, 30, 10.0f);
 }
 
 void Sandbox3D::OnAttach() { }
@@ -103,7 +106,7 @@ void Sandbox3D::OnImGuiRender()
 	ImGui::Begin("Settings");
 	ImGui::Text("FPS %.0f", 1000.0f * static_cast<float>(m_FrameCount) / m_TimePassed);
 	ImGui::SliderFloat3("Light Position", &lightPosition.x, -20.f, 20.f);
-	ImGui::SliderFloat("Light Intensity", &lightIntensity, 20.0f, 1000.0f);
+	ImGui::SliderFloat("Light Intensity", &lightIntensity, 1.0f, 10.0f);
 	ImGui::End();
 
 	ImGui::Begin("Viewport");

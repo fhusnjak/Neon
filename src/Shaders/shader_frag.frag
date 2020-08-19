@@ -39,13 +39,13 @@ pushConstant;
 
 void main()
 {
-    vec3 normal = normalize(fragNorm);
+    vec3 normal = fragNorm;
 
     Material mat = materials[fragMatID];
 
     vec3 lightDir = pushConstant.lightPosition - fragWorldPos;
     float d = length(lightDir);
-    float lightIntensity = pushConstant.lightIntensity / (d * d);
+    float lightIntensity = pushConstant.lightIntensity / d;
     lightDir = normalize(lightDir);
 
     vec3 diffuse = computeDiffuse(mat, lightDir, normal);

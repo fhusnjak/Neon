@@ -527,3 +527,42 @@ void Neon::VulkanRenderer::LoadAnimatedModel(Neon::SkinnedMeshRenderer& skinnedM
 							s_Instance.m_SwapChain->GetExtent(), {Vertex::getBindingDescription()},
 							{Vertex::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
 }
+
+void Neon::VulkanRenderer::LoadTerrain(MeshRenderer& meshRenderer)
+{
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
+
+	std::vector<vk::DescriptorSetLayoutBinding> bindings;
+	bindings.emplace_back(0, vk::DescriptorType::eCombinedImageSampler,
+						  1,
+						  vk::ShaderStageFlagBits::eFragment);
+
+	vk::DescriptorImageInfo texturesBufferInfo = meshRenderer.m_TextureImages[0]->descriptor;
+	meshRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
+	for (int i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
+	{
+		auto& wavefrontDescriptorSet = meshRenderer.m_DescriptorSets[i];
+		wavefrontDescriptorSet.Init(device);
+		wavefrontDescriptorSet.Create(
+			s_Instance.m_DescriptorPools[s_Instance.m_DescriptorPools.size() - 1]->GetHandle(),
+			bindings);
+		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
+			wavefrontDescriptorSet.CreateWrite(0, &texturesBufferInfo, 0)};
+		wavefrontDescriptorSet.Update(descriptorWrites);
+	}
+
+	auto& pipeline = meshRenderer.m_GraphicsPipeline;
+	pipeline.Init(device);
+	pipeline.LoadVertexShader("src/Shaders/vert_terrain.spv");
+	pipeline.LoadFragmentShader("src/Shaders/frag_terrain.spv");
+
+	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
+											   vk::ShaderStageFlagBits::eFragment,
+											   0, sizeof(PushConstant)};
+	pipeline.CreatePipelineLayout({s_Instance.m_CameraDescriptorSets[0].GetLayout(),
+								   meshRenderer.m_DescriptorSets[0].GetLayout()},
+								  {pushConstantRange});
+	pipeline.CreatePipeline(s_Instance.m_OffscreenRenderPass.get(), msaaSamples,
+							s_Instance.m_SwapChain->GetExtent(), {Vertex::getBindingDescription()},
+							{Vertex::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
+}

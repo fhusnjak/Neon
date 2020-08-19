@@ -62,6 +62,7 @@ public:
 	static void LoadSkyDome(SkyDomeRenderer& skyDomeRenderer);
 	static void LoadModel(MeshRenderer& meshRenderer);
 	static void LoadAnimatedModel(SkinnedMeshRenderer& meshComponent);
+	static void LoadTerrain(MeshRenderer& meshRenderer);
 
 	template <typename T>
 	static void Render(const Transform& transformComponent,
