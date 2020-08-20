@@ -36,9 +36,6 @@ layout(set = 1, binding = 2, scalar) readonly buffer BoneBuffer
 layout(push_constant, scalar) uniform PushConstant
 {
     mat4 model;
-    float lightIntensity;
-    vec3 lightPosition;
-    vec3 lightColor;
 }
 pushConstant;
 

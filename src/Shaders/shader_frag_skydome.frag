@@ -16,14 +16,6 @@ layout(set = 0, binding = 0, scalar) uniform CameraMatrices
     mat4 projection;
 } cameraMatrices;
 
-layout(push_constant, scalar) uniform PushConstant
-{
-    mat4 model;
-    vec3 lightPosition;
-    vec3 lightColor;
-}
-pushConstant;
-
 const vec3 baseColor = vec3(0.18,0.27,0.47);
 
 void main()
