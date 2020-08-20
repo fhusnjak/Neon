@@ -32,7 +32,7 @@ Sandbox3D::Sandbox3D()
 	glm::mat4 planeTransform = glm::scale(glm::mat4(1.0), {0.1, 0.1, 0.1});
 	planeTransform = glm::translate(glm::mat4(1.0), {-3, 0, 0}) * planeTransform;
 	m_ActiveScene->LoadModel("models/plane.obj", planeTransform);
-	m_ActiveScene->LoadTerrain(30, 30, 10.0f);
+	m_ActiveScene->LoadTerrain(100, 100, 15.0f);
 }
 
 void Sandbox3D::OnAttach() { }

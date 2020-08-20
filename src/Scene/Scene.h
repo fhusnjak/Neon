@@ -88,7 +88,7 @@ public:
 
 	void LoadModel(const std::string& filename, const glm::mat4& worldTransform);
 
-	void LoadTerrain(float width, float height, float density);
+	void LoadTerrain(float width, float height, float maxHeight);
 
 	Entity LoadAnimatedModel(const std::string& filename);
 

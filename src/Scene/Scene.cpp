@@ -401,43 +401,47 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 	VulkanRenderer::EndScene();
 }
 
-float GetHeight(unsigned char* pixels, int texWidth, int texHeight, int texX, int texZ, float maxHeight)
+float GetHeight(unsigned char* pixels, int texWidth, int texHeight, int texX, int texY, float maxHeight)
 {
-	if (texX < 0 || texZ < 0 || texX >= texWidth || texZ >= texHeight)
+	if (texX < 0 || texY < 0 || texX >= texWidth || texY >= texHeight)
 	{
 		return 0.0f;
 	}
-	unsigned char *valuePtr = pixels + static_cast<int>((texX * texHeight + texZ) * 4);
+	unsigned char *valuePtr = pixels + static_cast<int>((texY * texWidth + texX) * 4);
 	uint32_t value = (uint32_t)*valuePtr + (uint32_t)*(valuePtr + 1) + (uint32_t)*(valuePtr + 2);
 	return static_cast<float>(value) / 765.0f * maxHeight;
 }
 
-glm::vec3 CalculateNormal(unsigned char* pixels, int texWidth, int texHeight, int texX, int texZ, float maxHeight)
+glm::vec3 CalculateNormal(unsigned char* pixels, int texWidth, int texHeight, int texX, int texY, float maxHeight)
 {
-	float heightL = GetHeight(pixels, texWidth, texHeight, texX - 1, texZ, maxHeight);
-	float heightR = GetHeight(pixels, texWidth, texHeight, texX + 1, texZ, maxHeight);
-	float heightD = GetHeight(pixels, texWidth, texHeight, texX, texZ - 1, maxHeight);
-	float heightU = GetHeight(pixels, texWidth, texHeight, texX, texZ + 1, maxHeight);
-	glm::vec3 normal = {heightL - heightR, 2.0f, heightD - heightU};
+	float heightL = GetHeight(pixels, texWidth, texHeight, texX - 1, texY, maxHeight);
+	float heightR = GetHeight(pixels, texWidth, texHeight, texX + 1, texY, maxHeight);
+	float heightD = GetHeight(pixels, texWidth, texHeight, texX, texY - 1, maxHeight);
+	float heightU = GetHeight(pixels, texWidth, texHeight, texX, texY + 1, maxHeight);
+	glm::vec3 normal = {heightR - heightL, 2.0f, heightD - heightU};
 	return glm::normalize(normal);
 }
 
-void Neon::Scene::LoadTerrain(float width, float height, float density)
+void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 {
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
-	int widthCount = static_cast<int>(density * width * 2.0f) + 1;
-	int heightCount = static_cast<int>(density * height * 2.0f) + 1;
-	float widthIncrement = 1.0f / (density);
-	float heightIncrement = 1.0f / (density);
-	float xValue = -width;
-	float zValue = -height;
 
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels =
 		stbi_load("textures/heightmap.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	assert(pixels);
+
+	float densityX = static_cast<float>(texWidth) / (width * 2.0f + 1);
+	float densityY = static_cast<float>(texHeight) / (height * 2.0f + 1);
+
+	int widthCount = static_cast<int>(densityX * width * 2.0f) + 1;
+	int heightCount = static_cast<int>(densityY * height * 2.0f) + 1;
+	float widthIncrement = 1.0f / (densityX);
+	float heightIncrement = 1.0f / (densityY);
+	float xValue = -width;
+	float zValue = -height;
 
 	float texCoordX = 0;
 	float texCoordY = 0;
@@ -446,20 +450,20 @@ void Neon::Scene::LoadTerrain(float width, float height, float density)
 		for (int j = 0; j < widthCount; j++)
 		{
 			Vertex vertex{};
-			int texX = static_cast<int>((xValue + width) / (width * 2 + 1) * static_cast<float>(texWidth));
-			int texZ = static_cast<int>((zValue + height) / (height * 2 + 1) * static_cast<float>(texHeight));
-			vertex.pos = {xValue, GetHeight(pixels, texWidth, texHeight, texX, texZ, 7.0f), zValue};
-			vertex.norm = CalculateNormal(pixels, texWidth, texHeight, texX, texZ, 10.0f);
+			int texX = static_cast<int>(static_cast<float>(j) / static_cast<float>(widthCount) * static_cast<float>(texWidth));
+			int texY = static_cast<int>(static_cast<float>(i) / static_cast<float>(heightCount) * static_cast<float>(texHeight));
+			vertex.pos = {xValue, GetHeight(pixels, texWidth, texHeight, texX, texY, maxHeight), zValue};
+			vertex.norm = CalculateNormal(pixels, texWidth, texHeight, texX, texY, maxHeight);
 			vertex.matID = 0;
 			vertex.texCoord = {texCoordX, texCoordY};
 			vertices.push_back(vertex);
 			xValue += widthIncrement;
-			texCoordX += 0.5f;
+			texCoordX += 0.2;
 		}
 		xValue = -width;
 		zValue += heightIncrement;
 		texCoordX = 0;
-		texCoordY += 0.5f;
+		texCoordY += 0.2f;
 	}
 
 	uint32_t index = 0;
@@ -480,7 +484,7 @@ void Neon::Scene::LoadTerrain(float width, float height, float density)
 
 	Entity entity = CreateEntity("terrain");
 	auto& meshRenderer = entity.AddComponent<MeshRenderer>();
-	auto& transform = entity.AddComponent<Transform>(glm::translate(glm::mat4(1.0), {0, -2, 0}));
+	auto& transform = entity.AddComponent<Transform>(glm::translate(glm::mat4(1.0), {0, -15, 0}));
 
 	std::vector<Material> materials;
 	Material material{};
