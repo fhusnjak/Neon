@@ -30,8 +30,10 @@ struct CameraMatrices
 
 struct PushConstant
 {
-	glm::mat4 transformComponent;
-	float lightIntensity;
+	glm::mat4 modelMatrix;
+	int pointLight;
+	[[maybe_unused]] float lightIntensity;
+	[[maybe_unused]] glm::vec3 lightDirection;
 	[[maybe_unused]] glm::vec3 lightPosition;
 	[[maybe_unused]] glm::vec3 lightColor;
 };
@@ -62,11 +64,11 @@ public:
 	static void LoadSkyDome(SkyDomeRenderer& skyDomeRenderer);
 	static void LoadModel(MeshRenderer& meshRenderer);
 	static void LoadAnimatedModel(SkinnedMeshRenderer& meshComponent);
-	static void LoadTerrain(MeshRenderer& meshRenderer);
 
-	template <typename T>
-	static void Render(const Transform& transformComponent,
-					   const T& renderer, float lightIntensity, const glm::vec3& lightPosition)
+	template<typename T>
+	static void Render(const Transform& transformComponent, const T& renderer, bool pointLight,
+					   float lightIntensity, glm::vec3 lightDirection,
+					   const glm::vec3& lightPosition)
 	{
 		auto& commandBuffer =
 			s_Instance.m_CommandBuffers[s_Instance.m_SwapChain->GetImageIndex()].get();
@@ -85,23 +87,27 @@ public:
 			s_Instance.m_CameraDescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get()};
 		if (s_Instance.m_SwapChain->GetImageIndex() < renderer.m_DescriptorSets.size())
 		{
-			descriptorSets.push_back(renderer.m_DescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get());
+			descriptorSets.push_back(
+				renderer.m_DescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get());
 		}
 
 		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
 										 renderer.m_GraphicsPipeline.GetLayout(), 0,
 										 descriptorSets.size(), descriptorSets.data(), 0, nullptr);
 
-		PushConstant pushConstant{transformComponent.m_Transform, lightIntensity, lightPosition, {1, 0, 1}};
+		PushConstant pushConstant{
+			transformComponent.m_Transform, pointLight, lightIntensity, lightDirection, lightPosition, {1, 0, 1}};
 		commandBuffer.pushConstants(renderer.m_GraphicsPipeline.GetLayout(),
 									vk::ShaderStageFlagBits::eVertex |
-									vk::ShaderStageFlagBits::eFragment,
+										vk::ShaderStageFlagBits::eFragment,
 									0, sizeof(PushConstant), &pushConstant);
 
 		commandBuffer.bindVertexBuffers(0, {renderer.m_Mesh.m_VertexBuffer->buffer}, {0});
-		commandBuffer.bindIndexBuffer(renderer.m_Mesh.m_IndexBuffer->buffer, 0, vk::IndexType::eUint32);
+		commandBuffer.bindIndexBuffer(renderer.m_Mesh.m_IndexBuffer->buffer, 0,
+									  vk::IndexType::eUint32);
 
-		commandBuffer.drawIndexed(static_cast<uint32_t>(renderer.m_Mesh.m_IndicesCount), 1, 0, 0, 0);
+		commandBuffer.drawIndexed(static_cast<uint32_t>(renderer.m_Mesh.m_IndicesCount), 1, 0, 0,
+								  0);
 	}
 
 private:

@@ -31,16 +31,15 @@ Neon::Entity Neon::Scene::CreateEntity(const std::string& name)
 void Neon::Scene::LoadSkyDome()
 {
 	Assimp::Importer importer;
-	const aiScene* scene =
-		importer.ReadFile("models/dome.obj", aiProcess_Triangulate | aiProcess_GenSmoothNormals |
-									aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices);
+	const aiScene* scene = importer.ReadFile(
+		"models/dome.obj", aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs |
+							   aiProcess_JoinIdenticalVertices);
 	assert(scene && !(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) && scene->mRootNode);
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 	ProcessNode(scene, scene->mRootNode, glm::mat4(1.0), vertices, indices);
 	Entity entity = CreateEntity(scene->mRootNode->mName.C_Str());
-	auto& skyDomeRenderer =
-		entity.AddComponent<SkyDomeRenderer>();
+	auto& skyDomeRenderer = entity.AddComponent<SkyDomeRenderer>();
 	auto& transformComponent = entity.AddComponent<Transform>(glm::mat4(1.0));
 	transformComponent.m_Transform = glm::scale(transformComponent.m_Transform, {5000, 5000, 5000});
 
@@ -72,7 +71,6 @@ void Neon::Scene::LoadModel(const std::string& filename, const glm::mat4& worldT
 	ProcessNode(scene, scene->mRootNode, glm::mat4(1.0f), worldTransform);
 }
 
-
 Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 {
 	Assimp::Importer importer;
@@ -88,8 +86,8 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	std::unordered_map<std::string, uint32_t> boneMap;
 	std::vector<glm::mat4> boneOffsets;
 
-	ProcessNode(scene, scene->mRootNode, glm::mat4(1.0), vertices, indices, materials, textureImages, boneMap,
-				boneOffsets);
+	ProcessNode(scene, scene->mRootNode, glm::mat4(1.0), vertices, indices, materials,
+				textureImages, boneMap, boneOffsets);
 
 	Entity entity = CreateEntity(scene->mRootNode->mName.C_Str());
 	auto& skinnedMeshRenderer =
@@ -151,7 +149,8 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	}
 }
 
-void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform, const glm::mat4& worldTransform)
+void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
+							  const glm::mat4& worldTransform)
 {
 	std::vector<uint32_t> indices;
 	for (int i = 0; i < mesh->mNumFaces; i++)
@@ -255,8 +254,9 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	Allocator::FlushStaging();
 }
 
-void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform, std::vector<Vertex>& vertices,
-							  std::vector<uint32_t>& indices, std::vector<Material>& materials,
+void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
+							  std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+							  std::vector<Material>& materials,
 							  std::vector<std::shared_ptr<TextureImage>>& textureImages,
 							  std::unordered_map<std::string, uint32_t>& boneMap,
 							  std::vector<glm::mat4>& boneOffsets)
@@ -371,7 +371,8 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 }
 
 void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controller,
-						   glm::vec4 clearColor, float lightIntensity, glm::vec3 lightPosition)
+						   glm::vec4 clearColor, bool pointLight, float lightIntensity,
+						   glm::vec3 lightDirection, glm::vec3 lightPosition)
 {
 	VulkanRenderer::BeginScene(controller.GetCamera(), clearColor);
 	auto group1 = m_Registry.group<SkyDomeRenderer>(entt::get<Transform>);
@@ -379,43 +380,47 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 	{
 		auto [skyDomeRenderer, transform] = group1.get<SkyDomeRenderer, Transform>(entity);
 		glm::mat4 transformMatrix = transform.m_Transform;
-		transformMatrix = glm::translate(glm::mat4(1.0), controller.GetCamera().GetPosition()) * transform.m_Transform;
+		transformMatrix = glm::translate(glm::mat4(1.0), controller.GetCamera().GetPosition()) *
+						  transform.m_Transform;
 		transformMatrix = glm::translate(glm::mat4(1.0), {0, -1000, 0}) * transform.m_Transform;
 		Transform newTransform(transformMatrix);
-		VulkanRenderer::Render(newTransform, skyDomeRenderer, lightIntensity, lightPosition);
+		VulkanRenderer::Render(newTransform, skyDomeRenderer, pointLight, lightIntensity,
+							   lightDirection, lightPosition);
 	}
 	auto group2 = m_Registry.group<MeshRenderer>(entt::get<Transform>);
 	for (auto entity : group2)
 	{
 		const auto& [meshRenderer, transform] = group2.get<MeshRenderer, Transform>(entity);
-		VulkanRenderer::Render(transform, meshRenderer, lightIntensity, lightPosition);
+		VulkanRenderer::Render(transform, meshRenderer, pointLight, lightIntensity, lightDirection,
+							   lightPosition);
 	}
 	auto group3 = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);
 	for (auto entity : group3)
 	{
 		const auto& [skinnedMeshRenderer, transform] =
-		group3.get<SkinnedMeshRenderer, Transform>(entity);
+			group3.get<SkinnedMeshRenderer, Transform>(entity);
 		skinnedMeshRenderer.Update(ts / 1000.0f);
-		VulkanRenderer::Render(transform, skinnedMeshRenderer, lightIntensity, lightPosition);
+		VulkanRenderer::Render(transform, skinnedMeshRenderer, pointLight, lightIntensity,
+							   lightDirection, lightPosition);
 	}
 	VulkanRenderer::EndScene();
 }
 
-float GetHeight(unsigned char* pixels, int texWidth, int texHeight, int texX, int texY, float maxHeight)
+float GetHeight(unsigned char* pixels, int texWidth, int texHeight, int texX, int texY,
+				float maxHeight)
 {
-	if (texX < 0 || texY < 0 || texX >= texWidth || texY >= texHeight)
-	{
-		return 0.0f;
-	}
-	unsigned char *valuePtr = pixels + static_cast<int>((texY * texWidth + texX) * 4);
-	uint32_t value = (uint32_t)*valuePtr + (uint32_t)*(valuePtr + 1) + (uint32_t)*(valuePtr + 2);
+	if (texX < 0 || texY < 0 || texX >= texWidth || texY >= texHeight) { return 0.0f; }
+	unsigned char* valuePtr = pixels + static_cast<int>((texY * texWidth + texX) * 4);
+	uint32_t value =
+		(uint32_t)*valuePtr + (uint32_t) * (valuePtr + 1) + (uint32_t) * (valuePtr + 2);
 	return static_cast<float>(value) / 765.0f * maxHeight;
 }
 
-glm::vec3 CalculateNormal(unsigned char* pixels, int texWidth, int texHeight, int texX, int texY, float maxHeight)
+glm::vec3 CalculateNormal(unsigned char* pixels, int texWidth, int texHeight, int texX, int texY,
+						  float maxHeight)
 {
-	float heightL = GetHeight(pixels, texWidth, texHeight, texX - 1, texY, maxHeight);
-	float heightR = GetHeight(pixels, texWidth, texHeight, texX + 1, texY, maxHeight);
+	float heightL = GetHeight(pixels, texWidth, texHeight, texX + 1, texY, maxHeight);
+	float heightR = GetHeight(pixels, texWidth, texHeight, texX - 1, texY, maxHeight);
 	float heightD = GetHeight(pixels, texWidth, texHeight, texX, texY - 1, maxHeight);
 	float heightU = GetHeight(pixels, texWidth, texHeight, texX, texY + 1, maxHeight);
 	glm::vec3 normal = {heightR - heightL, 2.0f, heightD - heightU};
@@ -450,9 +455,12 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 		for (int j = 0; j < widthCount; j++)
 		{
 			Vertex vertex{};
-			int texX = static_cast<int>(static_cast<float>(j) / static_cast<float>(widthCount) * static_cast<float>(texWidth));
-			int texY = static_cast<int>(static_cast<float>(i) / static_cast<float>(heightCount) * static_cast<float>(texHeight));
-			vertex.pos = {xValue, GetHeight(pixels, texWidth, texHeight, texX, texY, maxHeight), zValue};
+			int texX = static_cast<int>(static_cast<float>(j) / static_cast<float>(widthCount) *
+										static_cast<float>(texWidth));
+			int texY = static_cast<int>(static_cast<float>(i) / static_cast<float>(heightCount) *
+										static_cast<float>(texHeight));
+			vertex.pos = {xValue, GetHeight(pixels, texWidth, texHeight, texX, texY, maxHeight),
+						  zValue};
 			vertex.norm = CalculateNormal(pixels, texWidth, texHeight, texX, texY, maxHeight);
 			vertex.matID = 0;
 			vertex.texCoord = {texCoordX, texCoordY};
@@ -484,7 +492,7 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 
 	Entity entity = CreateEntity("terrain");
 	auto& meshRenderer = entity.AddComponent<MeshRenderer>();
-	auto& transform = entity.AddComponent<Transform>(glm::translate(glm::mat4(1.0), {0, -15, 0}));
+	auto& transform = entity.AddComponent<Transform>(glm::translate(glm::mat4(1.0), {0, -5, 0}));
 
 	std::vector<Material> materials;
 	Material material{};
@@ -494,7 +502,9 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 	material.textureID = 0;
 	materials.push_back(material);
 
-	std::unique_ptr<ImageAllocation> imageAllocation = Neon::Allocator::CreateTextureImage("textures/grass.jpg");;
+	std::unique_ptr<ImageAllocation> imageAllocation =
+		Neon::Allocator::CreateTextureImage("textures/grass.jpg");
+	;
 	assert(imageAllocation);
 	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
 		imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);

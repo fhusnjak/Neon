@@ -31,7 +31,9 @@ layout(set = 1, binding = 1) uniform sampler2D textureSamplers[];
 layout(push_constant, scalar) uniform PushConstant
 {
     mat4 model;
+    int pointLight;
     float lightIntensity;
+    vec3 lightDirection;
     vec3 lightPosition;
     vec3 lightColor;
 }
@@ -39,16 +41,18 @@ pushConstant;
 
 void main()
 {
-    vec3 normal = fragNorm;
-
     Material mat = materials[fragMatID];
 
-    vec3 lightDir = pushConstant.lightPosition - fragWorldPos;
-    float d = length(lightDir);
-    float lightIntensity = pushConstant.lightIntensity / d;
-    lightDir = normalize(lightDir);
+    vec3 lightDir = normalize(-pushConstant.lightDirection);
+    float lightIntensity = pushConstant.lightIntensity;
+    if (pushConstant.pointLight == 1)
+    {
+        lightDir = pushConstant.lightPosition - fragWorldPos;
+        float d = length(lightDir);
+        lightIntensity = pushConstant.lightIntensity / d;
+    }
 
-    vec3 diffuse = computeDiffuse(mat, lightDir, normal);
+    vec3 diffuse = computeDiffuse(mat, lightDir, fragNorm);
     if (mat.textureId >= 0)
     {
         vec3 diffuseTxt = texture(textureSamplers[mat.textureId], fragTexCoord).xyz;
@@ -56,7 +60,7 @@ void main()
     }
 
     vec3 viewDir = normalize(cameraMatrices.cameraPos - fragWorldPos);
-    vec3 specular = computeSpecular(mat, viewDir, lightDir, normal);
+    vec3 specular = computeSpecular(mat, viewDir, lightDir, fragNorm);
 
     float gamma = 1. / 2.2;
     outColor = pow(vec4(lightIntensity * (diffuse + specular), texture(textureSamplers[mat.textureId], fragTexCoord).w), vec4(gamma));

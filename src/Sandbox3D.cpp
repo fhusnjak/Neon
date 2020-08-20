@@ -29,10 +29,10 @@ Sandbox3D::Sandbox3D()
 	transformComponent2.m_Transform =
 		glm::translate(glm::mat4(1.0), {-3, -1.0, 0}) * transformComponent2.m_Transform;*/
 
-	glm::mat4 planeTransform = glm::scale(glm::mat4(1.0), {0.1, 0.1, 0.1});
-	planeTransform = glm::translate(glm::mat4(1.0), {-3, 0, 0}) * planeTransform;
+	glm::mat4 planeTransform = glm::scale(glm::mat4(1.0), {0.13, 0.13, 0.13});
+	planeTransform = glm::translate(glm::mat4(1.0), {-6.9, -0.1, -6.82}) * planeTransform;
 	m_ActiveScene->LoadModel("models/plane.obj", planeTransform);
-	m_ActiveScene->LoadTerrain(100, 100, 15.0f);
+	m_ActiveScene->LoadTerrain(10, 10, 10.0f);
 }
 
 void Sandbox3D::OnAttach() { }
@@ -43,7 +43,7 @@ void Sandbox3D::OnUpdate(float ts)
 {
 	m_CameraController.OnUpdate(ts);
 
-	m_ActiveScene->OnUpdate(ts, m_CameraController, clearColor, lightIntensity, lightPosition);
+	m_ActiveScene->OnUpdate(ts, m_CameraController, clearColor, pointLight, lightIntensity, lightDirection, lightPosition);
 
 	m_Times.push(ts);
 	m_TimePassed += ts;
@@ -105,8 +105,10 @@ void Sandbox3D::OnImGuiRender()
 
 	ImGui::Begin("Settings");
 	ImGui::Text("FPS %.0f", 1000.0f * static_cast<float>(m_FrameCount) / m_TimePassed);
-	ImGui::SliderFloat3("Light Position", &lightPosition.x, -20.f, 20.f);
 	ImGui::SliderFloat("Light Intensity", &lightIntensity, 1.0f, 10.0f);
+	ImGui::Checkbox("Point Light", &pointLight);
+	ImGui::SliderFloat3("Light Direction", &lightDirection.x, -5.f, 5.f);
+	ImGui::SliderFloat3("Light Position", &lightPosition.x, -20.f, 20.f);
 	ImGui::End();
 
 	ImGui::Begin("Viewport");

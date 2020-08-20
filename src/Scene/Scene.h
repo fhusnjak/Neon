@@ -92,7 +92,8 @@ public:
 
 	Entity LoadAnimatedModel(const std::string& filename);
 
-	void OnUpdate(float ts, Neon::PerspectiveCameraController controller, glm::vec4 clearColor, float lightIntensity,
+	void OnUpdate(float ts, Neon::PerspectiveCameraController controller, glm::vec4 clearColor,
+				  bool pointLight, float lightIntensity, glm::vec3 lightDirection,
 				  glm::vec3 lightPosition);
 
 private:
