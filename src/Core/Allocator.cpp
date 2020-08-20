@@ -48,8 +48,8 @@ std::unique_ptr<Neon::BufferAllocation> Neon::Allocator::CreateBuffer(const vk::
 	bufferInfo.usage = static_cast<VkBufferUsageFlags>(usage);
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	auto* bufferAllocation = new BufferAllocation();
-	vmaCreateBuffer(s_Allocator.m_Allocator, &bufferInfo, &allocInfo, &bufferAllocation->buffer,
-					&bufferAllocation->allocation, nullptr);
+	vmaCreateBuffer(s_Allocator.m_Allocator, &bufferInfo, &allocInfo, &bufferAllocation->m_Buffer,
+					&bufferAllocation->m_Allocation, nullptr);
 	return std::unique_ptr<BufferAllocation>(bufferAllocation);
 }
 
@@ -75,8 +75,8 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateImage(const uint32
 	imageInfo.queueFamilyIndexCount = 0;
 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	auto imageAllocation = new ImageAllocation();
-	vmaCreateImage(s_Allocator.m_Allocator, &imageInfo, &allocInfo, &imageAllocation->image,
-				   &imageAllocation->allocation, nullptr);
+	vmaCreateImage(s_Allocator.m_Allocator, &imageInfo, &allocInfo, &imageAllocation->m_Image,
+				   &imageAllocation->m_Allocation, nullptr);
 	return std::unique_ptr<ImageAllocation>(imageAllocation);
 }
 
@@ -166,9 +166,9 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateTextureImage(stbi_
 		CreateBuffer(imageSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_GPU_TO_CPU);
 
 	void* mappedData;
-	vmaMapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->allocation, &mappedData);
+	vmaMapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->m_Allocation, &mappedData);
 	memcpy(mappedData, pixels, static_cast<size_t>(imageSize));
-	vmaUnmapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->allocation);
+	vmaUnmapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->m_Allocation);
 
 	stbi_image_free(pixels);
 
@@ -178,7 +178,7 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateTextureImage(stbi_
 					vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
 					VMA_MEMORY_USAGE_GPU_ONLY);
 
-	TransitionImageLayout(imageAllocation->image, vk::ImageAspectFlagBits::eColor,
+	TransitionImageLayout(imageAllocation->m_Image, vk::ImageAspectFlagBits::eColor,
 						  vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
 	vk::ImageSubresourceLayers imgSubresourceLayers{vk::ImageAspectFlagBits::eColor, 0, 0, 1};
@@ -191,11 +191,11 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateTextureImage(stbi_
 		vk::Extent3D{static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1}};
 
 	auto commandBuffer = VulkanRenderer::BeginSingleTimeCommands();
-	commandBuffer.copyBufferToImage(stagingBufferAllocation->buffer, imageAllocation->image,
+	commandBuffer.copyBufferToImage(stagingBufferAllocation->m_Buffer, imageAllocation->m_Image,
 									vk::ImageLayout::eTransferDstOptimal, {region});
 	VulkanRenderer::EndSingleTimeCommands(commandBuffer);
 
-	TransitionImageLayout(imageAllocation->image, vk::ImageAspectFlagBits::eColor,
+	TransitionImageLayout(imageAllocation->m_Image, vk::ImageAspectFlagBits::eColor,
 						  vk::ImageLayout::eTransferDstOptimal,
 						  vk::ImageLayout::eShaderReadOnlyOptimal);
 
@@ -215,9 +215,9 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateHdrTextureImage(co
 		CreateBuffer(imageSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_GPU_TO_CPU);
 
 	void* mappedData;
-	vmaMapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->allocation, &mappedData);
+	vmaMapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->m_Allocation, &mappedData);
 	memcpy(mappedData, pixels, static_cast<size_t>(imageSize));
-	vmaUnmapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->allocation);
+	vmaUnmapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->m_Allocation);
 
 	stbi_image_free(pixels);
 
@@ -227,7 +227,7 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateHdrTextureImage(co
 					vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
 					VMA_MEMORY_USAGE_GPU_ONLY);
 
-	TransitionImageLayout(imageAllocation->image, vk::ImageAspectFlagBits::eColor,
+	TransitionImageLayout(imageAllocation->m_Image, vk::ImageAspectFlagBits::eColor,
 						  vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
 	vk::ImageSubresourceLayers imgSubresourceLayers{vk::ImageAspectFlagBits::eColor, 0, 0, 1};
@@ -240,11 +240,11 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateHdrTextureImage(co
 		vk::Extent3D{static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1}};
 
 	auto commandBuffer = VulkanRenderer::BeginSingleTimeCommands();
-	commandBuffer.copyBufferToImage(stagingBufferAllocation->buffer, imageAllocation->image,
+	commandBuffer.copyBufferToImage(stagingBufferAllocation->m_Buffer, imageAllocation->m_Image,
 									vk::ImageLayout::eTransferDstOptimal, {region});
 	VulkanRenderer::EndSingleTimeCommands(commandBuffer);
 
-	TransitionImageLayout(imageAllocation->image, vk::ImageAspectFlagBits::eColor,
+	TransitionImageLayout(imageAllocation->m_Image, vk::ImageAspectFlagBits::eColor,
 						  vk::ImageLayout::eTransferDstOptimal,
 						  vk::ImageLayout::eShaderReadOnlyOptimal);
 
@@ -259,18 +259,18 @@ void Neon::Allocator::FreeMemory(VmaAllocation allocation)
 
 void Neon::Allocator::DestroyImageAllocation(Neon::ImageAllocation& imageAllocation)
 {
-	s_Allocator.m_LogicalDevice.destroyImage(imageAllocation.image);
-	FreeMemory(imageAllocation.allocation);
+	s_Allocator.m_LogicalDevice.destroyImage(imageAllocation.m_Image);
+	FreeMemory(imageAllocation.m_Allocation);
 }
 
 void Neon::Allocator::DestroyBufferAllocation(Neon::BufferAllocation& bufferAllocation)
 {
-	s_Allocator.m_LogicalDevice.destroyBuffer(bufferAllocation.buffer);
-	FreeMemory(bufferAllocation.allocation);
+	s_Allocator.m_LogicalDevice.destroyBuffer(bufferAllocation.m_Buffer);
+	FreeMemory(bufferAllocation.m_Allocation);
 }
 
 void Neon::Allocator::DestroyTextureImage(Neon::TextureImage& textureImage)
 {
-	s_Allocator.m_LogicalDevice.destroySampler(textureImage.descriptor.sampler);
-	s_Allocator.m_LogicalDevice.destroyImageView(textureImage.descriptor.imageView);
+	s_Allocator.m_LogicalDevice.destroySampler(textureImage.m_Descriptor.sampler);
+	s_Allocator.m_LogicalDevice.destroyImageView(textureImage.m_Descriptor.imageView);
 }

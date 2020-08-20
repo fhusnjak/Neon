@@ -63,6 +63,11 @@ public:
 		RecalculateViewMatrix();
 	}
 
+	void InvertPitch()
+	{
+		m_Front.y *= -1;
+	}
+
 	[[nodiscard]] const glm::mat4& GetProjectionMatrix() const
 	{
 		return m_ProjectionMatrix;

@@ -119,7 +119,7 @@ private:
 	static void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
 							std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
 							std::vector<Material>& materials,
-							std::vector<std::shared_ptr<TextureImage>>& textureImages,
+							std::vector<TextureImage>& textureImages,
 							std::unordered_map<std::string, uint32_t>& boneMap,
 							std::vector<glm::mat4>& boneOffsets);
 

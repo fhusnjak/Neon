@@ -49,8 +49,8 @@ struct Mesh
 {
 	uint32_t m_VerticesCount{0};
 	uint32_t m_IndicesCount{0};
-	std::shared_ptr<BufferAllocation> m_VertexBuffer{};
-	std::shared_ptr<BufferAllocation> m_IndexBuffer{};
+	std::unique_ptr<BufferAllocation> m_VertexBuffer{};
+	std::unique_ptr<BufferAllocation> m_IndexBuffer{};
 };
 
 struct SkyDomeRenderer
@@ -69,7 +69,7 @@ struct SkinnedMeshRenderer
 
 	Bone m_RootBone;
 	uint32_t m_BoneSize;
-	std::shared_ptr<BufferAllocation> m_BoneBuffer{};
+	std::unique_ptr<BufferAllocation> m_BoneBuffer{};
 
 	std::unique_ptr<Animation> m_Animation = nullptr;
 
@@ -77,7 +77,7 @@ struct SkinnedMeshRenderer
 	std::vector<DescriptorSet> m_DescriptorSets;
 
 	std::shared_ptr<BufferAllocation> m_MaterialBuffer{};
-	std::vector<std::shared_ptr<TextureImage>> m_TextureImages;
+	std::vector<TextureImage> m_TextureImages;
 
 	SkinnedMeshRenderer(const aiScene* scene, int index,
 						std::unordered_map<std::string, uint32_t>& boneMap,
@@ -94,7 +94,7 @@ struct SkinnedMeshRenderer
 	{
 		std::vector<glm::mat4> transforms(m_BoneSize);
 		m_Animation->Update(seconds, transforms, m_RootBone);
-		Allocator::UpdateAllocation(m_BoneBuffer->allocation, transforms);
+		Allocator::UpdateAllocation(m_BoneBuffer->m_Allocation, transforms);
 	}
 
 	void CreateBoneTree(const aiScene* scene, const aiNode* node, Bone& parentBone,
@@ -164,7 +164,7 @@ struct MeshRenderer
 	std::vector<DescriptorSet> m_DescriptorSets;
 
 	std::shared_ptr<BufferAllocation> m_MaterialBuffer{};
-	std::vector<std::shared_ptr<TextureImage>> m_TextureImages;
+	std::vector<TextureImage> m_TextureImages;
 
 	MeshRenderer() = default;
 };
@@ -176,14 +176,27 @@ struct TerrainRenderer
 	GraphicsPipeline m_GraphicsPipeline;
 	std::vector<DescriptorSet> m_DescriptorSets;
 
-	std::shared_ptr<BufferAllocation> m_MaterialBuffer{};
-	std::shared_ptr<TextureImage> m_BlendMap;
-	std::shared_ptr<TextureImage> m_BackgroundTexture;
-	std::shared_ptr<TextureImage> m_RTexture;
-	std::shared_ptr<TextureImage> m_GTexture;
-	std::shared_ptr<TextureImage> m_BTexture;
+	std::unique_ptr<BufferAllocation> m_MaterialBuffer{};
+	TextureImage m_BlendMap;
+	TextureImage m_BackgroundTexture;
+	TextureImage m_RTexture;
+	TextureImage m_GTexture;
+	TextureImage m_BTexture;
 
 	TerrainRenderer() = default;
+};
+
+struct Water
+{
+	Mesh m_Mesh;
+
+	GraphicsPipeline m_GraphicsPipeline;
+	std::vector<DescriptorSet> m_DescriptorSets;
+
+	std::unique_ptr<BufferAllocation> m_MaterialBuffer{};
+	TextureImage m_ReflectionTexture;
+
+	Water() = default;
 };
 } // namespace Neon
 

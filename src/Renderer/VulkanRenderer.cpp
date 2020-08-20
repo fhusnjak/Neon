@@ -247,54 +247,54 @@ void Neon::VulkanRenderer::CreateOffscreenRenderer()
 {
 	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 	const auto& extent = s_Instance.m_SwapChain->GetExtent();
-	m_SampledImage.textureAllocation = Allocator::CreateImage(
+	m_SampledImage.m_TextureAllocation = Allocator::CreateImage(
 		extent.width, extent.height, s_MsaaSamples, vk::Format::eR32G32B32A32Sfloat,
 		vk::ImageTiling::eOptimal,
 		vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
 		VMA_MEMORY_USAGE_GPU_ONLY);
-	Neon::Allocator::TransitionImageLayout(m_SampledImage.textureAllocation->image,
+	Neon::Allocator::TransitionImageLayout(m_SampledImage.m_TextureAllocation->m_Image,
 										   vk::ImageAspectFlagBits::eColor,
 										   vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
-	m_SampledImage.descriptor.imageView =
-		CreateImageView(m_SampledImage.textureAllocation->image, vk::Format::eR32G32B32A32Sfloat,
+	m_SampledImage.m_Descriptor.imageView =
+		CreateImageView(m_SampledImage.m_TextureAllocation->m_Image, vk::Format::eR32G32B32A32Sfloat,
 						vk::ImageAspectFlagBits::eColor);
 
-	m_OffscreenDepthImageAllocation.textureAllocation = Neon::Allocator::CreateImage(
+	m_OffscreenDepthImageAllocation.m_TextureAllocation = Neon::Allocator::CreateImage(
 		extent.width, extent.height, s_MsaaSamples, vk::Format::eD32Sfloat, vk::ImageTiling::eOptimal,
 		vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc |
-			vk::ImageUsageFlagBits::eTransferDst,
+		vk::ImageUsageFlagBits::eTransferDst,
 		VMA_MEMORY_USAGE_GPU_ONLY);
 	Neon::Allocator::TransitionImageLayout(
-		m_OffscreenDepthImageAllocation.textureAllocation->image, vk::ImageAspectFlagBits::eDepth,
+		m_OffscreenDepthImageAllocation.m_TextureAllocation->m_Image, vk::ImageAspectFlagBits::eDepth,
 		vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-	m_OffscreenDepthImageAllocation.descriptor.imageView =
-		CreateImageView(m_OffscreenDepthImageAllocation.textureAllocation->image,
+	m_OffscreenDepthImageAllocation.m_Descriptor.imageView =
+		CreateImageView(m_OffscreenDepthImageAllocation.m_TextureAllocation->m_Image,
 						vk::Format::eD32Sfloat, vk::ImageAspectFlagBits::eDepth);
 
-	m_OffscreenImageAllocation.textureAllocation = Neon::Allocator::CreateImage(
+	m_OffscreenImageAllocation.m_TextureAllocation = Neon::Allocator::CreateImage(
 		extent.width, extent.height, vk::SampleCountFlagBits::e1, vk::Format::eR32G32B32A32Sfloat,
 		vk::ImageTiling::eOptimal,
 		vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled |
 			vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eTransferSrc |
 			vk::ImageUsageFlagBits::eTransferDst,
 		VMA_MEMORY_USAGE_GPU_ONLY);
-	Neon::Allocator::TransitionImageLayout(m_OffscreenImageAllocation.textureAllocation->image,
+	Neon::Allocator::TransitionImageLayout(m_OffscreenImageAllocation.m_TextureAllocation->m_Image,
 										   vk::ImageAspectFlagBits::eColor,
 										   vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
-	m_OffscreenImageAllocation.descriptor.imageView =
-		CreateImageView(m_OffscreenImageAllocation.textureAllocation->image,
+	m_OffscreenImageAllocation.m_Descriptor.imageView =
+		CreateImageView(m_OffscreenImageAllocation.m_TextureAllocation->m_Image,
 						vk::Format::eR32G32B32A32Sfloat, vk::ImageAspectFlagBits::eColor);
-	m_OffscreenImageAllocation.descriptor.sampler = CreateSampler(vk::SamplerCreateInfo());
-	m_OffscreenImageAllocation.descriptor.imageLayout = vk::ImageLayout::eGeneral;
+	m_OffscreenImageAllocation.m_Descriptor.sampler = CreateSampler(vk::SamplerCreateInfo());
+	m_OffscreenImageAllocation.m_Descriptor.imageLayout = vk::ImageLayout::eGeneral;
 
 	m_OffscreenFrameBuffers.clear();
 	m_OffscreenFrameBuffers.reserve(m_SwapChain->GetImageViewSize());
 	for (size_t i = 0; i < m_SwapChain->GetImageViewSize(); i++)
 	{
 		std::vector<vk::ImageView> attachments = {
-			m_SampledImage.descriptor.imageView,
-			m_OffscreenDepthImageAllocation.descriptor.imageView,
-			m_OffscreenImageAllocation.descriptor.imageView};
+			m_SampledImage.m_Descriptor.imageView,
+			m_OffscreenDepthImageAllocation.m_Descriptor.imageView,
+			m_OffscreenImageAllocation.m_Descriptor.imageView};
 
 		vk::FramebufferCreateInfo framebufferInfo;
 		framebufferInfo.setRenderPass(m_OffscreenRenderPass.get());
@@ -307,9 +307,9 @@ void Neon::VulkanRenderer::CreateOffscreenRenderer()
 		m_OffscreenFrameBuffers.push_back(device.createFramebufferUnique(framebufferInfo));
 	}
 	ImGui_ImplVulkan_UpdateTexture(
-		m_ImGuiOffscreenTextureDescSet, m_OffscreenImageAllocation.descriptor.sampler,
-		m_OffscreenImageAllocation.descriptor.imageView,
-		(VkImageLayout)m_OffscreenImageAllocation.descriptor.imageLayout);
+		m_ImGuiOffscreenTextureDescSet, m_OffscreenImageAllocation.m_Descriptor.sampler,
+		m_OffscreenImageAllocation.m_Descriptor.imageView,
+		(VkImageLayout)m_OffscreenImageAllocation.m_Descriptor.imageLayout);
 }
 
 void Neon::VulkanRenderer::CreateImGuiRenderer()

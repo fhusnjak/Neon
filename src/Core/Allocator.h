@@ -12,20 +12,38 @@ namespace Neon
 struct BufferAllocation
 {
 	~BufferAllocation();
-	VkBuffer buffer{};
-	VmaAllocation allocation{};
+	VkBuffer m_Buffer{};
+	VmaAllocation m_Allocation{};
 };
 struct ImageAllocation
 {
 	~ImageAllocation();
-	VkImage image{};
-	VmaAllocation allocation{};
+	VkImage m_Image{};
+	VmaAllocation m_Allocation{};
 };
 struct TextureImage
 {
+	TextureImage() = default;
+	TextureImage(vk::DescriptorImageInfo descriptor,
+				 std::unique_ptr<ImageAllocation>& textureAllocation)
+		: m_Descriptor(descriptor)
+		, m_TextureAllocation(std::move(textureAllocation))
+	{
+	}
 	~TextureImage();
-	vk::DescriptorImageInfo descriptor{};
-	std::unique_ptr<ImageAllocation> textureAllocation{};
+	TextureImage(TextureImage&& other) noexcept
+	{
+		*this = std::move(other);
+	}
+	TextureImage& operator=(TextureImage&& other) noexcept
+	{
+		m_Descriptor = other.m_Descriptor;
+		other.m_Descriptor = vk::DescriptorImageInfo{};
+		m_TextureAllocation = std::move(other.m_TextureAllocation);
+		return *this;
+	}
+	vk::DescriptorImageInfo m_Descriptor{};
+	std::unique_ptr<ImageAllocation> m_TextureAllocation{};
 };
 class Allocator
 {
@@ -38,20 +56,20 @@ public:
 	static void Init(vk::PhysicalDevice physicalDevice, vk::Device device);
 	static void FlushStaging();
 	static std::unique_ptr<BufferAllocation> CreateBuffer(const vk::DeviceSize& size,
-										 const vk::BufferUsageFlags& usage,
-										 const VmaMemoryUsage& memoryUsage);
+														  const vk::BufferUsageFlags& usage,
+														  const VmaMemoryUsage& memoryUsage);
 
-	static std::unique_ptr<ImageAllocation> CreateImage(uint32_t width, uint32_t height,
-									   const vk::SampleCountFlagBits& sampleCount,
-									   const vk::Format& format, const vk::ImageTiling& tiling,
-									   const vk::ImageUsageFlags& usage,
-									   const VmaMemoryUsage& memoryUsage);
+	static std::unique_ptr<ImageAllocation>
+	CreateImage(uint32_t width, uint32_t height, const vk::SampleCountFlagBits& sampleCount,
+				const vk::Format& format, const vk::ImageTiling& tiling,
+				const vk::ImageUsageFlags& usage, const VmaMemoryUsage& memoryUsage);
 
 	static void TransitionImageLayout(vk::Image image, vk::ImageAspectFlagBits aspect,
 									  vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 
 	static std::unique_ptr<ImageAllocation> CreateTextureImage(const std::string& filename);
-	static std::unique_ptr<ImageAllocation> CreateTextureImage(stbi_uc* pixels, int texWidth, int texHeight);
+	static std::unique_ptr<ImageAllocation> CreateTextureImage(stbi_uc* pixels, int texWidth,
+															   int texHeight);
 
 	static std::unique_ptr<ImageAllocation> CreateHdrTextureImage(const std::string& filename);
 
@@ -74,9 +92,9 @@ public:
 	}
 
 	template<typename T>
-	static std::unique_ptr<BufferAllocation> CreateDeviceLocalBuffer(const vk::CommandBuffer& commandBuffer,
-													const std::vector<T>& data,
-													const vk::BufferUsageFlags& usage)
+	static std::unique_ptr<BufferAllocation>
+	CreateDeviceLocalBuffer(const vk::CommandBuffer& commandBuffer, const std::vector<T>& data,
+							const vk::BufferUsageFlags& usage)
 	{
 		vk::DeviceSize bufferSize = sizeof(data[0]) * data.size();
 
@@ -84,16 +102,16 @@ public:
 			bufferSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_GPU_TO_CPU);
 
 		void* mappedData;
-		vmaMapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->allocation, &mappedData);
+		vmaMapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->m_Allocation, &mappedData);
 		memcpy(mappedData, data.data(), (size_t)bufferSize);
-		vmaUnmapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->allocation);
+		vmaUnmapMemory(s_Allocator.m_Allocator, stagingBufferAllocation->m_Allocation);
 
 		std::unique_ptr<BufferAllocation> resultBufferAllocation = CreateBuffer(
 			bufferSize, vk::BufferUsageFlagBits::eTransferDst | usage, VMA_MEMORY_USAGE_GPU_ONLY);
 
 		vk::BufferCopy copyRegion{0, 0, bufferSize};
 
-		commandBuffer.copyBuffer(stagingBufferAllocation->buffer, resultBufferAllocation->buffer, 1,
+		commandBuffer.copyBuffer(stagingBufferAllocation->m_Buffer, resultBufferAllocation->m_Buffer, 1,
 								 &copyRegion);
 		s_Allocator.m_StagingBuffers.push_back(std::move(stagingBufferAllocation));
 		return std::move(resultBufferAllocation);

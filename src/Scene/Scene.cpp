@@ -96,7 +96,7 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 	std::vector<Material> materials;
-	std::vector<std::shared_ptr<TextureImage>> textureImages;
+	std::vector<TextureImage> textureImages;
 	std::unordered_map<std::string, uint32_t> boneMap;
 	std::vector<glm::mat4> boneOffsets;
 
@@ -142,18 +142,18 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	bindings.emplace_back(2, vk::DescriptorType::eStorageBuffer, 1,
 						  vk::ShaderStageFlagBits::eVertex);
 
-	vk::DescriptorBufferInfo materialBufferInfo{skinnedMeshRenderer.m_MaterialBuffer->buffer, 0,
+	vk::DescriptorBufferInfo materialBufferInfo{skinnedMeshRenderer.m_MaterialBuffer->m_Buffer, 0,
 												VK_WHOLE_SIZE};
 
 	std::vector<vk::DescriptorImageInfo> texturesBufferInfo;
 	texturesBufferInfo.reserve(skinnedMeshRenderer.m_TextureImages.size());
 	for (auto& textureImage : skinnedMeshRenderer.m_TextureImages)
 	{
-		texturesBufferInfo.push_back(textureImage->descriptor);
+		texturesBufferInfo.push_back(textureImage.m_Descriptor);
 	}
 
 	skinnedMeshRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
-	vk::DescriptorBufferInfo boneBufferInfo{skinnedMeshRenderer.m_BoneBuffer->buffer, 0,
+	vk::DescriptorBufferInfo boneBufferInfo{skinnedMeshRenderer.m_BoneBuffer->m_Buffer, 0,
 											VK_WHOLE_SIZE};
 	for (int i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
 	{
@@ -287,7 +287,7 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	assert(imageAllocation);
 
 	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
-		imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+		imageAllocation->m_Image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 	vk::SamplerCreateInfo samplerInfo = {
 		{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
 	samplerInfo.setMaxLod(FLT_MAX);
@@ -295,8 +295,7 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	vk::DescriptorImageInfo desc{sampler, textureImageView,
 								 vk::ImageLayout::eShaderReadOnlyOptimal};
 
-	auto* textureImage = new TextureImage{desc, std::move(imageAllocation)};
-	meshRenderer.m_TextureImages.push_back(std::shared_ptr<TextureImage>(textureImage));
+	meshRenderer.m_TextureImages.emplace_back(desc, std::move(imageAllocation));
 
 	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
 
@@ -325,14 +324,14 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 						  static_cast<uint32_t>(meshRenderer.m_TextureImages.size()),
 						  vk::ShaderStageFlagBits::eFragment);
 
-	vk::DescriptorBufferInfo materialBufferInfo{meshRenderer.m_MaterialBuffer->buffer, 0,
+	vk::DescriptorBufferInfo materialBufferInfo{meshRenderer.m_MaterialBuffer->m_Buffer, 0,
 												VK_WHOLE_SIZE};
 
 	std::vector<vk::DescriptorImageInfo> texturesBufferInfo;
 	texturesBufferInfo.reserve(meshRenderer.m_TextureImages.size());
 	for (auto& texture : meshRenderer.m_TextureImages)
 	{
-		texturesBufferInfo.push_back(texture->descriptor);
+		texturesBufferInfo.push_back(texture.m_Descriptor);
 	}
 
 	meshRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
@@ -366,7 +365,7 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
 							  std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
 							  std::vector<Material>& materials,
-							  std::vector<std::shared_ptr<TextureImage>>& textureImages,
+							  std::vector<TextureImage>& textureImages,
 							  std::unordered_map<std::string, uint32_t>& boneMap,
 							  std::vector<glm::mat4>& boneOffsets)
 {
@@ -468,15 +467,14 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	}
 	assert(imageAllocation);
 	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
-		imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+		imageAllocation->m_Image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 	vk::SamplerCreateInfo samplerInfo = {
 		{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
 	samplerInfo.setMaxLod(FLT_MAX);
 	vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
 	vk::DescriptorImageInfo desc{sampler, textureImageView,
 								 vk::ImageLayout::eShaderReadOnlyOptimal};
-	auto* textureImage = new TextureImage{desc, std::move(imageAllocation)};
-	textureImages.push_back(std::shared_ptr<TextureImage>(textureImage));
+	textureImages.emplace_back(desc, std::move(imageAllocation));
 }
 
 void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controller,
@@ -544,21 +542,20 @@ glm::vec3 CalculateNormal(unsigned char* pixels, int texWidth, int texHeight, in
 	return glm::normalize(normal);
 }
 
-Neon::TextureImage* CreateTextureImage(std::string filename)
+void CreateTextureImage(const std::string& filename, Neon::TextureImage& textureImage)
 {
-	std::unique_ptr<Neon::ImageAllocation> imageAllocation =
+	textureImage.m_TextureAllocation =
 		Neon::Allocator::CreateTextureImage(filename);
-	assert(imageAllocation);
+	assert(textureImage.m_TextureAllocation);
 
 	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
-		imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+            textureImage.m_TextureAllocation->m_Image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 	vk::SamplerCreateInfo samplerInfo = {
 		{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
 	samplerInfo.setMaxLod(FLT_MAX);
 	vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
-	vk::DescriptorImageInfo desc{sampler, textureImageView,
-								 vk::ImageLayout::eShaderReadOnlyOptimal};
-	return new Neon::TextureImage{desc, std::move(imageAllocation)};
+	textureImage.m_Descriptor = {sampler, textureImageView,
+							   vk::ImageLayout::eShaderReadOnlyOptimal};
 }
 
 struct VertexTerrain
@@ -673,11 +670,11 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 	material.textureID = 0;
 	materials.push_back(material);
 
-	terrainRenderer.m_BlendMap = std::shared_ptr<TextureImage>(CreateTextureImage("textures/blendMap.png"));
-	terrainRenderer.m_BackgroundTexture = std::shared_ptr<TextureImage>(CreateTextureImage("textures/grassy2.png"));
-	terrainRenderer.m_RTexture = std::shared_ptr<TextureImage>(CreateTextureImage("textures/mud.png"));
-	terrainRenderer.m_GTexture = std::shared_ptr<TextureImage>(CreateTextureImage("textures/grassFlowers.png"));
-	terrainRenderer.m_BTexture = std::shared_ptr<TextureImage>(CreateTextureImage("textures/path.png"));
+	CreateTextureImage("textures/blendMap.png", terrainRenderer.m_BlendMap);
+	CreateTextureImage("textures/grassy2.png", terrainRenderer.m_BackgroundTexture);
+	CreateTextureImage("textures/mud.png", terrainRenderer.m_RTexture);
+	CreateTextureImage("textures/grassFlowers.png", terrainRenderer.m_GTexture);
+	CreateTextureImage("textures/path.png", terrainRenderer.m_BTexture);
 
 	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
 
@@ -717,7 +714,7 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 						  1,
 						  vk::ShaderStageFlagBits::eFragment);
 
-	vk::DescriptorBufferInfo materialBufferInfo{terrainRenderer.m_MaterialBuffer->buffer, 0,
+	vk::DescriptorBufferInfo materialBufferInfo{terrainRenderer.m_MaterialBuffer->m_Buffer, 0,
 												VK_WHOLE_SIZE};
 
 	terrainRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
@@ -730,11 +727,11 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 			bindings);
 		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
 			wavefrontDescriptorSet.CreateWrite(0, &materialBufferInfo, 0),
-			wavefrontDescriptorSet.CreateWrite(1, &terrainRenderer.m_BlendMap->descriptor, 0),
-			wavefrontDescriptorSet.CreateWrite(2, &terrainRenderer.m_BackgroundTexture->descriptor, 0),
-			wavefrontDescriptorSet.CreateWrite(3, &terrainRenderer.m_RTexture->descriptor, 0),
-			wavefrontDescriptorSet.CreateWrite(4, &terrainRenderer.m_GTexture->descriptor, 0),
-			wavefrontDescriptorSet.CreateWrite(5, &terrainRenderer.m_BTexture->descriptor, 0)};
+			wavefrontDescriptorSet.CreateWrite(1, &terrainRenderer.m_BlendMap.m_Descriptor, 0),
+			wavefrontDescriptorSet.CreateWrite(2, &terrainRenderer.m_BackgroundTexture.m_Descriptor, 0),
+			wavefrontDescriptorSet.CreateWrite(3, &terrainRenderer.m_RTexture.m_Descriptor, 0),
+			wavefrontDescriptorSet.CreateWrite(4, &terrainRenderer.m_GTexture.m_Descriptor, 0),
+			wavefrontDescriptorSet.CreateWrite(5, &terrainRenderer.m_BTexture.m_Descriptor, 0)};
 		wavefrontDescriptorSet.Update(descriptorWrites);
 	}
 
