@@ -18,24 +18,24 @@
 #include "SwapChain.h"
 #include "Window.h"
 
+#define MAX_SWAP_CHAIN_IMAGES 8
+
 namespace Neon
 {
 
-struct CameraMatrices
+struct PushConstant
 {
 	glm::vec3 cameraPos;
 	glm::mat4 view;
 	glm::mat4 projection;
-};
 
-struct PushConstant
-{
-	glm::mat4 modelMatrix;
+	glm::mat4 model;
+
 	int pointLight;
-	[[maybe_unused]] float lightIntensity;
-	[[maybe_unused]] glm::vec3 lightDirection;
-	[[maybe_unused]] glm::vec3 lightPosition;
-	[[maybe_unused]] glm::vec3 lightColor;
+	float lightIntensity;
+	glm::vec3 lightDirection;
+	glm::vec3 lightPosition;
+	glm::vec3 lightColor;
 };
 
 class VulkanRenderer
@@ -59,11 +59,30 @@ public:
 	static vk::UniqueImageView CreateImageViewUnique(vk::Image image, vk::Format format,
 													 const vk::ImageAspectFlags& aspectFlags);
 	static vk::Sampler CreateSampler(const vk::SamplerCreateInfo& createInfo);
-	static void* GetOffscreenImageID();
-	static vk::Extent2D GetExtent2D();
-	static void LoadSkyDome(SkyDomeRenderer& skyDomeRenderer);
-	static void LoadModel(MeshRenderer& meshRenderer);
-	static void LoadAnimatedModel(SkinnedMeshRenderer& meshComponent);
+	static void* GetOffscreenImageID()
+	{
+		assert(s_Instance.m_ImGuiOffscreenTextureDescSet);
+		return s_Instance.m_ImGuiOffscreenTextureDescSet;
+	}
+	static vk::Extent2D GetExtent2D()
+	{
+		assert(s_Instance.m_SwapChain);
+		return s_Instance.m_SwapChain->GetExtent();
+	}
+	static vk::RenderPass GetOffscreenRenderPass()
+	{
+		assert(s_Instance.m_OffscreenRenderPass.get());
+		return s_Instance.m_OffscreenRenderPass.get();
+	}
+	static vk::DescriptorPool GetDescriptorPool()
+	{
+		assert(!s_Instance.m_DescriptorPools.empty());
+		return s_Instance.m_DescriptorPools[s_Instance.m_DescriptorPools.size() - 1]->GetHandle();
+	}
+	static vk::SampleCountFlagBits GetMsaaSamples()
+	{
+		return s_MsaaSamples;
+	}
 
 	template<typename T>
 	static void Render(const Transform& transformComponent, const T& renderer, bool pointLight,
@@ -83,24 +102,25 @@ public:
 		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
 								   static_cast<vk::Pipeline>(renderer.m_GraphicsPipeline));
 
-		std::vector<vk::DescriptorSet> descriptorSets = {
-			s_Instance.m_CameraDescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get()};
-		if (s_Instance.m_SwapChain->GetImageIndex() < renderer.m_DescriptorSets.size())
+		if (renderer.m_DescriptorSets.size() > 0)
 		{
-			descriptorSets.push_back(
-				renderer.m_DescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get());
+			assert(s_Instance.m_SwapChain->GetImageIndex() < renderer.m_DescriptorSets.size());
+			commandBuffer.bindDescriptorSets(
+				vk::PipelineBindPoint::eGraphics, renderer.m_GraphicsPipeline.GetLayout(), 0, 1,
+				&renderer.m_DescriptorSets[s_Instance.m_SwapChain->GetImageIndex()].Get(), 0,
+				nullptr);
 		}
 
-		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-										 renderer.m_GraphicsPipeline.GetLayout(), 0,
-										 descriptorSets.size(), descriptorSets.data(), 0, nullptr);
-
-		PushConstant pushConstant{
-			transformComponent.m_Transform, pointLight, lightIntensity, lightDirection, lightPosition, {1, 0, 1}};
+		s_Instance.m_PushConstant.model = transformComponent.m_Transform;
+		s_Instance.m_PushConstant.pointLight = pointLight;
+		s_Instance.m_PushConstant.lightIntensity = lightIntensity;
+		s_Instance.m_PushConstant.lightDirection = lightDirection;
+		s_Instance.m_PushConstant.lightPosition = lightPosition;
+		s_Instance.m_PushConstant.lightColor = {1, 0, 1};
 		commandBuffer.pushConstants(renderer.m_GraphicsPipeline.GetLayout(),
 									vk::ShaderStageFlagBits::eVertex |
 										vk::ShaderStageFlagBits::eFragment,
-									0, sizeof(PushConstant), &pushConstant);
+									0, sizeof(PushConstant), &s_Instance.m_PushConstant);
 
 		commandBuffer.bindVertexBuffers(0, {renderer.m_Mesh.m_VertexBuffer->buffer}, {0});
 		commandBuffer.bindIndexBuffer(renderer.m_Mesh.m_IndexBuffer->buffer, 0,
@@ -118,15 +138,12 @@ private:
 	void CreateOffscreenRenderer();
 	void CreateImGuiRenderer();
 	void CreateCommandPool();
-	void CreateUniformBuffers(std::vector<std::unique_ptr<BufferAllocation>>& bufferAllocations,
-							  vk::DeviceSize bufferSize);
 	void CreateCommandBuffers();
-	void UpdateCameraMatrices(const PerspectiveCamera& camera);
 
 private:
 	static VulkanRenderer s_Instance;
 
-	std::vector<DescriptorSet> m_CameraDescriptorSets;
+	static const auto s_MsaaSamples = vk::SampleCountFlagBits::e8;
 
 	size_t m_DynamicAlignment = -1;
 
@@ -135,6 +152,7 @@ private:
 	vk::UniqueRenderPass m_OffscreenRenderPass;
 	vk::UniqueRenderPass m_ImGuiRenderPass;
 
+	// Used for multisampling
 	TextureImage m_SampledImage;
 
 	TextureImage m_OffscreenImageAllocation;
@@ -147,8 +165,6 @@ private:
 
 	vk::UniqueCommandPool m_CommandPool;
 
-	std::vector<std::unique_ptr<BufferAllocation>> m_CameraBufferAllocations;
-
 	std::vector<std::unique_ptr<DescriptorPool>> m_DescriptorPools;
 
 	std::shared_ptr<DescriptorPool> m_ImGuiDescriptorPool;
@@ -156,6 +172,8 @@ private:
 	std::vector<vk::UniqueCommandBuffer> m_CommandBuffers;
 
 	VkDescriptorSet m_ImGuiOffscreenTextureDescSet = nullptr;
+
+	PushConstant m_PushConstant;
 };
 } // namespace Neon
 

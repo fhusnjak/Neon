@@ -4,6 +4,7 @@
 
 #include "Scene.h"
 #include "VulkanRenderer.h"
+#include <Renderer/Context.h>
 
 #include "Allocator.h"
 #include "PerspectiveCameraController.h"
@@ -56,9 +57,22 @@ void Neon::Scene::LoadSkyDome()
 
 	Neon::VulkanRenderer::EndSingleTimeCommands(cmdBuff);
 
-	Neon::VulkanRenderer::LoadSkyDome(skyDomeRenderer);
-
 	Neon::Allocator::FlushStaging();
+
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
+
+	auto& pipeline = skyDomeRenderer.m_GraphicsPipeline;
+	pipeline.Init(device);
+	pipeline.LoadVertexShader("src/Shaders/build/vert_skydome.spv");
+	pipeline.LoadFragmentShader("src/Shaders/build/frag_skydome.spv");
+
+	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
+											   vk::ShaderStageFlagBits::eFragment,
+											   0, sizeof(PushConstant)};
+	pipeline.CreatePipelineLayout({}, {pushConstantRange});
+	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(), VulkanRenderer::GetMsaaSamples(),
+							VulkanRenderer::GetExtent2D(), {Vertex::getBindingDescription()},
+							{Vertex::getAttributeDescriptions()}, vk::CullModeFlagBits::eNone);
 }
 
 void Neon::Scene::LoadModel(const std::string& filename, const glm::mat4& worldTransform)
@@ -115,9 +129,58 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 
 	Neon::VulkanRenderer::EndSingleTimeCommands(cmdBuff);
 
-	Neon::VulkanRenderer::LoadAnimatedModel(skinnedMeshRenderer);
-
 	Neon::Allocator::FlushStaging();
+
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
+
+	std::vector<vk::DescriptorSetLayoutBinding> bindings;
+	bindings.emplace_back(0, vk::DescriptorType::eStorageBuffer, 1,
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(1, vk::DescriptorType::eCombinedImageSampler,
+						  static_cast<uint32_t>(skinnedMeshRenderer.m_TextureImages.size()),
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(2, vk::DescriptorType::eStorageBuffer, 1,
+						  vk::ShaderStageFlagBits::eVertex);
+
+	vk::DescriptorBufferInfo materialBufferInfo{skinnedMeshRenderer.m_MaterialBuffer->buffer, 0,
+												VK_WHOLE_SIZE};
+
+	std::vector<vk::DescriptorImageInfo> texturesBufferInfo;
+	texturesBufferInfo.reserve(skinnedMeshRenderer.m_TextureImages.size());
+	for (auto& textureImage : skinnedMeshRenderer.m_TextureImages)
+	{
+		texturesBufferInfo.push_back(textureImage->descriptor);
+	}
+
+	skinnedMeshRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
+	vk::DescriptorBufferInfo boneBufferInfo{skinnedMeshRenderer.m_BoneBuffer->buffer, 0,
+											VK_WHOLE_SIZE};
+	for (int i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
+	{
+		auto& wavefrontDescriptorSet = skinnedMeshRenderer.m_DescriptorSets[i];
+		wavefrontDescriptorSet.Init(device);
+		wavefrontDescriptorSet.Create(
+			VulkanRenderer::GetDescriptorPool(),
+			bindings);
+		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
+			wavefrontDescriptorSet.CreateWrite(0, &materialBufferInfo, 0),
+			wavefrontDescriptorSet.CreateWrite(1, texturesBufferInfo.data(), 0),
+			wavefrontDescriptorSet.CreateWrite(2, &boneBufferInfo, 0)};
+		wavefrontDescriptorSet.Update(descriptorWrites);
+	}
+	auto& pipeline = skinnedMeshRenderer.m_GraphicsPipeline;
+	pipeline.Init(device);
+	pipeline.LoadVertexShader("src/Shaders/build/animation_vert.spv");
+	pipeline.LoadFragmentShader("src/Shaders/build/frag.spv");
+
+	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
+											   vk::ShaderStageFlagBits::eFragment,
+											   0, sizeof(PushConstant)};
+	pipeline.CreatePipelineLayout({skinnedMeshRenderer.m_DescriptorSets[0].GetLayout()},
+								  {pushConstantRange});
+	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(), VulkanRenderer::GetMsaaSamples(),
+							VulkanRenderer::GetExtent2D(), {Vertex::getBindingDescription()},
+							{Vertex::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
 
 	return entity;
 }
@@ -222,6 +285,7 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 		imageAllocation = Neon::Allocator::CreateTextureImage(pixels, texWidth, texHeight);
 	}
 	assert(imageAllocation);
+
 	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
 		imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 	vk::SamplerCreateInfo samplerInfo = {
@@ -230,6 +294,7 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
 	vk::DescriptorImageInfo desc{sampler, textureImageView,
 								 vk::ImageLayout::eShaderReadOnlyOptimal};
+
 	auto* textureImage = new TextureImage{desc, std::move(imageAllocation)};
 	meshRenderer.m_TextureImages.push_back(std::shared_ptr<TextureImage>(textureImage));
 
@@ -249,9 +314,53 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 
 	VulkanRenderer::EndSingleTimeCommands(cmdBuff);
 
-	VulkanRenderer::LoadModel(meshRenderer);
-
 	Allocator::FlushStaging();
+
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
+
+	std::vector<vk::DescriptorSetLayoutBinding> bindings;
+	bindings.emplace_back(0, vk::DescriptorType::eStorageBuffer, 1,
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(1, vk::DescriptorType::eCombinedImageSampler,
+						  static_cast<uint32_t>(meshRenderer.m_TextureImages.size()),
+						  vk::ShaderStageFlagBits::eFragment);
+
+	vk::DescriptorBufferInfo materialBufferInfo{meshRenderer.m_MaterialBuffer->buffer, 0,
+												VK_WHOLE_SIZE};
+
+	std::vector<vk::DescriptorImageInfo> texturesBufferInfo;
+	texturesBufferInfo.reserve(meshRenderer.m_TextureImages.size());
+	for (auto& texture : meshRenderer.m_TextureImages)
+	{
+		texturesBufferInfo.push_back(texture->descriptor);
+	}
+
+	meshRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
+	for (int i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
+	{
+		auto& wavefrontDescriptorSet = meshRenderer.m_DescriptorSets[i];
+		wavefrontDescriptorSet.Init(device);
+		wavefrontDescriptorSet.Create(
+			VulkanRenderer::GetDescriptorPool(),
+			bindings);
+		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
+			wavefrontDescriptorSet.CreateWrite(0, &materialBufferInfo, 0),
+			wavefrontDescriptorSet.CreateWrite(1, texturesBufferInfo.data(), 0)};
+		wavefrontDescriptorSet.Update(descriptorWrites);
+	}
+	auto& pipeline = meshRenderer.m_GraphicsPipeline;
+	pipeline.Init(device);
+	pipeline.LoadVertexShader("src/Shaders/build/vert.spv");
+	pipeline.LoadFragmentShader("src/Shaders/build/frag.spv");
+
+	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
+											   vk::ShaderStageFlagBits::eFragment,
+											   0, sizeof(PushConstant)};
+	pipeline.CreatePipelineLayout({meshRenderer.m_DescriptorSets[0].GetLayout()},
+								  {pushConstantRange});
+	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(), VulkanRenderer::GetMsaaSamples(),
+							VulkanRenderer::GetExtent2D(), {Vertex::getBindingDescription()},
+							{Vertex::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
 }
 
 void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
@@ -394,11 +503,19 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 		VulkanRenderer::Render(transform, meshRenderer, pointLight, lightIntensity, lightDirection,
 							   lightPosition);
 	}
+	auto group4 = m_Registry.group<TerrainRenderer>(entt::get<Transform>);
+	for (auto entity : group4)
+	{
+		const auto& [terrainRenderer, transform] =
+		group4.get<TerrainRenderer, Transform>(entity);
+		VulkanRenderer::Render(transform, terrainRenderer, pointLight, lightIntensity,
+							   lightDirection, lightPosition);
+	}
 	auto group3 = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);
 	for (auto entity : group3)
 	{
 		const auto& [skinnedMeshRenderer, transform] =
-			group3.get<SkinnedMeshRenderer, Transform>(entity);
+		group3.get<SkinnedMeshRenderer, Transform>(entity);
 		skinnedMeshRenderer.Update(ts / 1000.0f);
 		VulkanRenderer::Render(transform, skinnedMeshRenderer, pointLight, lightIntensity,
 							   lightDirection, lightPosition);
@@ -427,9 +544,56 @@ glm::vec3 CalculateNormal(unsigned char* pixels, int texWidth, int texHeight, in
 	return glm::normalize(normal);
 }
 
+Neon::TextureImage* CreateTextureImage(std::string filename)
+{
+	std::unique_ptr<Neon::ImageAllocation> imageAllocation =
+		Neon::Allocator::CreateTextureImage(filename);
+	assert(imageAllocation);
+
+	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
+		imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+	vk::SamplerCreateInfo samplerInfo = {
+		{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
+	samplerInfo.setMaxLod(FLT_MAX);
+	vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
+	vk::DescriptorImageInfo desc{sampler, textureImageView,
+								 vk::ImageLayout::eShaderReadOnlyOptimal};
+	return new Neon::TextureImage{desc, std::move(imageAllocation)};
+}
+
+struct VertexTerrain
+{
+	glm::vec3 pos;
+	glm::vec3 norm;
+	glm::vec3 color;
+	glm::vec2 mapTexCoord;
+	glm::vec2 tileTexCoord;
+
+	static vk::VertexInputBindingDescription getBindingDescription()
+	{
+		return {0, sizeof(VertexTerrain)};
+	}
+
+	static std::vector<vk::VertexInputAttributeDescription> getAttributeDescriptions()
+	{
+		std::vector<vk::VertexInputAttributeDescription> result = {
+			{0, 0, vk::Format::eR32G32B32Sfloat, static_cast<uint32_t>(offsetof(VertexTerrain, pos))},
+			{1, 0, vk::Format::eR32G32B32Sfloat, static_cast<uint32_t>(offsetof(VertexTerrain, norm))},
+			{2, 0, vk::Format::eR32G32B32Sfloat, static_cast<uint32_t>(offsetof(VertexTerrain, color))},
+			{3, 0, vk::Format::eR32G32Sfloat, static_cast<uint32_t>(offsetof(VertexTerrain, mapTexCoord))},
+			{4, 0, vk::Format::eR32G32Sfloat, static_cast<uint32_t>(offsetof(VertexTerrain, tileTexCoord))}};
+		return result;
+	}
+
+	bool operator==(const VertexTerrain& other) const
+	{
+		return pos == other.pos;
+	}
+};
+
 void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 {
-	std::vector<Vertex> vertices;
+	std::vector<VertexTerrain> vertices;
 	std::vector<uint32_t> indices;
 
 	int texWidth, texHeight, texChannels;
@@ -441,20 +605,24 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 	float densityX = static_cast<float>(texWidth) / (width * 2.0f + 1);
 	float densityY = static_cast<float>(texHeight) / (height * 2.0f + 1);
 
-	int widthCount = static_cast<int>(densityX * width * 2.0f) + 1;
-	int heightCount = static_cast<int>(densityY * height * 2.0f) + 1;
+	int widthCount = static_cast<int>(densityX * (width * 2.0f + 1));
+	int heightCount = static_cast<int>(densityY * (height * 2.0f + 1));
 	float widthIncrement = 1.0f / (densityX);
 	float heightIncrement = 1.0f / (densityY);
 	float xValue = -width;
 	float zValue = -height;
 
-	float texCoordX = 0;
-	float texCoordY = 0;
+	float mapTexCoordXIncrement = 1.0f / static_cast<float>(widthCount);
+	float mapTexCoordYIncrement = 1.0f / static_cast<float>(heightCount);
+	float mapTexCoordX = 0;
+	float mapTexCoordY = 0;
+	float tileTexCoordX = 0;
+	float tileTexCoordY = 0;
 	for (int i = 0; i < heightCount; i++)
 	{
 		for (int j = 0; j < widthCount; j++)
 		{
-			Vertex vertex{};
+			VertexTerrain vertex{};
 			int texX = static_cast<int>(static_cast<float>(j) / static_cast<float>(widthCount) *
 										static_cast<float>(texWidth));
 			int texY = static_cast<int>(static_cast<float>(i) / static_cast<float>(heightCount) *
@@ -462,16 +630,19 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 			vertex.pos = {xValue, GetHeight(pixels, texWidth, texHeight, texX, texY, maxHeight),
 						  zValue};
 			vertex.norm = CalculateNormal(pixels, texWidth, texHeight, texX, texY, maxHeight);
-			vertex.matID = 0;
-			vertex.texCoord = {texCoordX, texCoordY};
+			vertex.mapTexCoord = {mapTexCoordX, mapTexCoordY};
+			vertex.tileTexCoord = {tileTexCoordX, tileTexCoordY};
 			vertices.push_back(vertex);
 			xValue += widthIncrement;
-			texCoordX += 0.2;
+			mapTexCoordX += mapTexCoordXIncrement;
+			tileTexCoordX += 0.5;
 		}
 		xValue = -width;
 		zValue += heightIncrement;
-		texCoordX = 0;
-		texCoordY += 0.2f;
+		mapTexCoordX = 0;
+		mapTexCoordY += mapTexCoordYIncrement;
+		tileTexCoordX = 0;
+		tileTexCoordY += 0.5f;
 	}
 
 	uint32_t index = 0;
@@ -491,8 +662,8 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 	}
 
 	Entity entity = CreateEntity("terrain");
-	auto& meshRenderer = entity.AddComponent<MeshRenderer>();
-	auto& transform = entity.AddComponent<Transform>(glm::translate(glm::mat4(1.0), {0, -5, 0}));
+	auto& terrainRenderer = entity.AddComponent<TerrainRenderer>();
+	auto& transform = entity.AddComponent<Transform>(glm::translate(glm::mat4(1.0), {0, -15, 0}));
 
 	std::vector<Material> materials;
 	Material material{};
@@ -502,37 +673,82 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 	material.textureID = 0;
 	materials.push_back(material);
 
-	std::unique_ptr<ImageAllocation> imageAllocation =
-		Neon::Allocator::CreateTextureImage("textures/grass.jpg");
-	;
-	assert(imageAllocation);
-	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
-		imageAllocation->image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
-	vk::SamplerCreateInfo samplerInfo = {
-		{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
-	samplerInfo.setMaxLod(FLT_MAX);
-	vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
-	vk::DescriptorImageInfo desc{sampler, textureImageView,
-								 vk::ImageLayout::eShaderReadOnlyOptimal};
-	auto* textureImage = new TextureImage{desc, std::move(imageAllocation)};
-	meshRenderer.m_TextureImages.push_back(std::shared_ptr<TextureImage>(textureImage));
+	terrainRenderer.m_BlendMap = std::shared_ptr<TextureImage>(CreateTextureImage("textures/blendMap.png"));
+	terrainRenderer.m_BackgroundTexture = std::shared_ptr<TextureImage>(CreateTextureImage("textures/grassy2.png"));
+	terrainRenderer.m_RTexture = std::shared_ptr<TextureImage>(CreateTextureImage("textures/mud.png"));
+	terrainRenderer.m_GTexture = std::shared_ptr<TextureImage>(CreateTextureImage("textures/grassFlowers.png"));
+	terrainRenderer.m_BTexture = std::shared_ptr<TextureImage>(CreateTextureImage("textures/path.png"));
 
 	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
 
-	meshRenderer.m_Mesh.m_VerticesCount = (uint32_t)vertices.size();
-	meshRenderer.m_Mesh.m_IndicesCount = (uint32_t)indices.size();
-	meshRenderer.m_Mesh.m_VertexBuffer = Allocator::CreateDeviceLocalBuffer(
+	terrainRenderer.m_Mesh.m_VerticesCount = (uint32_t)vertices.size();
+	terrainRenderer.m_Mesh.m_IndicesCount = (uint32_t)indices.size();
+	terrainRenderer.m_Mesh.m_VertexBuffer = Allocator::CreateDeviceLocalBuffer(
 		cmdBuff, vertices,
 		vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
-	meshRenderer.m_Mesh.m_IndexBuffer = Allocator::CreateDeviceLocalBuffer(
+	terrainRenderer.m_Mesh.m_IndexBuffer = Allocator::CreateDeviceLocalBuffer(
 		cmdBuff, indices,
 		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
-	meshRenderer.m_MaterialBuffer = Allocator::CreateDeviceLocalBuffer(
+	terrainRenderer.m_MaterialBuffer = Allocator::CreateDeviceLocalBuffer(
 		cmdBuff, materials, vk::BufferUsageFlagBits::eStorageBuffer);
 
 	VulkanRenderer::EndSingleTimeCommands(cmdBuff);
 
-	VulkanRenderer::LoadModel(meshRenderer);
-
 	Allocator::FlushStaging();
+
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
+
+	std::vector<vk::DescriptorSetLayoutBinding> bindings;
+	bindings.emplace_back(0, vk::DescriptorType::eStorageBuffer, 1,
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(1, vk::DescriptorType::eCombinedImageSampler,
+						  1,
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(2, vk::DescriptorType::eCombinedImageSampler,
+						  1,
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(3, vk::DescriptorType::eCombinedImageSampler,
+						  1,
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(4, vk::DescriptorType::eCombinedImageSampler,
+						  1,
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(5, vk::DescriptorType::eCombinedImageSampler,
+						  1,
+						  vk::ShaderStageFlagBits::eFragment);
+
+	vk::DescriptorBufferInfo materialBufferInfo{terrainRenderer.m_MaterialBuffer->buffer, 0,
+												VK_WHOLE_SIZE};
+
+	terrainRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
+	for (int i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
+	{
+		auto& wavefrontDescriptorSet = terrainRenderer.m_DescriptorSets[i];
+		wavefrontDescriptorSet.Init(device);
+		wavefrontDescriptorSet.Create(
+			VulkanRenderer::GetDescriptorPool(),
+			bindings);
+		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
+			wavefrontDescriptorSet.CreateWrite(0, &materialBufferInfo, 0),
+			wavefrontDescriptorSet.CreateWrite(1, &terrainRenderer.m_BlendMap->descriptor, 0),
+			wavefrontDescriptorSet.CreateWrite(2, &terrainRenderer.m_BackgroundTexture->descriptor, 0),
+			wavefrontDescriptorSet.CreateWrite(3, &terrainRenderer.m_RTexture->descriptor, 0),
+			wavefrontDescriptorSet.CreateWrite(4, &terrainRenderer.m_GTexture->descriptor, 0),
+			wavefrontDescriptorSet.CreateWrite(5, &terrainRenderer.m_BTexture->descriptor, 0)};
+		wavefrontDescriptorSet.Update(descriptorWrites);
+	}
+
+	auto& pipeline = terrainRenderer.m_GraphicsPipeline;
+	pipeline.Init(device);
+	pipeline.LoadVertexShader("src/Shaders/build/vert_terrain.spv");
+	pipeline.LoadFragmentShader("src/Shaders/build/frag_terrain.spv");
+
+	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
+											   vk::ShaderStageFlagBits::eFragment,
+											   0, sizeof(PushConstant)};
+	pipeline.CreatePipelineLayout({terrainRenderer.m_DescriptorSets[0].GetLayout()},
+								  {pushConstantRange});
+	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(), VulkanRenderer::GetMsaaSamples(),
+							VulkanRenderer::GetExtent2D(), {VertexTerrain::getBindingDescription()},
+							{VertexTerrain::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
 }

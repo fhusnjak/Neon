@@ -3,3 +3,5 @@
 "C:/VulkanSDK/1.2.131.2/Bin32/glslc.exe" src/shader_frag.frag -o build/frag.spv
 "C:/VulkanSDK/1.2.131.2/Bin32/glslc.exe" src/shader_frag_skydome.frag -o build/frag_skydome.spv
 "C:/VulkanSDK/1.2.131.2/Bin32/glslc.exe" src/shader_vert_skydome.vert -o build/vert_skydome.spv
+"C:/VulkanSDK/1.2.131.2/Bin32/glslc.exe" src/shader_vert_terrain.vert -o build/vert_terrain.spv
+"C:/VulkanSDK/1.2.131.2/Bin32/glslc.exe" src/shader_frag_terrain.frag -o build/frag_terrain.spv

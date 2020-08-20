@@ -5,23 +5,21 @@
 
 layout(location = 0) in vec3 pos;
 
-layout(location = 0) out vec3 fragPos;
+layout(location = 0) out vec3 fragWorldPos;
 
-layout(set = 0, binding = 0, scalar) uniform CameraMatrices
+layout(push_constant, scalar) uniform PushConstant
 {
     vec3 cameraPos;
     mat4 view;
     mat4 projection;
-} cameraMatrices;
 
-layout(push_constant, scalar) uniform PushConstant
-{
     mat4 model;
 }
 pushConstant;
 
 void main()
 {
-    fragPos = (pushConstant.model * vec4(pos, 1.0)).xyz;
-    gl_Position = cameraMatrices.projection * cameraMatrices.view * pushConstant.model * vec4(pos, 1.0);
+    vec4 worldPos = pushConstant.model * vec4(pos, 1.0);
+    fragWorldPos = (worldPos).xyz;
+    gl_Position = pushConstant.projection * pushConstant.view * worldPos;
 }

@@ -17,17 +17,12 @@ layout(location = 2) out vec3 fragWorldPos;
 layout(location = 3) out vec2 fragMapTexCoord;
 layout(location = 4) out vec2 fragTileTexCoord;
 
-vec4 plane = vec4(0, -1, 0, 1);
-
-layout(set = 0, binding = 0, scalar) uniform CameraMatrices
+layout(push_constant, scalar) uniform PushConstant
 {
     vec3 cameraPos;
     mat4 view;
     mat4 projection;
-} cameraMatrices;
 
-layout(push_constant, scalar) uniform PushConstant
-{
     mat4 model;
 }
 pushConstant;
@@ -37,10 +32,9 @@ void main()
     fragColor = color;
     fragNorm = normalize((pushConstant.model * vec4(norm, 0)).xyz);
     vec4 worldPos = pushConstant.model * vec4(pos, 1);
-    gl_ClipDistance[0] = dot(worldPos, plane);
     fragWorldPos = worldPos.xyz;
-    fragTexCoord = texCoord;
-    fragMatID = matID;
+    fragMapTexCoord = mapTexCoord;
+    fragTileTexCoord = tileTexCoord;
 
-    gl_Position = cameraMatrices.projection * cameraMatrices.view * worldPos;
+    gl_Position = pushConstant.projection * pushConstant.view * worldPos;
 }

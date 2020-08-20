@@ -30,6 +30,7 @@ Neon::LogicalDevice::LogicalDevice(const PhysicalDevice& physicalDevice)
 	descriptorFeatures.pNext = &scalarLayoutFeatures;
 	vk::PhysicalDeviceFeatures deviceFeatures;
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	deviceFeatures.shaderClipDistance = VK_TRUE;
 	vk::PhysicalDeviceFeatures2 deviceFeatures2;
 	deviceFeatures2.pNext = &descriptorFeatures;
 	deviceFeatures2.features = deviceFeatures;

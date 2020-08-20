@@ -14,7 +14,7 @@ Sandbox3D::Sandbox3D()
 {
 	m_ActiveScene = std::make_shared<Neon::Scene>();
 	m_ActiveScene->LoadSkyDome();
-	/*auto human = m_ActiveScene->LoadAnimatedModel("models/rp_nathan_animated_003_walking.fbx");
+	auto human = m_ActiveScene->LoadAnimatedModel("models/rp_nathan_animated_003_walking.fbx");
 	auto& transformComponent1 = human.GetComponent<Neon::Transform>();
 	transformComponent1.m_Transform = glm::scale(glm::mat4(1.0f), {0.01, 0.01, 0.01});
 	transformComponent1.m_Transform =
@@ -27,12 +27,12 @@ Sandbox3D::Sandbox3D()
 	transformComponent2.m_Transform =
 		glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * transformComponent2.m_Transform;
 	transformComponent2.m_Transform =
-		glm::translate(glm::mat4(1.0), {-3, -1.0, 0}) * transformComponent2.m_Transform;*/
+		glm::translate(glm::mat4(1.0), {-3, -1.0, 0}) * transformComponent2.m_Transform;
 
 	glm::mat4 planeTransform = glm::scale(glm::mat4(1.0), {0.13, 0.13, 0.13});
 	planeTransform = glm::translate(glm::mat4(1.0), {-6.9, -0.1, -6.82}) * planeTransform;
 	m_ActiveScene->LoadModel("models/plane.obj", planeTransform);
-	m_ActiveScene->LoadTerrain(10, 10, 10.0f);
+	m_ActiveScene->LoadTerrain(100, 100, 20.0f);
 }
 
 void Sandbox3D::OnAttach() { }

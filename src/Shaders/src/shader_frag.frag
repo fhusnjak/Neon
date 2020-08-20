@@ -15,22 +15,20 @@ layout(location = 4) flat in int fragMatID;
 
 layout(location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 0, scalar) uniform CameraMatrices
+layout(set = 0, binding = 0, scalar) readonly buffer MaterialBufferObject
+{
+    Material materials[];
+};
+layout(set = 0, binding = 1) uniform sampler2D textureSamplers[];
+
+layout(push_constant, scalar) uniform PushConstant
 {
     vec3 cameraPos;
     mat4 view;
     mat4 projection;
-} cameraMatrices;
 
-layout(set = 1, binding = 0, scalar) readonly buffer MaterialBufferObject
-{
-    Material materials[];
-};
-layout(set = 1, binding = 1) uniform sampler2D textureSamplers[];
-
-layout(push_constant, scalar) uniform PushConstant
-{
     mat4 model;
+
     int pointLight;
     float lightIntensity;
     vec3 lightDirection;
@@ -59,7 +57,7 @@ void main()
         diffuse *= diffuseTxt;
     }
 
-    vec3 viewDir = normalize(cameraMatrices.cameraPos - fragWorldPos);
+    vec3 viewDir = normalize(pushConstant.cameraPos - fragWorldPos);
     vec3 specular = computeSpecular(mat, viewDir, lightDir, fragNorm);
 
     float gamma = 1. / 2.2;

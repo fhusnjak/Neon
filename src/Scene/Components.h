@@ -168,6 +168,23 @@ struct MeshRenderer
 
 	MeshRenderer() = default;
 };
+
+struct TerrainRenderer
+{
+	Mesh m_Mesh;
+
+	GraphicsPipeline m_GraphicsPipeline;
+	std::vector<DescriptorSet> m_DescriptorSets;
+
+	std::shared_ptr<BufferAllocation> m_MaterialBuffer{};
+	std::shared_ptr<TextureImage> m_BlendMap;
+	std::shared_ptr<TextureImage> m_BackgroundTexture;
+	std::shared_ptr<TextureImage> m_RTexture;
+	std::shared_ptr<TextureImage> m_GTexture;
+	std::shared_ptr<TextureImage> m_BTexture;
+
+	TerrainRenderer() = default;
+};
 } // namespace Neon
 
 #endif //NEON_COMPONENTS_H
