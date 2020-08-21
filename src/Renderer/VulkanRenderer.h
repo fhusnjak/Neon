@@ -116,7 +116,7 @@ public:
 				nullptr);
 		}
 
-		s_Instance.m_PushConstant.model = transformComponent.m_Transform;
+		s_Instance.m_PushConstant.model = transformComponent.m_Global;
 		commandBuffer.pushConstants(renderer.m_GraphicsPipeline.GetLayout(),
 									vk::ShaderStageFlagBits::eVertex |
 										vk::ShaderStageFlagBits::eFragment,

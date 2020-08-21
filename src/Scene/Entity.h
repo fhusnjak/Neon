@@ -6,7 +6,6 @@
 #define NEON_ENTITY_H
 
 #include "Scene.h"
-#include "entt.h"
 
 namespace Neon
 {
@@ -42,6 +41,11 @@ public:
 	{
 		assert(HasComponent<T>());
 		m_Scene->m_Registry.remove<T>(m_EntityHandle);
+	}
+
+	[[nodiscard]] entt::entity GetHandle() const
+	{
+		return m_EntityHandle;
 	}
 
 	operator bool() const

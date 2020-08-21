@@ -4,10 +4,9 @@
 
 #include "Components.h"
 #include <Renderer/Context.h>
-#include <Renderer/RenderPass.h>
 #include <Renderer/VulkanRenderer.h>
 
-Neon::Water::Water(vk::Extent2D extent)
+Neon::WaterRenderer::WaterRenderer(vk::Extent2D extent)
 {
 	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 

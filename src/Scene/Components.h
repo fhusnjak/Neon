@@ -8,6 +8,7 @@
 #include "Allocator.h"
 #include "Animation.h"
 #include "DescriptorSet.h"
+#include "Entity.h"
 #include "GraphicsPipeline.h"
 #include <Core/Allocator.h>
 #include <Renderer/DescriptorSet.h>
@@ -36,11 +37,13 @@ struct TagComponent
 
 struct Transform
 {
-	glm::mat4 m_Transform{1.0f};
+	glm::mat4 m_Global{1.0f};
+	glm::mat4 m_Local{1.0f};
 
 	Transform() = default;
-	explicit Transform(const glm::mat4& transform)
-		: m_Transform(transform)
+	explicit Transform(const glm::mat4& global, const glm::mat4& local)
+		: m_Global(global)
+		, m_Local(local)
 	{
 	}
 };
@@ -61,6 +64,17 @@ struct SkyDomeRenderer
 	std::vector<DescriptorSet> m_DescriptorSets;
 
 	SkyDomeRenderer() = default;
+};
+
+struct Relationship
+{
+	Entity m_Parent{};
+
+	Relationship() = default;
+	explicit Relationship(Entity parent)
+		: m_Parent(parent)
+	{
+	}
 };
 
 struct SkinnedMeshRenderer
@@ -186,7 +200,7 @@ struct TerrainRenderer
 	TerrainRenderer() = default;
 };
 
-struct Water
+struct WaterRenderer
 {
 	Mesh m_Mesh;
 
@@ -203,7 +217,7 @@ struct Water
 
 	std::vector<vk::UniqueFramebuffer> m_FrameBuffers;
 
-	explicit Water(vk::Extent2D extent);
+	explicit WaterRenderer(vk::Extent2D extent);
 };
 } // namespace Neon
 

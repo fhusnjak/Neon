@@ -46,7 +46,6 @@ add_executable(Neon
         src/Scene/Scene.cpp
         src/Scene/Entity.cpp
         src/Scene/Animation.cpp
-        src/Scene/Bone.cpp
 
         vendor/imgui/examples/imgui_impl_glfw.cpp
         vendor/imgui/examples/imgui_impl_vulkan.cpp

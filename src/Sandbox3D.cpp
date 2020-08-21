@@ -21,17 +21,20 @@ Sandbox3D::Sandbox3D()
 		glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * transformComponent1.m_Transform;
 	transformComponent1.m_Transform =
 		glm::translate(glm::mat4(1.0), {-5, -1.0, 0}) * transformComponent1.m_Transform;*/
+	auto modelTransform = glm::scale(glm::mat4(1.0f), {0.05, 0.05, 0.05});
+	modelTransform =
+		glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * modelTransform;
+	modelTransform =
+		glm::translate(glm::mat4(1.0), {-8, -6.0, -2}) * modelTransform;
+
 	auto ugly = m_ActiveScene->LoadAnimatedModel("models/boblampclean.md5mesh");
 	auto& transformComponent2 = ugly.GetComponent<Neon::Transform>();
-	transformComponent2.m_Transform = glm::scale(glm::mat4(1.0f), {0.05, 0.05, 0.05});
-	transformComponent2.m_Transform =
-		glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * transformComponent2.m_Transform;
-	transformComponent2.m_Transform =
-		glm::translate(glm::mat4(1.0), {-8, -6.0, -2}) * transformComponent2.m_Transform;
+	transformComponent2.m_Global = modelTransform;
 
-	glm::mat4 planeTransform = glm::scale(glm::mat4(1.0), {0.13, 0.13, 0.13});
-	planeTransform = glm::translate(glm::mat4(1.0), {-6.9, -5, -6.82}) * planeTransform;
-	m_ActiveScene->LoadModel("models/plane.obj", planeTransform);
+	auto uglyStat = m_ActiveScene->LoadModel("models/boblampclean.md5mesh");
+	auto& transformComponent3 = uglyStat.GetComponent<Neon::Transform>();
+	transformComponent3.m_Global = modelTransform;
+
 	m_ActiveScene->LoadTerrain(100, 100, 20.0f);
 }
 
