@@ -20,6 +20,7 @@ layout(location = 1) out vec3 fragNorm;
 layout(location = 2) out vec3 fragWorldPos;
 layout(location = 3) out vec2 fragTexCoord;
 layout(location = 4) flat out int fragMatID;
+layout(location = 5) out vec4 clipSpace;
 
 layout(set = 0, binding = 2, scalar) readonly buffer BoneBuffer
 {
@@ -31,6 +32,8 @@ layout(push_constant, scalar) uniform PushConstant
     vec3 cameraPos;
     mat4 view;
     mat4 projection;
+
+    vec4 clippingPlane;
 
     mat4 model;
 }
@@ -50,5 +53,10 @@ void main()
     fragWorldPos = worldPos.xyz;
     fragTexCoord = texCoord;
     fragMatID = matID;
+
+    clipSpace = pushConstant.projection * pushConstant.view * worldPos;
+
+    gl_ClipDistance[0] = dot(worldPos, pushConstant.clippingPlane);
+
     gl_Position = pushConstant.projection * pushConstant.view * worldPos;
 }

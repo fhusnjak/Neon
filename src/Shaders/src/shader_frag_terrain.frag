@@ -32,13 +32,14 @@ layout(push_constant, scalar) uniform PushConstant
     mat4 view;
     mat4 projection;
 
+    vec4 clippingPlane;
+
     mat4 model;
 
     int pointLight;
     float lightIntensity;
     vec3 lightDirection;
     vec3 lightPosition;
-    vec3 lightColor;
 }
 pushConstant;
 

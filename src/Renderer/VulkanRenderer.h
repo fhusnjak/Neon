@@ -22,12 +22,13 @@
 
 namespace Neon
 {
-
 struct PushConstant
 {
 	glm::vec3 cameraPos;
 	glm::mat4 view;
 	glm::mat4 projection;
+
+	glm::vec4 clippingPlane;
 
 	glm::mat4 model;
 
@@ -35,7 +36,6 @@ struct PushConstant
 	float lightIntensity;
 	glm::vec3 lightDirection;
 	glm::vec3 lightPosition;
-	glm::vec3 lightColor;
 };
 
 class VulkanRenderer
@@ -49,7 +49,10 @@ public:
 	static void Shutdown();
 	static void Begin();
 	static void End();
-	static void BeginScene(const PerspectiveCamera& camera, const glm::vec4& clearColor);
+	static void BeginScene(const std::vector<vk::UniqueFramebuffer>& frameBuffers,
+						   const glm::vec4& clearColor, const Neon::PerspectiveCamera& camera,
+						   const glm::vec4& clippingPlane, bool pointLight, float lightIntensity,
+						   glm::vec3 lightDirection, const glm::vec3& lightPosition);
 	static void EndScene();
 	static void DrawImGui();
 	static vk::CommandBuffer BeginSingleTimeCommands();
@@ -83,11 +86,13 @@ public:
 	{
 		return s_MsaaSamples;
 	}
+	static const std::vector<vk::UniqueFramebuffer>& GetOffscreenFramebuffers()
+	{
+		return s_Instance.m_OffscreenFrameBuffers;
+	}
 
 	template<typename T>
-	static void Render(const Transform& transformComponent, const T& renderer, bool pointLight,
-					   float lightIntensity, glm::vec3 lightDirection,
-					   const glm::vec3& lightPosition)
+	static void Render(const Transform& transformComponent, const T& renderer)
 	{
 		auto& commandBuffer =
 			s_Instance.m_CommandBuffers[s_Instance.m_SwapChain->GetImageIndex()].get();
@@ -112,18 +117,13 @@ public:
 		}
 
 		s_Instance.m_PushConstant.model = transformComponent.m_Transform;
-		s_Instance.m_PushConstant.pointLight = pointLight;
-		s_Instance.m_PushConstant.lightIntensity = lightIntensity;
-		s_Instance.m_PushConstant.lightDirection = lightDirection;
-		s_Instance.m_PushConstant.lightPosition = lightPosition;
-		s_Instance.m_PushConstant.lightColor = {1, 0, 1};
 		commandBuffer.pushConstants(renderer.m_GraphicsPipeline.GetLayout(),
 									vk::ShaderStageFlagBits::eVertex |
 										vk::ShaderStageFlagBits::eFragment,
 									0, sizeof(PushConstant), &s_Instance.m_PushConstant);
 
-		commandBuffer.bindVertexBuffers(0, {renderer.m_Mesh.m_VertexBuffer->buffer}, {0});
-		commandBuffer.bindIndexBuffer(renderer.m_Mesh.m_IndexBuffer->buffer, 0,
+		commandBuffer.bindVertexBuffers(0, {renderer.m_Mesh.m_VertexBuffer->m_Buffer}, {0});
+		commandBuffer.bindIndexBuffer(renderer.m_Mesh.m_IndexBuffer->m_Buffer, 0,
 									  vk::IndexType::eUint32);
 
 		commandBuffer.drawIndexed(static_cast<uint32_t>(renderer.m_Mesh.m_IndicesCount), 1, 0, 0,

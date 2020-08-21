@@ -67,12 +67,13 @@ void Neon::Scene::LoadSkyDome()
 	pipeline.LoadFragmentShader("src/Shaders/build/frag_skydome.spv");
 
 	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
-											   vk::ShaderStageFlagBits::eFragment,
+												   vk::ShaderStageFlagBits::eFragment,
 											   0, sizeof(PushConstant)};
 	pipeline.CreatePipelineLayout({}, {pushConstantRange});
-	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(), VulkanRenderer::GetMsaaSamples(),
-							VulkanRenderer::GetExtent2D(), {Vertex::getBindingDescription()},
-							{Vertex::getAttributeDescriptions()}, vk::CullModeFlagBits::eNone);
+	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(),
+							VulkanRenderer::GetMsaaSamples(), VulkanRenderer::GetExtent2D(),
+							{Vertex::getBindingDescription()}, {Vertex::getAttributeDescriptions()},
+							vk::CullModeFlagBits::eNone);
 }
 
 void Neon::Scene::LoadModel(const std::string& filename, const glm::mat4& worldTransform)
@@ -159,9 +160,7 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	{
 		auto& wavefrontDescriptorSet = skinnedMeshRenderer.m_DescriptorSets[i];
 		wavefrontDescriptorSet.Init(device);
-		wavefrontDescriptorSet.Create(
-			VulkanRenderer::GetDescriptorPool(),
-			bindings);
+		wavefrontDescriptorSet.Create(VulkanRenderer::GetDescriptorPool(), bindings);
 		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
 			wavefrontDescriptorSet.CreateWrite(0, &materialBufferInfo, 0),
 			wavefrontDescriptorSet.CreateWrite(1, texturesBufferInfo.data(), 0),
@@ -174,13 +173,14 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	pipeline.LoadFragmentShader("src/Shaders/build/frag.spv");
 
 	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
-											   vk::ShaderStageFlagBits::eFragment,
+												   vk::ShaderStageFlagBits::eFragment,
 											   0, sizeof(PushConstant)};
 	pipeline.CreatePipelineLayout({skinnedMeshRenderer.m_DescriptorSets[0].GetLayout()},
 								  {pushConstantRange});
-	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(), VulkanRenderer::GetMsaaSamples(),
-							VulkanRenderer::GetExtent2D(), {Vertex::getBindingDescription()},
-							{Vertex::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
+	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(),
+							VulkanRenderer::GetMsaaSamples(), VulkanRenderer::GetExtent2D(),
+							{Vertex::getBindingDescription()}, {Vertex::getAttributeDescriptions()},
+							vk::CullModeFlagBits::eBack);
 
 	return entity;
 }
@@ -247,7 +247,7 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	}
 
 	Entity entity = CreateEntity(mesh->mName.C_Str());
-	auto& meshRenderer = entity.AddComponent<MeshRenderer>();
+	auto& water = entity.AddComponent<Water>(VulkanRenderer::GetExtent2D());
 	auto& transform = entity.AddComponent<Transform>(worldTransform * parentTransform);
 
 	std::vector<Material> materials;
@@ -268,7 +268,7 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	material.textureID = 0;
 	materials.push_back(material);
 
-	std::unique_ptr<ImageAllocation> imageAllocation;
+	/*std::unique_ptr<ImageAllocation> imageAllocation;
 	if (aiMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0)
 	{
 		// TODO: for now just load first diffuse texture
@@ -293,22 +293,22 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	samplerInfo.setMaxLod(FLT_MAX);
 	vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
 	vk::DescriptorImageInfo desc{sampler, textureImageView,
-								 vk::ImageLayout::eShaderReadOnlyOptimal};
+								 vk::ImageLayout::eShaderReadOnlyOptimal};*/
 
-	meshRenderer.m_TextureImages.emplace_back(desc, std::move(imageAllocation));
+	//water.m_TextureImages.emplace_back(desc, std::move(imageAllocation));
 
 	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
 
-	meshRenderer.m_Mesh.m_VerticesCount = (uint32_t)vertices.size();
-	meshRenderer.m_Mesh.m_IndicesCount = (uint32_t)indices.size();
-	meshRenderer.m_Mesh.m_VertexBuffer = Allocator::CreateDeviceLocalBuffer(
+	water.m_Mesh.m_VerticesCount = (uint32_t)vertices.size();
+	water.m_Mesh.m_IndicesCount = (uint32_t)indices.size();
+	water.m_Mesh.m_VertexBuffer = Allocator::CreateDeviceLocalBuffer(
 		cmdBuff, vertices,
 		vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
-	meshRenderer.m_Mesh.m_IndexBuffer = Allocator::CreateDeviceLocalBuffer(
+	water.m_Mesh.m_IndexBuffer = Allocator::CreateDeviceLocalBuffer(
 		cmdBuff, indices,
 		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
 
-	meshRenderer.m_MaterialBuffer = Allocator::CreateDeviceLocalBuffer(
+	water.m_MaterialBuffer = Allocator::CreateDeviceLocalBuffer(
 		cmdBuff, materials, vk::BufferUsageFlagBits::eStorageBuffer);
 
 	VulkanRenderer::EndSingleTimeCommands(cmdBuff);
@@ -321,45 +321,42 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 	bindings.emplace_back(0, vk::DescriptorType::eStorageBuffer, 1,
 						  vk::ShaderStageFlagBits::eFragment);
 	bindings.emplace_back(1, vk::DescriptorType::eCombinedImageSampler,
-						  static_cast<uint32_t>(meshRenderer.m_TextureImages.size()),
+						  static_cast<uint32_t>(water.m_TextureImages.size()),
 						  vk::ShaderStageFlagBits::eFragment);
 
-	vk::DescriptorBufferInfo materialBufferInfo{meshRenderer.m_MaterialBuffer->m_Buffer, 0,
-												VK_WHOLE_SIZE};
+	vk::DescriptorBufferInfo materialBufferInfo{water.m_MaterialBuffer->m_Buffer, 0, VK_WHOLE_SIZE};
 
 	std::vector<vk::DescriptorImageInfo> texturesBufferInfo;
-	texturesBufferInfo.reserve(meshRenderer.m_TextureImages.size());
-	for (auto& texture : meshRenderer.m_TextureImages)
+	texturesBufferInfo.reserve(water.m_TextureImages.size());
+	for (auto& texture : water.m_TextureImages)
 	{
 		texturesBufferInfo.push_back(texture.m_Descriptor);
 	}
 
-	meshRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
+	water.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
 	for (int i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
 	{
-		auto& wavefrontDescriptorSet = meshRenderer.m_DescriptorSets[i];
+		auto& wavefrontDescriptorSet = water.m_DescriptorSets[i];
 		wavefrontDescriptorSet.Init(device);
-		wavefrontDescriptorSet.Create(
-			VulkanRenderer::GetDescriptorPool(),
-			bindings);
+		wavefrontDescriptorSet.Create(VulkanRenderer::GetDescriptorPool(), bindings);
 		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
 			wavefrontDescriptorSet.CreateWrite(0, &materialBufferInfo, 0),
 			wavefrontDescriptorSet.CreateWrite(1, texturesBufferInfo.data(), 0)};
 		wavefrontDescriptorSet.Update(descriptorWrites);
 	}
-	auto& pipeline = meshRenderer.m_GraphicsPipeline;
+	auto& pipeline = water.m_GraphicsPipeline;
 	pipeline.Init(device);
-	pipeline.LoadVertexShader("src/Shaders/build/vert.spv");
-	pipeline.LoadFragmentShader("src/Shaders/build/frag.spv");
+	pipeline.LoadVertexShader("src/Shaders/build/vert_water.spv");
+	pipeline.LoadFragmentShader("src/Shaders/build/frag_water.spv");
 
 	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
-											   vk::ShaderStageFlagBits::eFragment,
+												   vk::ShaderStageFlagBits::eFragment,
 											   0, sizeof(PushConstant)};
-	pipeline.CreatePipelineLayout({meshRenderer.m_DescriptorSets[0].GetLayout()},
-								  {pushConstantRange});
-	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(), VulkanRenderer::GetMsaaSamples(),
-							VulkanRenderer::GetExtent2D(), {Vertex::getBindingDescription()},
-							{Vertex::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
+	pipeline.CreatePipelineLayout({water.m_DescriptorSets[0].GetLayout()}, {pushConstantRange});
+	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(),
+							VulkanRenderer::GetMsaaSamples(), VulkanRenderer::GetExtent2D(),
+							{Vertex::getBindingDescription()}, {Vertex::getAttributeDescriptions()},
+							vk::CullModeFlagBits::eBack);
 }
 
 void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
@@ -481,42 +478,39 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 						   glm::vec4 clearColor, bool pointLight, float lightIntensity,
 						   glm::vec3 lightDirection, glm::vec3 lightPosition)
 {
-	VulkanRenderer::BeginScene(controller.GetCamera(), clearColor);
-	auto group1 = m_Registry.group<SkyDomeRenderer>(entt::get<Transform>);
-	for (auto entity : group1)
+	auto animationView = m_Registry.view<SkinnedMeshRenderer>();
+	for (auto entity : animationView)
 	{
-		auto [skyDomeRenderer, transform] = group1.get<SkyDomeRenderer, Transform>(entity);
-		glm::mat4 transformMatrix = transform.m_Transform;
-		transformMatrix = glm::translate(glm::mat4(1.0), controller.GetCamera().GetPosition()) *
-						  transform.m_Transform;
-		transformMatrix = glm::translate(glm::mat4(1.0), {0, -1000, 0}) * transform.m_Transform;
-		Transform newTransform(transformMatrix);
-		VulkanRenderer::Render(newTransform, skyDomeRenderer, pointLight, lightIntensity,
-							   lightDirection, lightPosition);
-	}
-	auto group2 = m_Registry.group<MeshRenderer>(entt::get<Transform>);
-	for (auto entity : group2)
-	{
-		const auto& [meshRenderer, transform] = group2.get<MeshRenderer, Transform>(entity);
-		VulkanRenderer::Render(transform, meshRenderer, pointLight, lightIntensity, lightDirection,
-							   lightPosition);
-	}
-	auto group4 = m_Registry.group<TerrainRenderer>(entt::get<Transform>);
-	for (auto entity : group4)
-	{
-		const auto& [terrainRenderer, transform] =
-		group4.get<TerrainRenderer, Transform>(entity);
-		VulkanRenderer::Render(transform, terrainRenderer, pointLight, lightIntensity,
-							   lightDirection, lightPosition);
-	}
-	auto group3 = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);
-	for (auto entity : group3)
-	{
-		const auto& [skinnedMeshRenderer, transform] =
-		group3.get<SkinnedMeshRenderer, Transform>(entity);
+		auto& skinnedMeshRenderer = animationView.get<SkinnedMeshRenderer>(entity);
 		skinnedMeshRenderer.Update(ts / 1000.0f);
-		VulkanRenderer::Render(transform, skinnedMeshRenderer, pointLight, lightIntensity,
-							   lightDirection, lightPosition);
+	}
+
+	auto camera = controller.GetCamera();
+	float translation = -((camera.GetPosition().y + 5) * 2);
+	camera.Translate({0, translation, 0});
+	camera.InvertPitch();
+
+	auto waterGroup = m_Registry.group<Water>(entt::get<Transform>);
+	for (auto entity : waterGroup)
+	{
+		const auto& [water, transform] = waterGroup.get<Water, Transform>(entity);
+		VulkanRenderer::BeginScene(water.m_FrameBuffers, clearColor, camera, {0, 1, 0, 5},
+								   pointLight, lightIntensity, lightDirection, lightPosition);
+		Render(camera);
+		VulkanRenderer::EndScene();
+	}
+
+	camera.Translate({0, -translation, 0});
+	camera.InvertPitch();
+
+	VulkanRenderer::BeginScene(VulkanRenderer::GetOffscreenFramebuffers(), clearColor, camera,
+							   {0, 1, 0, 100000}, pointLight, lightIntensity, lightDirection,
+							   lightPosition);
+	Render(camera);
+	for (auto entity : waterGroup)
+	{
+		const auto& [water, transform] = waterGroup.get<Water, Transform>(entity);
+		VulkanRenderer::Render(transform, water);
 	}
 	VulkanRenderer::EndScene();
 }
@@ -544,18 +538,18 @@ glm::vec3 CalculateNormal(unsigned char* pixels, int texWidth, int texHeight, in
 
 void CreateTextureImage(const std::string& filename, Neon::TextureImage& textureImage)
 {
-	textureImage.m_TextureAllocation =
-		Neon::Allocator::CreateTextureImage(filename);
+	textureImage.m_TextureAllocation = Neon::Allocator::CreateTextureImage(filename);
 	assert(textureImage.m_TextureAllocation);
 
 	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
-            textureImage.m_TextureAllocation->m_Image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+		textureImage.m_TextureAllocation->m_Image, vk::Format::eR8G8B8A8Srgb,
+		vk::ImageAspectFlagBits::eColor);
 	vk::SamplerCreateInfo samplerInfo = {
 		{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
 	samplerInfo.setMaxLod(FLT_MAX);
 	vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
 	textureImage.m_Descriptor = {sampler, textureImageView,
-							   vk::ImageLayout::eShaderReadOnlyOptimal};
+								 vk::ImageLayout::eShaderReadOnlyOptimal};
 }
 
 struct VertexTerrain
@@ -574,11 +568,16 @@ struct VertexTerrain
 	static std::vector<vk::VertexInputAttributeDescription> getAttributeDescriptions()
 	{
 		std::vector<vk::VertexInputAttributeDescription> result = {
-			{0, 0, vk::Format::eR32G32B32Sfloat, static_cast<uint32_t>(offsetof(VertexTerrain, pos))},
-			{1, 0, vk::Format::eR32G32B32Sfloat, static_cast<uint32_t>(offsetof(VertexTerrain, norm))},
-			{2, 0, vk::Format::eR32G32B32Sfloat, static_cast<uint32_t>(offsetof(VertexTerrain, color))},
-			{3, 0, vk::Format::eR32G32Sfloat, static_cast<uint32_t>(offsetof(VertexTerrain, mapTexCoord))},
-			{4, 0, vk::Format::eR32G32Sfloat, static_cast<uint32_t>(offsetof(VertexTerrain, tileTexCoord))}};
+			{0, 0, vk::Format::eR32G32B32Sfloat,
+			 static_cast<uint32_t>(offsetof(VertexTerrain, pos))},
+			{1, 0, vk::Format::eR32G32B32Sfloat,
+			 static_cast<uint32_t>(offsetof(VertexTerrain, norm))},
+			{2, 0, vk::Format::eR32G32B32Sfloat,
+			 static_cast<uint32_t>(offsetof(VertexTerrain, color))},
+			{3, 0, vk::Format::eR32G32Sfloat,
+			 static_cast<uint32_t>(offsetof(VertexTerrain, mapTexCoord))},
+			{4, 0, vk::Format::eR32G32Sfloat,
+			 static_cast<uint32_t>(offsetof(VertexTerrain, tileTexCoord))}};
 		return result;
 	}
 
@@ -698,20 +697,15 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
 	bindings.emplace_back(0, vk::DescriptorType::eStorageBuffer, 1,
 						  vk::ShaderStageFlagBits::eFragment);
-	bindings.emplace_back(1, vk::DescriptorType::eCombinedImageSampler,
-						  1,
+	bindings.emplace_back(1, vk::DescriptorType::eCombinedImageSampler, 1,
 						  vk::ShaderStageFlagBits::eFragment);
-	bindings.emplace_back(2, vk::DescriptorType::eCombinedImageSampler,
-						  1,
+	bindings.emplace_back(2, vk::DescriptorType::eCombinedImageSampler, 1,
 						  vk::ShaderStageFlagBits::eFragment);
-	bindings.emplace_back(3, vk::DescriptorType::eCombinedImageSampler,
-						  1,
+	bindings.emplace_back(3, vk::DescriptorType::eCombinedImageSampler, 1,
 						  vk::ShaderStageFlagBits::eFragment);
-	bindings.emplace_back(4, vk::DescriptorType::eCombinedImageSampler,
-						  1,
+	bindings.emplace_back(4, vk::DescriptorType::eCombinedImageSampler, 1,
 						  vk::ShaderStageFlagBits::eFragment);
-	bindings.emplace_back(5, vk::DescriptorType::eCombinedImageSampler,
-						  1,
+	bindings.emplace_back(5, vk::DescriptorType::eCombinedImageSampler, 1,
 						  vk::ShaderStageFlagBits::eFragment);
 
 	vk::DescriptorBufferInfo materialBufferInfo{terrainRenderer.m_MaterialBuffer->m_Buffer, 0,
@@ -722,13 +716,12 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 	{
 		auto& wavefrontDescriptorSet = terrainRenderer.m_DescriptorSets[i];
 		wavefrontDescriptorSet.Init(device);
-		wavefrontDescriptorSet.Create(
-			VulkanRenderer::GetDescriptorPool(),
-			bindings);
+		wavefrontDescriptorSet.Create(VulkanRenderer::GetDescriptorPool(), bindings);
 		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
 			wavefrontDescriptorSet.CreateWrite(0, &materialBufferInfo, 0),
 			wavefrontDescriptorSet.CreateWrite(1, &terrainRenderer.m_BlendMap.m_Descriptor, 0),
-			wavefrontDescriptorSet.CreateWrite(2, &terrainRenderer.m_BackgroundTexture.m_Descriptor, 0),
+			wavefrontDescriptorSet.CreateWrite(2, &terrainRenderer.m_BackgroundTexture.m_Descriptor,
+											   0),
 			wavefrontDescriptorSet.CreateWrite(3, &terrainRenderer.m_RTexture.m_Descriptor, 0),
 			wavefrontDescriptorSet.CreateWrite(4, &terrainRenderer.m_GTexture.m_Descriptor, 0),
 			wavefrontDescriptorSet.CreateWrite(5, &terrainRenderer.m_BTexture.m_Descriptor, 0)};
@@ -741,11 +734,41 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 	pipeline.LoadFragmentShader("src/Shaders/build/frag_terrain.spv");
 
 	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
-											   vk::ShaderStageFlagBits::eFragment,
+												   vk::ShaderStageFlagBits::eFragment,
 											   0, sizeof(PushConstant)};
 	pipeline.CreatePipelineLayout({terrainRenderer.m_DescriptorSets[0].GetLayout()},
 								  {pushConstantRange});
-	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(), VulkanRenderer::GetMsaaSamples(),
-							VulkanRenderer::GetExtent2D(), {VertexTerrain::getBindingDescription()},
-							{VertexTerrain::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
+	pipeline.CreatePipeline(
+		VulkanRenderer::GetOffscreenRenderPass(), VulkanRenderer::GetMsaaSamples(),
+		VulkanRenderer::GetExtent2D(), {VertexTerrain::getBindingDescription()},
+		{VertexTerrain::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
+}
+
+void Neon::Scene::Render(Neon::PerspectiveCamera camera)
+{
+	auto skyDomeGroup = m_Registry.group<SkyDomeRenderer>(entt::get<Transform>);
+	for (auto entity : skyDomeGroup)
+	{
+		auto [skyDomeRenderer, transform] = skyDomeGroup.get<SkyDomeRenderer, Transform>(entity);
+		glm::mat4 transformMatrix = transform.m_Transform;
+		transformMatrix =
+			glm::translate(glm::mat4(1.0), camera.GetPosition()) * transform.m_Transform;
+		transformMatrix = glm::translate(glm::mat4(1.0), {0, -1000, 0}) * transform.m_Transform;
+		Transform newTransform(transformMatrix);
+		VulkanRenderer::Render(newTransform, skyDomeRenderer);
+	}
+	auto terrainGroup = m_Registry.group<TerrainRenderer>(entt::get<Transform>);
+	for (auto entity : terrainGroup)
+	{
+		const auto& [terrainRenderer, transform] =
+			terrainGroup.get<TerrainRenderer, Transform>(entity);
+		VulkanRenderer::Render(transform, terrainRenderer);
+	}
+	auto animationGroup = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);
+	for (auto entity : animationGroup)
+	{
+		const auto& [skinnedMeshRenderer, transform] =
+			animationGroup.get<SkinnedMeshRenderer, Transform>(entity);
+		VulkanRenderer::Render(transform, skinnedMeshRenderer);
+	}
 }

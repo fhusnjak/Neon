@@ -56,12 +56,22 @@ void Neon::VulkanRenderer::End()
 	}
 }
 
-void Neon::VulkanRenderer::BeginScene(const Neon::PerspectiveCamera& camera,
-									  const glm::vec4& clearColor)
+void Neon::VulkanRenderer::BeginScene(const std::vector<vk::UniqueFramebuffer>& frameBuffers,
+									  const glm::vec4& clearColor,
+									  const Neon::PerspectiveCamera& camera,
+									  const glm::vec4& clippingPlane, bool pointLight,
+									  float lightIntensity, glm::vec3 lightDirection,
+									  const glm::vec3& lightPosition)
 {
+	assert(s_Instance.m_SwapChain->GetImageIndex() < frameBuffers.size());
 	s_Instance.m_PushConstant.cameraPos = camera.GetPosition();
 	s_Instance.m_PushConstant.view = camera.GetViewMatrix();
 	s_Instance.m_PushConstant.projection = camera.GetProjectionMatrix();
+	s_Instance.m_PushConstant.clippingPlane = clippingPlane;
+	s_Instance.m_PushConstant.pointLight = pointLight;
+	s_Instance.m_PushConstant.lightIntensity = lightIntensity;
+	s_Instance.m_PushConstant.lightDirection = lightDirection;
+	s_Instance.m_PushConstant.lightPosition = lightPosition;
 
 	auto& commandBuffer =
 		s_Instance.m_CommandBuffers[s_Instance.m_SwapChain->GetImageIndex()].get();
@@ -71,7 +81,7 @@ void Neon::VulkanRenderer::BeginScene(const Neon::PerspectiveCamera& camera,
 	memcpy(&clearValues[2].color.float32, &clearColor, sizeof(clearValues[0].color.float32));
 	vk::RenderPassBeginInfo renderPassInfo{
 		s_Instance.m_OffscreenRenderPass.get(),
-		s_Instance.m_OffscreenFrameBuffers[s_Instance.m_SwapChain->GetImageIndex()].get(),
+		frameBuffers[s_Instance.m_SwapChain->GetImageIndex()].get(),
 		{{0, 0}, s_Instance.m_SwapChain->GetExtent()},
 		static_cast<uint32_t>(clearValues.size()),
 		clearValues.data()};
@@ -256,17 +266,19 @@ void Neon::VulkanRenderer::CreateOffscreenRenderer()
 										   vk::ImageAspectFlagBits::eColor,
 										   vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
 	m_SampledImage.m_Descriptor.imageView =
-		CreateImageView(m_SampledImage.m_TextureAllocation->m_Image, vk::Format::eR32G32B32A32Sfloat,
-						vk::ImageAspectFlagBits::eColor);
+		CreateImageView(m_SampledImage.m_TextureAllocation->m_Image,
+						vk::Format::eR32G32B32A32Sfloat, vk::ImageAspectFlagBits::eColor);
 
 	m_OffscreenDepthImageAllocation.m_TextureAllocation = Neon::Allocator::CreateImage(
-		extent.width, extent.height, s_MsaaSamples, vk::Format::eD32Sfloat, vk::ImageTiling::eOptimal,
+		extent.width, extent.height, s_MsaaSamples, vk::Format::eD32Sfloat,
+		vk::ImageTiling::eOptimal,
 		vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc |
-		vk::ImageUsageFlagBits::eTransferDst,
+			vk::ImageUsageFlagBits::eTransferDst,
 		VMA_MEMORY_USAGE_GPU_ONLY);
 	Neon::Allocator::TransitionImageLayout(
-		m_OffscreenDepthImageAllocation.m_TextureAllocation->m_Image, vk::ImageAspectFlagBits::eDepth,
-		vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+		m_OffscreenDepthImageAllocation.m_TextureAllocation->m_Image,
+		vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined,
+		vk::ImageLayout::eDepthStencilAttachmentOptimal);
 	m_OffscreenDepthImageAllocation.m_Descriptor.imageView =
 		CreateImageView(m_OffscreenDepthImageAllocation.m_TextureAllocation->m_Image,
 						vk::Format::eD32Sfloat, vk::ImageAspectFlagBits::eDepth);

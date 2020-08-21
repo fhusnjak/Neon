@@ -4,7 +4,6 @@ Neon::PerspectiveCamera::PerspectiveCamera(float fovY, float aspect, float zNear
 	: m_ProjectionMatrix(glm::perspective(fovY, aspect, zNear, zFar))
 {
 	m_ProjectionMatrix[1][1] *= -1;
-	SetProjection(fovY, aspect, zNear, zFar);
 	RecalculateViewMatrix();
 }
 

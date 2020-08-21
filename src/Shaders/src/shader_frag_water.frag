@@ -58,7 +58,7 @@ void main()
     vec3 diffuse = computeDiffuse(mat, lightDir, fragNorm);
     if (mat.textureId >= 0)
     {
-        vec3 diffuseTxt = texture(textureSamplers[mat.textureId], fragTexCoord).xyz;
+        vec3 diffuseTxt = texture(textureSamplers[mat.textureId], vec2(normCoords.x, -normCoords.y)).xyz;
         diffuse *= diffuseTxt;
     }
 
@@ -66,5 +66,5 @@ void main()
     vec3 specular = computeSpecular(mat, viewDir, lightDir, fragNorm);
 
     float gamma = 1. / 2.2;
-    outColor = pow(vec4(lightIntensity * (diffuse + specular), texture(textureSamplers[mat.textureId], fragTexCoord).w), vec4(gamma));
+    outColor = pow(vec4(lightIntensity * (diffuse + specular), texture(textureSamplers[mat.textureId], vec2(normCoords.x, -normCoords.y)).w), vec4(gamma));
 }

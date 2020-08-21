@@ -13,6 +13,8 @@ layout(push_constant, scalar) uniform PushConstant
     mat4 view;
     mat4 projection;
 
+    vec4 clippingPlane;
+
     mat4 model;
 }
 pushConstant;
@@ -21,5 +23,8 @@ void main()
 {
     vec4 worldPos = pushConstant.model * vec4(pos, 1.0);
     fragWorldPos = (worldPos).xyz;
+
+    gl_ClipDistance[0] = dot(worldPos, pushConstant.clippingPlane);
+
     gl_Position = pushConstant.projection * pushConstant.view * worldPos;
 }

@@ -194,9 +194,16 @@ struct Water
 	std::vector<DescriptorSet> m_DescriptorSets;
 
 	std::unique_ptr<BufferAllocation> m_MaterialBuffer{};
+	std::vector<TextureImage> m_TextureImages;
+
+	// Used for multisampling
+	TextureImage m_SampledImage;
+	TextureImage m_DepthReflectionTexture;
 	TextureImage m_ReflectionTexture;
 
-	Water() = default;
+	std::vector<vk::UniqueFramebuffer> m_FrameBuffers;
+
+	explicit Water(vk::Extent2D extent);
 };
 } // namespace Neon
 

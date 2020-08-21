@@ -18,6 +18,41 @@ namespace Neon
 {
 class Entity;
 
+struct Model
+{
+	struct Vertex
+	{
+		glm::vec3 pos;
+		glm::vec3 norm;
+		glm::vec2 texCoord;
+		uint32_t matID;
+
+		static vk::VertexInputBindingDescription getBindingDescription()
+		{
+			return {0, sizeof(Vertex)};
+		}
+
+		static std::vector<vk::VertexInputAttributeDescription> getAttributeDescriptions()
+		{
+			return {
+				{0, 0, vk::Format::eR32G32B32Sfloat, static_cast<uint32_t>(offsetof(Vertex, pos))},
+				{1, 0, vk::Format::eR32G32B32Sfloat, static_cast<uint32_t>(offsetof(Vertex, norm))},
+				{3, 0, vk::Format::eR32G32Sfloat, static_cast<uint32_t>(offsetof(Vertex, texCoord))},
+				{4, 0, vk::Format::eR32Sint, static_cast<uint32_t>(offsetof(Vertex, matID))}};
+		}
+
+		bool operator==(const Vertex& other) const
+		{
+			return pos == other.pos;
+		}
+	};
+};
+
+struct AnimatedModel
+{
+
+};
+
 struct Vertex
 {
 	glm::vec3 pos;
@@ -112,6 +147,7 @@ private:
 			ProcessNode(scene, node->mChildren[i], nodeTransform, std::forward<Args>(args)...);
 		}
 	}
+	void Render(Neon::PerspectiveCamera camera);
 	static void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
 							std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
 	void ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,

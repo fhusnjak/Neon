@@ -66,6 +66,7 @@ public:
 	void InvertPitch()
 	{
 		m_Front.y *= -1;
+		RecalculateViewMatrix();
 	}
 
 	[[nodiscard]] const glm::mat4& GetProjectionMatrix() const

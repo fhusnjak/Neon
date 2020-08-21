@@ -52,7 +52,7 @@ add_executable(Neon
         vendor/imgui/examples/imgui_impl_vulkan.cpp
         vendor/imgui/imgui.cpp
         vendor/imgui/imgui_draw.cpp
-        vendor/imgui/imgui_widgets.cpp)
+        vendor/imgui/imgui_widgets.cpp src/Scene/Components.cpp)
 
 target_link_libraries(Neon
         $ENV{VULKAN_SDK}/lib/vulkan-1.lib
