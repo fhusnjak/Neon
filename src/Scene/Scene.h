@@ -84,13 +84,13 @@ public:
 
 	Entity CreateEntity(const std::string& name = std::string());
 
-	void LoadSkyDome();
+	Entity LoadSkyDome();
 
 	Entity LoadModel(const std::string& filename);
 
 	Entity LoadAnimatedModel(const std::string& filename);
 
-	void LoadTerrain(float width, float height, float maxHeight);
+	Entity LoadTerrain(float width, float height, float maxHeight);
 
 	void OnUpdate(float ts, Neon::PerspectiveCameraController controller, glm::vec4 clearColor,
 				  bool pointLight, float lightIntensity, glm::vec3 lightDirection,

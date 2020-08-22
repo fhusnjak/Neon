@@ -29,7 +29,7 @@ Neon::Entity Neon::Scene::CreateEntity(const std::string& name)
 	return entity;
 }
 
-void Neon::Scene::LoadSkyDome()
+Neon::Entity Neon::Scene::LoadSkyDome()
 {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(
@@ -74,6 +74,8 @@ void Neon::Scene::LoadSkyDome()
 							VulkanRenderer::GetMsaaSamples(), VulkanRenderer::GetExtent2D(),
 							{Vertex::getBindingDescription()}, {Vertex::getAttributeDescriptions()},
 							vk::CullModeFlagBits::eNone);
+
+	return entity;
 }
 
 Neon::Entity Neon::Scene::LoadModel(const std::string& filename)
@@ -260,7 +262,7 @@ struct VertexTerrain
 	}
 };
 
-void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
+Neon::Entity Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 {
 	std::vector<VertexTerrain> vertices;
 	std::vector<uint32_t> indices;
@@ -415,6 +417,8 @@ void Neon::Scene::LoadTerrain(float width, float height, float maxHeight)
 		VulkanRenderer::GetOffscreenRenderPass(), VulkanRenderer::GetMsaaSamples(),
 		VulkanRenderer::GetExtent2D(), {VertexTerrain::getBindingDescription()},
 		{VertexTerrain::getAttributeDescriptions()}, vk::CullModeFlagBits::eBack);
+
+	return entity;
 }
 
 void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controller,

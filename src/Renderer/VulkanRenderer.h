@@ -33,9 +33,9 @@ struct PushConstant
 	glm::mat4 model;
 
 	int pointLight;
-	float lightIntensity;
-	glm::vec3 lightDirection;
-	glm::vec3 lightPosition;
+	[[maybe_unused]] float lightIntensity;
+	[[maybe_unused]] glm::vec3 lightDirection;
+	[[maybe_unused]] glm::vec3 lightPosition;
 };
 
 class VulkanRenderer
@@ -173,7 +173,7 @@ private:
 
 	VkDescriptorSet m_ImGuiOffscreenTextureDescSet = nullptr;
 
-	PushConstant m_PushConstant;
+	PushConstant m_PushConstant{};
 };
 } // namespace Neon
 

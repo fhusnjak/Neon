@@ -13,7 +13,11 @@ class Entity
 {
 public:
 	Entity() = default;
-	Entity(entt::entity handle, Scene* scene);
+	Entity(entt::entity handle, Scene* scene)
+		: m_EntityHandle(handle)
+		, m_Scene(scene)
+	{
+	}
 	Entity(const Entity& other) = default;
 
 	template<typename T, typename... Args>
@@ -48,7 +52,7 @@ public:
 		return m_EntityHandle;
 	}
 
-	operator bool() const
+	explicit operator bool() const
 	{
 		return m_EntityHandle != entt::null;
 	}

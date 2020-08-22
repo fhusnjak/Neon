@@ -44,7 +44,6 @@ add_executable(Neon
         src/main.cpp
         src/Sandbox3D.cpp
         src/Scene/Scene.cpp
-        src/Scene/Entity.cpp
         src/Scene/Animation.cpp
 
         vendor/imgui/examples/imgui_impl_glfw.cpp
