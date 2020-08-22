@@ -422,6 +422,116 @@ Neon::Entity Neon::Scene::LoadTerrain(float width, float height, float maxHeight
 	return entity;
 }
 
+namespace Neon
+{
+struct VertexWater
+{
+	glm::vec3 pos;
+	glm::vec3 norm;
+
+	static vk::VertexInputBindingDescription getBindingDescription()
+	{
+		return {0, sizeof(VertexWater)};
+	}
+
+	static std::vector<vk::VertexInputAttributeDescription> getAttributeDescriptions()
+	{
+		std::vector<vk::VertexInputAttributeDescription> result = {
+			{0, 0, vk::Format::eR32G32B32Sfloat,
+				static_cast<uint32_t>(offsetof(VertexWater, pos))},
+			{1, 0, vk::Format::eR32G32B32Sfloat,
+				static_cast<uint32_t>(offsetof(VertexWater, norm))}};
+		return result;
+	}
+
+	bool operator==(const VertexWater& other) const
+	{
+		return pos == other.pos;
+	}
+};
+}
+
+Neon::Entity Neon::Scene::LoadWater()
+{
+	VertexWater topLeft = {{1, 0, 1}, {0, 1, 0}};
+	VertexWater bottomLeft = {{1, 0, -1}, {0, 1, 0}};
+	VertexWater topRight = {{-1, 0, 1}, {0, 1, 0}};
+	VertexWater bottomRight = {{-1, 0, -1}, {0, 1, 0}};
+
+	std::vector<VertexWater> vertices = {topLeft, bottomLeft, topRight, bottomRight};
+	std::vector<uint32_t> indices = {0, 1, 2, 2, 1, 3};
+
+	Entity entity = CreateEntity("Water");
+	auto& waterRenderer = entity.AddComponent<WaterRenderer>();
+	auto& transform = entity.AddComponent<Transform>(glm::mat4(1.0), glm::mat4(1.0));
+
+	Material material{};
+	material.ambient = {0.1, 0.1, 0.1};
+	material.diffuse = {0.8, 0.8, 0.8};
+	material.specular = {0.1, 0.1, 0.1};
+
+	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
+
+	waterRenderer.m_Mesh.m_VerticesCount = (uint32_t)vertices.size();
+	waterRenderer.m_Mesh.m_IndicesCount = (uint32_t)indices.size();
+	waterRenderer.m_Mesh.m_VertexBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, vertices,
+		vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
+	waterRenderer.m_Mesh.m_IndexBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, indices,
+		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
+
+	std::vector<Material> materials = {material};
+	waterRenderer.m_MaterialBuffer = Allocator::CreateDeviceLocalBuffer(
+		cmdBuff, materials, vk::BufferUsageFlagBits::eStorageBuffer);
+
+	VulkanRenderer::EndSingleTimeCommands(cmdBuff);
+
+	Allocator::FlushStaging();
+
+	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
+
+	std::vector<vk::DescriptorSetLayoutBinding> bindings;
+	bindings.emplace_back(0, vk::DescriptorType::eStorageBuffer, 1,
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(1, vk::DescriptorType::eCombinedImageSampler,
+						  1,
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(2, vk::DescriptorType::eCombinedImageSampler,
+						  1,
+						  vk::ShaderStageFlagBits::eFragment);
+
+	vk::DescriptorBufferInfo materialBufferInfo{waterRenderer.m_MaterialBuffer->m_Buffer, 0, VK_WHOLE_SIZE};
+
+	waterRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
+	for (int i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
+	{
+		auto& wavefrontDescriptorSet = waterRenderer.m_DescriptorSets[i];
+		wavefrontDescriptorSet.Init(device);
+		wavefrontDescriptorSet.Create(VulkanRenderer::GetDescriptorPool(), bindings);
+		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
+			wavefrontDescriptorSet.CreateWrite(0, &materialBufferInfo, 0),
+			wavefrontDescriptorSet.CreateWrite(1, &waterRenderer.m_RefractionColorTextureImage.m_Descriptor, 0),
+			wavefrontDescriptorSet.CreateWrite(2, &waterRenderer.m_ReflectionColorTextureImage.m_Descriptor, 0)};
+		wavefrontDescriptorSet.Update(descriptorWrites);
+	}
+	auto& pipeline = waterRenderer.m_GraphicsPipeline;
+	pipeline.Init(device);
+	pipeline.LoadVertexShader("src/Shaders/build/vert_water.spv");
+	pipeline.LoadFragmentShader("src/Shaders/build/frag_water.spv");
+
+	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
+											   vk::ShaderStageFlagBits::eFragment,
+											   0, sizeof(PushConstant)};
+	pipeline.CreatePipelineLayout({waterRenderer.m_DescriptorSets[0].GetLayout()}, {pushConstantRange});
+	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(),
+							VulkanRenderer::GetMsaaSamples(), VulkanRenderer::GetExtent2D(),
+							{VertexWater::getBindingDescription()}, {VertexWater::getAttributeDescriptions()},
+							vk::CullModeFlagBits::eNone);
+
+	return entity;
+}
+
 void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controller,
 						   glm::vec4 clearColor, bool pointLight, float lightIntensity,
 						   glm::vec3 lightDirection, glm::vec3 lightPosition)
@@ -445,34 +555,73 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 		skinnedMeshRenderer.Update(ts / 1000.0f);
 	}
 
-	auto camera = controller.GetCamera();
-	float translation = -((camera.GetPosition().y + 5) * 2);
-	camera.Translate({0, translation, 0});
-	camera.InvertPitch();
-
 	auto waterGroup = m_Registry.group<WaterRenderer>(entt::get<Transform>);
 	for (auto entity : waterGroup)
 	{
-		const auto& [water, transform] = waterGroup.get<WaterRenderer, Transform>(entity);
-		VulkanRenderer::BeginScene(water.m_FrameBuffers, clearColor, camera, {0, 1, 0, 5},
+		auto camera = controller.GetCamera();
+		const auto& [waterRenderer, transform] = waterGroup.get<WaterRenderer, Transform>(entity);
+
+		float waterHeight = transform.m_Global[3][1];
+		VulkanRenderer::BeginScene(waterRenderer.m_RefractionFrameBuffers, refractionReflectionResolution, clearColor, camera, {0, -1, 0, waterHeight},
 								   pointLight, lightIntensity, lightDirection, lightPosition);
-		Render(camera);
+		Render(camera, refractionReflectionResolution);
+		VulkanRenderer::EndScene();
+
+		float translation = -((camera.GetPosition().y - waterHeight) * 2);
+		camera.Translate({0, translation, 0});
+		camera.InvertPitch();
+
+		VulkanRenderer::BeginScene(waterRenderer.m_ReflectionFrameBuffers, refractionReflectionResolution, clearColor, camera, {0, 1, 0, -waterHeight},
+								   pointLight, lightIntensity, lightDirection, lightPosition);
+		Render(camera, refractionReflectionResolution);
 		VulkanRenderer::EndScene();
 	}
 
-	camera.Translate({0, -translation, 0});
-	camera.InvertPitch();
-
-	VulkanRenderer::BeginScene(VulkanRenderer::GetOffscreenFramebuffers(), clearColor, camera,
+	auto camera = controller.GetCamera();
+	VulkanRenderer::BeginScene(VulkanRenderer::GetOffscreenFramebuffers(), VulkanRenderer::GetExtent2D(), clearColor, camera,
 							   {0, 1, 0, 100000}, pointLight, lightIntensity, lightDirection,
 							   lightPosition);
-	Render(camera);
 	for (auto entity : waterGroup)
 	{
 		const auto& [water, transform] = waterGroup.get<WaterRenderer, Transform>(entity);
-		VulkanRenderer::Render(transform, water);
+		VulkanRenderer::Render(transform, water, VulkanRenderer::GetExtent2D());
 	}
+	Render(camera, VulkanRenderer::GetExtent2D());
 	VulkanRenderer::EndScene();
+}
+
+void Neon::Scene::Render(Neon::PerspectiveCamera camera, vk::Extent2D extent)
+{
+	auto skyDomeGroup = m_Registry.group<SkyDomeRenderer>(entt::get<Transform>);
+	for (auto entity : skyDomeGroup)
+	{
+		auto [skyDomeRenderer, transform] = skyDomeGroup.get<SkyDomeRenderer, Transform>(entity);
+		glm::mat4 transformMatrix = transform.m_Global;
+		transformMatrix = glm::translate(glm::mat4(1.0), camera.GetPosition()) * transform.m_Global;
+		transformMatrix = glm::translate(glm::mat4(1.0), {0, -1000, 0}) * transform.m_Global;
+		Transform newTransform(transformMatrix, glm::mat4(1.0));
+		VulkanRenderer::Render(newTransform, skyDomeRenderer, extent);
+	}
+	auto terrainGroup = m_Registry.group<TerrainRenderer>(entt::get<Transform>);
+	for (auto entity : terrainGroup)
+	{
+		const auto& [terrainRenderer, transform] =
+		terrainGroup.get<TerrainRenderer, Transform>(entity);
+		VulkanRenderer::Render(transform, terrainRenderer, extent);
+	}
+	auto meshGroup = m_Registry.group<MeshRenderer>(entt::get<Transform>);
+	for (auto entity : meshGroup)
+	{
+		const auto& [meshRenderer, transform] = meshGroup.get<MeshRenderer, Transform>(entity);
+		VulkanRenderer::Render(transform, meshRenderer, extent);
+	}
+	auto animationGroup = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);
+	for (auto entity : animationGroup)
+	{
+		const auto& [skinnedMeshRenderer, transform] =
+		animationGroup.get<SkinnedMeshRenderer, Transform>(entity);
+		VulkanRenderer::Render(transform, skinnedMeshRenderer, extent);
+	}
 }
 
 void Neon::Scene::ProcessNode(const aiScene* scene, aiNode* node, Neon::Entity parent)
@@ -702,154 +851,6 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, Entity parent)
 							vk::CullModeFlagBits::eBack);
 }
 
-/*
-void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 parentTransform,
-							  const glm::mat4& worldTransform)
-{
-	std::vector<uint32_t> indices;
-	for (int i = 0; i < mesh->mNumFaces; i++)
-	{
-		// FIXME: for now just ignore faces with number of indices not equal to 3
-		aiFace face = mesh->mFaces[i];
-		if (face.mNumIndices != 3) { continue; }
-		for (int j = 0; j < face.mNumIndices; j++)
-		{
-			indices.push_back(face.mIndices[j]);
-		}
-	}
-
-	if (indices.empty()) { return; }
-
-	std::vector<Vertex> vertices;
-	for (int i = 0; i < mesh->mNumVertices; i++)
-	{
-		Vertex vertex{};
-		vertex.pos = {mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z};
-		vertex.norm = {mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z};
-		vertex.matID = 0;
-		// TODO: for now just use first texture coordinate
-		if (mesh->mTextureCoords[0])
-		{ vertex.texCoord = {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}; }
-		else
-		{
-			vertex.texCoord = {0.0f, 0.0f};
-		}
-		vertices.push_back(vertex);
-	}
-
-	Entity entity = CreateEntity(mesh->mName.C_Str());
-	auto& water = entity.AddComponent<WaterRenderer>(VulkanRenderer::GetExtent2D());
-	auto& transform = entity.AddComponent<Transform>(worldTransform * parentTransform);
-
-	std::vector<Material> materials;
-	aiMaterial* aiMaterial = scene->mMaterials[mesh->mMaterialIndex];
-	Material material{};
-	aiColor3D ambientColor(0.f, 0.f, 0.f);
-	aiMaterial->Get(AI_MATKEY_COLOR_AMBIENT, ambientColor);
-	material.ambient = {ambientColor.r, ambientColor.g, ambientColor.b};
-	aiColor3D diffuseColor(0.f, 0.f, 0.f);
-	aiMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
-	material.diffuse = {diffuseColor.r, diffuseColor.g, diffuseColor.b};
-	aiColor3D specularColor(0.f, 0.f, 0.f);
-	aiMaterial->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
-	material.specular = {specularColor.r, specularColor.g, specularColor.b};
-	float shininess;
-	aiMaterial->Get(AI_MATKEY_SHININESS, shininess);
-	material.shininess = shininess;
-	material.textureID = 0;
-	materials.push_back(material);
-
-	std::unique_ptr<ImageAllocation> imageAllocation;
-	if (aiMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0)
-	{
-		// TODO: for now just load first diffuse texture
-		aiString txt;
-		aiMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &txt);
-		std::string texturePath = "textures/" + GetFileName(txt.C_Str());
-		imageAllocation = Neon::Allocator::CreateTextureImage(texturePath);
-	}
-	else
-	{
-		int texWidth = 1, texHeight = 1;
-		auto* color = new glm::u8vec4(255, 255, 255, 255);
-		auto* pixels = reinterpret_cast<stbi_uc*>(color);
-		imageAllocation = Neon::Allocator::CreateTextureImage(pixels, texWidth, texHeight);
-	}
-	assert(imageAllocation);
-
-	vk::ImageView textureImageView = Neon::VulkanRenderer::CreateImageView(
-		imageAllocation->m_Image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
-	vk::SamplerCreateInfo samplerInfo = {
-		{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear};
-	samplerInfo.setMaxLod(FLT_MAX);
-	vk::Sampler sampler = Neon::VulkanRenderer::CreateSampler(samplerInfo);
-	vk::DescriptorImageInfo desc{sampler, textureImageView,
-								 vk::ImageLayout::eShaderReadOnlyOptimal};
-
-	//water.m_TextureImages.emplace_back(desc, std::move(imageAllocation));
-
-	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
-
-	water.m_Mesh.m_VerticesCount = (uint32_t)vertices.size();
-	water.m_Mesh.m_IndicesCount = (uint32_t)indices.size();
-	water.m_Mesh.m_VertexBuffer = Allocator::CreateDeviceLocalBuffer(
-		cmdBuff, vertices,
-		vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
-	water.m_Mesh.m_IndexBuffer = Allocator::CreateDeviceLocalBuffer(
-		cmdBuff, indices,
-		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eStorageBuffer);
-
-	water.m_MaterialBuffer = Allocator::CreateDeviceLocalBuffer(
-		cmdBuff, materials, vk::BufferUsageFlagBits::eStorageBuffer);
-
-	VulkanRenderer::EndSingleTimeCommands(cmdBuff);
-
-	Allocator::FlushStaging();
-
-	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
-
-	std::vector<vk::DescriptorSetLayoutBinding> bindings;
-	bindings.emplace_back(0, vk::DescriptorType::eStorageBuffer, 1,
-						  vk::ShaderStageFlagBits::eFragment);
-	bindings.emplace_back(1, vk::DescriptorType::eCombinedImageSampler,
-						  static_cast<uint32_t>(water.m_TextureImages.size()),
-						  vk::ShaderStageFlagBits::eFragment);
-
-	vk::DescriptorBufferInfo materialBufferInfo{water.m_MaterialBuffer->m_Buffer, 0, VK_WHOLE_SIZE};
-
-	std::vector<vk::DescriptorImageInfo> texturesBufferInfo;
-	texturesBufferInfo.reserve(water.m_TextureImages.size());
-	for (auto& texture : water.m_TextureImages)
-	{
-		texturesBufferInfo.push_back(texture.m_Descriptor);
-	}
-
-	water.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
-	for (int i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
-	{
-		auto& wavefrontDescriptorSet = water.m_DescriptorSets[i];
-		wavefrontDescriptorSet.Init(device);
-		wavefrontDescriptorSet.Create(VulkanRenderer::GetDescriptorPool(), bindings);
-		std::vector<vk::WriteDescriptorSet> descriptorWrites = {
-			wavefrontDescriptorSet.CreateWrite(0, &materialBufferInfo, 0),
-			wavefrontDescriptorSet.CreateWrite(1, texturesBufferInfo.data(), 0)};
-		wavefrontDescriptorSet.Update(descriptorWrites);
-	}
-	auto& pipeline = water.m_GraphicsPipeline;
-	pipeline.Init(device);
-	pipeline.LoadVertexShader("src/Shaders/build/vert_water.spv");
-	pipeline.LoadFragmentShader("src/Shaders/build/frag_water.spv");
-
-	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
-												   vk::ShaderStageFlagBits::eFragment,
-											   0, sizeof(PushConstant)};
-	pipeline.CreatePipelineLayout({water.m_DescriptorSets[0].GetLayout()}, {pushConstantRange});
-	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(),
-							VulkanRenderer::GetMsaaSamples(), VulkanRenderer::GetExtent2D(),
-							{Vertex::getBindingDescription()}, {Vertex::getAttributeDescriptions()},
-							vk::CullModeFlagBits::eBack);
-}*/
-
 void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, std::vector<Vertex>& vertices,
 							  std::vector<uint32_t>& indices, std::vector<Material>& materials,
 							  std::vector<TextureImage>& textureImages,
@@ -962,39 +963,4 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, std::vector<Ve
 	vk::DescriptorImageInfo desc{sampler, textureImageView,
 								 vk::ImageLayout::eShaderReadOnlyOptimal};
 	textureImages.emplace_back(desc, std::move(imageAllocation));
-}
-
-void Neon::Scene::Render(Neon::PerspectiveCamera camera)
-{
-	auto skyDomeGroup = m_Registry.group<SkyDomeRenderer>(entt::get<Transform>);
-	for (auto entity : skyDomeGroup)
-	{
-		auto [skyDomeRenderer, transform] = skyDomeGroup.get<SkyDomeRenderer, Transform>(entity);
-		glm::mat4 transformMatrix = transform.m_Global;
-		transformMatrix = glm::translate(glm::mat4(1.0), camera.GetPosition()) * transform.m_Global;
-		transformMatrix = glm::translate(glm::mat4(1.0), {0, -1000, 0}) * transform.m_Global;
-		Transform newTransform(transformMatrix, glm::mat4(1.0));
-		VulkanRenderer::Render(newTransform, skyDomeRenderer);
-	}
-
-	auto terrainGroup = m_Registry.group<TerrainRenderer>(entt::get<Transform>);
-	for (auto entity : terrainGroup)
-	{
-		const auto& [terrainRenderer, transform] =
-			terrainGroup.get<TerrainRenderer, Transform>(entity);
-		VulkanRenderer::Render(transform, terrainRenderer);
-	}
-	auto meshGroup = m_Registry.group<MeshRenderer>(entt::get<Transform>);
-	for (auto entity : meshGroup)
-	{
-		const auto& [meshRenderer, transform] = meshGroup.get<MeshRenderer, Transform>(entity);
-		VulkanRenderer::Render(transform, meshRenderer);
-	}
-	auto animationGroup = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);
-	for (auto entity : animationGroup)
-	{
-		const auto& [skinnedMeshRenderer, transform] =
-			animationGroup.get<SkinnedMeshRenderer, Transform>(entity);
-		VulkanRenderer::Render(transform, skinnedMeshRenderer);
-	}
 }

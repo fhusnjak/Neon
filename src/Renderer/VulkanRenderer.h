@@ -50,7 +50,7 @@ public:
 	static void Begin();
 	static void End();
 	static void BeginScene(const std::vector<vk::UniqueFramebuffer>& frameBuffers,
-						   const glm::vec4& clearColor, const Neon::PerspectiveCamera& camera,
+						   const vk::Extent2D& extent, const glm::vec4& clearColor, const Neon::PerspectiveCamera& camera,
 						   const glm::vec4& clippingPlane, bool pointLight, float lightIntensity,
 						   glm::vec3 lightDirection, const glm::vec3& lightPosition);
 	static void EndScene();
@@ -92,11 +92,10 @@ public:
 	}
 
 	template<typename T>
-	static void Render(const Transform& transformComponent, const T& renderer)
+	static void Render(const Transform& transformComponent, const T& renderer, vk::Extent2D extent)
 	{
 		auto& commandBuffer =
 			s_Instance.m_CommandBuffers[s_Instance.m_SwapChain->GetImageIndex()].get();
-		const auto& extent = s_Instance.m_SwapChain->GetExtent();
 		vk::Viewport viewport{
 			0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height),
 			0.0f, 1.0f};
@@ -140,6 +139,11 @@ private:
 	void CreateCommandPool();
 	void CreateCommandBuffers();
 
+public:
+	static void CreateFrameBuffers(vk::Extent2D extent, Neon::TextureImage& sampledTextureImage, Neon::TextureImage& colorTextureImage,
+								   Neon::TextureImage& depthTextureImage,
+								   std::vector<vk::UniqueFramebuffer>& frameBuffers);
+
 private:
 	static VulkanRenderer s_Instance;
 
@@ -150,18 +154,14 @@ private:
 	std::unique_ptr<SwapChain> m_SwapChain;
 
 	vk::UniqueRenderPass m_OffscreenRenderPass;
-	vk::UniqueRenderPass m_ImGuiRenderPass;
-
-	// Used for multisampling
-	TextureImage m_SampledImage;
-
-	TextureImage m_OffscreenImageAllocation;
-	TextureImage m_OffscreenDepthImageAllocation;
-
-	std::unique_ptr<ImageAllocation> m_DepthImageAllocation{};
-
+	TextureImage m_SampledOffscreenTextureImage;
+	TextureImage m_OffscreenColorTextureImage;
+	TextureImage m_OffscreenDepthTextureImage;
 	std::vector<vk::UniqueFramebuffer> m_OffscreenFrameBuffers;
+
+	vk::UniqueRenderPass m_ImGuiRenderPass;
 	std::vector<vk::UniqueFramebuffer> m_ImGuiFrameBuffers;
+	VkDescriptorSet m_ImGuiOffscreenTextureDescSet = nullptr;
 
 	vk::UniqueCommandPool m_CommandPool;
 
@@ -170,8 +170,6 @@ private:
 	std::shared_ptr<DescriptorPool> m_ImGuiDescriptorPool;
 
 	std::vector<vk::UniqueCommandBuffer> m_CommandBuffers;
-
-	VkDescriptorSet m_ImGuiOffscreenTextureDescSet = nullptr;
 
 	PushConstant m_PushConstant{};
 };

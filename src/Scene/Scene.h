@@ -92,6 +92,8 @@ public:
 
 	Entity LoadTerrain(float width, float height, float maxHeight);
 
+	Entity LoadWater();
+
 	void OnUpdate(float ts, Neon::PerspectiveCameraController controller, glm::vec4 clearColor,
 				  bool pointLight, float lightIntensity, glm::vec3 lightDirection,
 				  glm::vec3 lightPosition);
@@ -113,7 +115,7 @@ private:
 							std::vector<TextureImage>& textureImages,
 							std::unordered_map<std::string, uint32_t>& boneMap,
 							std::vector<glm::mat4>& boneOffsets);
-	void Render(Neon::PerspectiveCamera camera);
+	void Render(Neon::PerspectiveCamera camera, vk::Extent2D extent);
 
 private:
 	entt::registry m_Registry;

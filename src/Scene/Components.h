@@ -200,6 +200,8 @@ struct TerrainRenderer
 	TerrainRenderer() = default;
 };
 
+const vk::Extent2D refractionReflectionResolution{1920, 1080};
+
 struct WaterRenderer
 {
 	Mesh m_Mesh;
@@ -208,16 +210,18 @@ struct WaterRenderer
 	std::vector<DescriptorSet> m_DescriptorSets;
 
 	std::unique_ptr<BufferAllocation> m_MaterialBuffer{};
-	std::vector<TextureImage> m_TextureImages;
 
-	// Used for multisampling
-	TextureImage m_SampledImage;
-	TextureImage m_DepthReflectionTexture;
-	TextureImage m_ReflectionTexture;
+	TextureImage m_RefractionSampledTextureImage;
+	TextureImage m_RefractionDepthTextureImage;
+	TextureImage m_RefractionColorTextureImage;
+	std::vector<vk::UniqueFramebuffer> m_RefractionFrameBuffers;
 
-	std::vector<vk::UniqueFramebuffer> m_FrameBuffers;
+	TextureImage m_ReflectionSampledTextureImage;
+	TextureImage m_ReflectionDepthTextureImage;
+	TextureImage m_ReflectionColorTextureImage;
+	std::vector<vk::UniqueFramebuffer> m_ReflectionFrameBuffers;
 
-	explicit WaterRenderer(vk::Extent2D extent);
+	WaterRenderer();
 };
 } // namespace Neon
 
