@@ -10,6 +10,9 @@ layout(location = 1) in vec3 norm;
 layout(location = 0) out vec3 fragWorldPos;
 layout(location = 1) out vec3 fragNorm;
 layout(location = 2) out vec4 fragClipSpace;
+layout(location = 3) out vec2 fragTextureCoords;
+
+const float tiling = 12;
 
 layout(push_constant, scalar) uniform PushConstant
 {
@@ -30,6 +33,7 @@ void main()
     fragNorm = normalize((pushConstant.model * vec4(norm, 0)).xyz);
     vec4 clipSpace = pushConstant.projection * pushConstant.view * worldPos;
     fragClipSpace = clipSpace;
+    fragTextureCoords = vec2(pos.x / 2 + 0.5, pos.z / 2 + 0.5) * tiling;
 
     gl_ClipDistance[0] = dot(worldPos, pushConstant.clippingPlane);
     gl_Position = clipSpace;

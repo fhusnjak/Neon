@@ -206,6 +206,10 @@ struct WaterRenderer
 {
 	Mesh m_Mesh;
 
+	static constexpr float WAVE_SPEED = 0.06;
+
+	float m_MoveFactor = 0;
+
 	GraphicsPipeline m_GraphicsPipeline;
 	std::vector<DescriptorSet> m_DescriptorSets;
 
@@ -221,7 +225,15 @@ struct WaterRenderer
 	TextureImage m_ReflectionColorTextureImage;
 	std::vector<vk::UniqueFramebuffer> m_ReflectionFrameBuffers;
 
+	TextureImage m_DuDvMapTextureImage;
+
 	WaterRenderer();
+
+	void Update(float seconds)
+	{
+		m_MoveFactor += WAVE_SPEED * seconds;
+		m_MoveFactor = m_MoveFactor - std::floor(m_MoveFactor);
+	}
 };
 } // namespace Neon
 

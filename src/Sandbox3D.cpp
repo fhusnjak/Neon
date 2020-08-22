@@ -14,25 +14,18 @@ Sandbox3D::Sandbox3D()
 {
 	m_ActiveScene = std::make_shared<Neon::Scene>();
 	m_ActiveScene->LoadSkyDome();
-	/*auto human = m_ActiveScene->LoadAnimatedModel("models/rp_nathan_animated_003_walking.fbx");
-	auto& transformComponent1 = human.GetComponent<Neon::Transform>();
-	transformComponent1.m_Transform = glm::scale(glm::mat4(1.0f), {0.01, 0.01, 0.01});
-	transformComponent1.m_Transform =
-		glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * transformComponent1.m_Transform;
-	transformComponent1.m_Transform =
-		glm::translate(glm::mat4(1.0), {-5, -1.0, 0}) * transformComponent1.m_Transform;*/
 
 	auto modelTransform = glm::scale(glm::mat4(1.0f), {0.05, 0.05, 0.05});
 	modelTransform = glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * modelTransform;
-	modelTransform = glm::translate(glm::mat4(1.0), {-8, -6.0, -2}) * modelTransform;
+	modelTransform = glm::translate(glm::mat4(1.0), {-8, -5.0, -2}) * modelTransform;
 
-	auto ugly = m_ActiveScene->LoadAnimatedModel("models/boblampclean.md5mesh");
+	auto ugly = m_ActiveScene->LoadModel("models/boblampclean.md5mesh");
 	auto& transformComponent2 = ugly.GetComponent<Neon::Transform>();
 	transformComponent2.m_Global = modelTransform;
 
 	auto water = m_ActiveScene->LoadWater();
 	auto& waterTransform = water.GetComponent<Neon::Transform>();
-	waterTransform.m_Global = glm::translate(glm::mat4(1.0), {-8, -4.5, -5});
+	waterTransform.m_Global = glm::scale(glm::mat4(1.0), {30.0, 30.0, 30.0});
 
 	m_ActiveScene->LoadTerrain(100, 100, 20.0f);
 }

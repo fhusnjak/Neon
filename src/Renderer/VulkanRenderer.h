@@ -36,6 +36,8 @@ struct PushConstant
 	[[maybe_unused]] float lightIntensity;
 	[[maybe_unused]] glm::vec3 lightDirection;
 	[[maybe_unused]] glm::vec3 lightPosition;
+
+	float moveFactor;
 };
 
 class VulkanRenderer
@@ -50,9 +52,10 @@ public:
 	static void Begin();
 	static void End();
 	static void BeginScene(const std::vector<vk::UniqueFramebuffer>& frameBuffers,
-						   const vk::Extent2D& extent, const glm::vec4& clearColor, const Neon::PerspectiveCamera& camera,
-						   const glm::vec4& clippingPlane, bool pointLight, float lightIntensity,
-						   glm::vec3 lightDirection, const glm::vec3& lightPosition);
+						   const vk::Extent2D& extent, const glm::vec4& clearColor,
+						   const Neon::PerspectiveCamera& camera, const glm::vec4& clippingPlane,
+						   bool pointLight, float lightIntensity, glm::vec3 lightDirection,
+						   const glm::vec3& lightPosition);
 	static void EndScene();
 	static void DrawImGui();
 	static vk::CommandBuffer BeginSingleTimeCommands();
@@ -92,7 +95,8 @@ public:
 	}
 
 	template<typename T>
-	static void Render(const Transform& transformComponent, const T& renderer, vk::Extent2D extent)
+	static void Render(const Transform& transformComponent, const T& renderer, vk::Extent2D extent,
+					   float moveFactor)
 	{
 		auto& commandBuffer =
 			s_Instance.m_CommandBuffers[s_Instance.m_SwapChain->GetImageIndex()].get();
@@ -116,6 +120,7 @@ public:
 		}
 
 		s_Instance.m_PushConstant.model = transformComponent.m_Global;
+		s_Instance.m_PushConstant.moveFactor = moveFactor;
 		commandBuffer.pushConstants(renderer.m_GraphicsPipeline.GetLayout(),
 									vk::ShaderStageFlagBits::eVertex |
 										vk::ShaderStageFlagBits::eFragment,
@@ -140,7 +145,8 @@ private:
 	void CreateCommandBuffers();
 
 public:
-	static void CreateFrameBuffers(vk::Extent2D extent, Neon::TextureImage& sampledTextureImage, Neon::TextureImage& colorTextureImage,
+	static void CreateFrameBuffers(vk::Extent2D extent, Neon::TextureImage& sampledTextureImage,
+								   Neon::TextureImage& colorTextureImage,
 								   Neon::TextureImage& depthTextureImage,
 								   std::vector<vk::UniqueFramebuffer>& frameBuffers);
 
