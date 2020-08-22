@@ -24,7 +24,6 @@ add_executable(Neon
         src/Core/Allocator.cpp
         src/Core/ImGuiLayer.cpp
         src/Core/Input.cpp
-        src/Core/Layer.cpp
         src/Core/LayerStack.cpp
         src/Renderer/Context.cpp
         src/Renderer/PhysicalDevice.cpp

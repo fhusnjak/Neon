@@ -22,10 +22,8 @@ Sandbox3D::Sandbox3D()
 	transformComponent1.m_Transform =
 		glm::translate(glm::mat4(1.0), {-5, -1.0, 0}) * transformComponent1.m_Transform;*/
 	auto modelTransform = glm::scale(glm::mat4(1.0f), {0.05, 0.05, 0.05});
-	modelTransform =
-		glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * modelTransform;
-	modelTransform =
-		glm::translate(glm::mat4(1.0), {-8, -6.0, -2}) * modelTransform;
+	modelTransform = glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * modelTransform;
+	modelTransform = glm::translate(glm::mat4(1.0), {-8, -6.0, -2}) * modelTransform;
 
 	auto ugly = m_ActiveScene->LoadAnimatedModel("models/boblampclean.md5mesh");
 	auto& transformComponent2 = ugly.GetComponent<Neon::Transform>();
@@ -46,7 +44,8 @@ void Sandbox3D::OnUpdate(float ts)
 {
 	m_CameraController.OnUpdate(ts);
 
-	m_ActiveScene->OnUpdate(ts, m_CameraController, clearColor, pointLight, lightIntensity, lightDirection, lightPosition);
+	m_ActiveScene->OnUpdate(ts, m_CameraController, clearColor, pointLight, lightIntensity,
+							lightDirection, lightPosition);
 
 	m_Times.push(ts);
 	m_TimePassed += ts;

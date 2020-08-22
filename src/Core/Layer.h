@@ -8,7 +8,10 @@ namespace Neon
 class Layer
 {
 public:
-	explicit Layer(std::string name = "Layer");
+	explicit Layer(std::string name = "Layer")
+		: m_DebugName(std::move(name))
+	{
+	}
 	virtual ~Layer() = default;
 
 	virtual void OnAttach() { }

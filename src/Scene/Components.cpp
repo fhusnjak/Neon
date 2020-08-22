@@ -11,16 +11,16 @@ Neon::WaterRenderer::WaterRenderer(vk::Extent2D extent)
 	const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
 
 	m_SampledImage.m_TextureAllocation = Allocator::CreateImage(
-		extent.width, extent.height, VulkanRenderer::GetMsaaSamples(), vk::Format::eR32G32B32A32Sfloat,
-		vk::ImageTiling::eOptimal,
+		extent.width, extent.height, VulkanRenderer::GetMsaaSamples(),
+		vk::Format::eR32G32B32A32Sfloat, vk::ImageTiling::eOptimal,
 		vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
 		VMA_MEMORY_USAGE_GPU_ONLY);
 	Neon::Allocator::TransitionImageLayout(m_SampledImage.m_TextureAllocation->m_Image,
 										   vk::ImageAspectFlagBits::eColor,
 										   vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
-	m_SampledImage.m_Descriptor.imageView =
-		VulkanRenderer::CreateImageView(m_SampledImage.m_TextureAllocation->m_Image, vk::Format::eR32G32B32A32Sfloat,
-						vk::ImageAspectFlagBits::eColor);
+	m_SampledImage.m_Descriptor.imageView = VulkanRenderer::CreateImageView(
+		m_SampledImage.m_TextureAllocation->m_Image, vk::Format::eR32G32B32A32Sfloat,
+		vk::ImageAspectFlagBits::eColor);
 
 	m_DepthReflectionTexture.m_TextureAllocation = Neon::Allocator::CreateImage(
 		extent.width, extent.height, VulkanRenderer::GetMsaaSamples(), vk::Format::eD32Sfloat,

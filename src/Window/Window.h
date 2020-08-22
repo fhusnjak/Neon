@@ -20,7 +20,7 @@ public:
 	explicit Window(const std::string& name);
 	~Window();
 
-	void OnUpdate();
+	static void OnUpdate();
 
 	[[nodiscard]] inline bool Resized() const
 	{

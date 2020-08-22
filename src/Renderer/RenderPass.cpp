@@ -55,16 +55,15 @@ vk::RenderPass Neon::CreateRenderPass(const vk::Device& device, vk::Format color
 	vk::AttachmentReference colorAttachmentResolveRef;
 	if (resolve)
 	{
-		vk::AttachmentDescription colorAttachmentResolve = {
-			{},
-			colorAttachmentFormat,
-			vk::SampleCountFlagBits::e1,
-			vk::AttachmentLoadOp::eDontCare,
-			vk::AttachmentStoreOp::eStore,
-			vk::AttachmentLoadOp::eDontCare,
-			vk::AttachmentStoreOp::eDontCare,
-			colorInitialLayout,
-			colorFinalLayout};
+		vk::AttachmentDescription colorAttachmentResolve = {{},
+															colorAttachmentFormat,
+															vk::SampleCountFlagBits::e1,
+															vk::AttachmentLoadOp::eDontCare,
+															vk::AttachmentStoreOp::eStore,
+															vk::AttachmentLoadOp::eDontCare,
+															vk::AttachmentStoreOp::eDontCare,
+															colorInitialLayout,
+															colorFinalLayout};
 		attachments.push_back(colorAttachmentResolve);
 		colorAttachmentResolveRef = {2, vk::ImageLayout::eColorAttachmentOptimal};
 		subpassDescription.setPResolveAttachments(&colorAttachmentResolveRef);

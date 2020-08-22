@@ -48,7 +48,6 @@ public:
 	GetDeviceSurfaceProperties(const vk::SurfaceKHR& surface) const
 	{
 		return QueryDeviceSurfaceProperties(m_Handle, surface);
-		;
 	}
 	[[nodiscard]] QueueFamily GetGraphicsQueueFamily() const
 	{

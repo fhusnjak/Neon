@@ -37,9 +37,9 @@ void Neon::Allocator::FlushStaging()
 	s_Allocator.m_StagingBuffers.clear();
 }
 
-std::unique_ptr<Neon::BufferAllocation> Neon::Allocator::CreateBuffer(const vk::DeviceSize& size,
-													 const vk::BufferUsageFlags& usage,
-													 const VmaMemoryUsage& memoryUsage)
+std::unique_ptr<Neon::BufferAllocation>
+Neon::Allocator::CreateBuffer(const vk::DeviceSize& size, const vk::BufferUsageFlags& usage,
+							  const VmaMemoryUsage& memoryUsage)
 {
 	VmaAllocationCreateInfo allocInfo = {};
 	allocInfo.usage = memoryUsage;
@@ -53,12 +53,11 @@ std::unique_ptr<Neon::BufferAllocation> Neon::Allocator::CreateBuffer(const vk::
 	return std::unique_ptr<BufferAllocation>(bufferAllocation);
 }
 
-std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateImage(const uint32_t width, const uint32_t height,
-												   const vk::SampleCountFlagBits& sampleCount,
-												   const vk::Format& format,
-												   const vk::ImageTiling& tiling,
-												   const vk::ImageUsageFlags& usage,
-												   const VmaMemoryUsage& memoryUsage)
+std::unique_ptr<Neon::ImageAllocation>
+Neon::Allocator::CreateImage(const uint32_t width, const uint32_t height,
+							 const vk::SampleCountFlagBits& sampleCount, const vk::Format& format,
+							 const vk::ImageTiling& tiling, const vk::ImageUsageFlags& usage,
+							 const VmaMemoryUsage& memoryUsage)
 {
 	VmaAllocationCreateInfo allocInfo = {};
 	allocInfo.usage = memoryUsage;
@@ -139,7 +138,8 @@ void Neon::Allocator::TransitionImageLayout(vk::Image image, vk::ImageAspectFlag
 	VulkanRenderer::EndSingleTimeCommands(commandBuffer);
 }
 
-std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateTextureImage(const std::string& filename)
+std::unique_ptr<Neon::ImageAllocation>
+Neon::Allocator::CreateTextureImage(const std::string& filename)
 {
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels =
@@ -156,8 +156,8 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateTextureImage(const
 	return CreateTextureImage(pixels, texWidth, texHeight);
 }
 
-std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateTextureImage(stbi_uc* pixels, int texWidth,
-																		   int texHeight)
+std::unique_ptr<Neon::ImageAllocation>
+Neon::Allocator::CreateTextureImage(stbi_uc* pixels, int texWidth, int texHeight)
 {
 	vk::DeviceSize imageSize =
 		static_cast<uint64_t>(texWidth) * static_cast<uint64_t>(texHeight) * sizeof(glm::u8vec4);
@@ -203,7 +203,8 @@ std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateTextureImage(stbi_
 	return std::move(imageAllocation);
 }
 
-std::unique_ptr<Neon::ImageAllocation> Neon::Allocator::CreateHdrTextureImage(const std::string& filename)
+std::unique_ptr<Neon::ImageAllocation>
+Neon::Allocator::CreateHdrTextureImage(const std::string& filename)
 {
 	int texWidth, texHeight, nrComponents;
 	float* pixels = stbi_loadf(filename.c_str(), &texWidth, &texHeight, &nrComponents, 0);

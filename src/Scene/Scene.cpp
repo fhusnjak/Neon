@@ -106,8 +106,8 @@ Neon::Entity Neon::Scene::LoadAnimatedModel(const std::string& filename)
 	std::unordered_map<std::string, uint32_t> boneMap;
 	std::vector<glm::mat4> boneOffsets;
 
-	ProcessNode(scene, scene->mRootNode, vertices, indices, materials,
-				textureImages, boneMap, boneOffsets);
+	ProcessNode(scene, scene->mRootNode, vertices, indices, materials, textureImages, boneMap,
+				boneOffsets);
 
 	Entity entity = CreateEntity(scene->mRootNode->mName.C_Str());
 	auto& skinnedMeshRenderer =
@@ -244,15 +244,15 @@ struct VertexTerrain
 	{
 		std::vector<vk::VertexInputAttributeDescription> result = {
 			{0, 0, vk::Format::eR32G32B32Sfloat,
-				static_cast<uint32_t>(offsetof(VertexTerrain, pos))},
+			 static_cast<uint32_t>(offsetof(VertexTerrain, pos))},
 			{1, 0, vk::Format::eR32G32B32Sfloat,
-				static_cast<uint32_t>(offsetof(VertexTerrain, norm))},
+			 static_cast<uint32_t>(offsetof(VertexTerrain, norm))},
 			{2, 0, vk::Format::eR32G32B32Sfloat,
-				static_cast<uint32_t>(offsetof(VertexTerrain, color))},
+			 static_cast<uint32_t>(offsetof(VertexTerrain, color))},
 			{3, 0, vk::Format::eR32G32Sfloat,
-				static_cast<uint32_t>(offsetof(VertexTerrain, mapTexCoord))},
+			 static_cast<uint32_t>(offsetof(VertexTerrain, mapTexCoord))},
 			{4, 0, vk::Format::eR32G32Sfloat,
-				static_cast<uint32_t>(offsetof(VertexTerrain, tileTexCoord))}};
+			 static_cast<uint32_t>(offsetof(VertexTerrain, tileTexCoord))}};
 		return result;
 	}
 
@@ -334,7 +334,8 @@ Neon::Entity Neon::Scene::LoadTerrain(float width, float height, float maxHeight
 
 	Entity entity = CreateEntity("terrain");
 	auto& terrainRenderer = entity.AddComponent<TerrainRenderer>();
-	auto& transform = entity.AddComponent<Transform>(glm::translate(glm::mat4(1.0), {0, -15, 0}), glm::mat4(1.0));
+	auto& transform =
+		entity.AddComponent<Transform>(glm::translate(glm::mat4(1.0), {0, -15, 0}), glm::mat4(1.0));
 
 	std::vector<Material> materials;
 	Material material{};
@@ -409,7 +410,7 @@ Neon::Entity Neon::Scene::LoadTerrain(float width, float height, float maxHeight
 	pipeline.LoadFragmentShader("src/Shaders/build/frag_terrain.spv");
 
 	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
-											   vk::ShaderStageFlagBits::eFragment,
+												   vk::ShaderStageFlagBits::eFragment,
 											   0, sizeof(PushConstant)};
 	pipeline.CreatePipelineLayout({terrainRenderer.m_DescriptorSets[0].GetLayout()},
 								  {pushConstantRange});
@@ -431,9 +432,9 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 	auto relationshipView = m_Registry.view<Relationship>();
 	for (auto entity : relationshipView)
 	{
-		const auto &relationship = m_Registry.get<Relationship>(entity);
-		auto &childTransform = m_Registry.get<Transform>(entity);
-		const auto &parentTransform = m_Registry.get<Transform>(relationship.m_Parent.GetHandle());
+		const auto& relationship = m_Registry.get<Relationship>(entity);
+		auto& childTransform = m_Registry.get<Transform>(entity);
+		const auto& parentTransform = m_Registry.get<Transform>(relationship.m_Parent.GetHandle());
 		childTransform.m_Global = parentTransform.m_Global * childTransform.m_Local;
 	}
 
@@ -477,7 +478,8 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 void Neon::Scene::ProcessNode(const aiScene* scene, aiNode* node, Neon::Entity parent)
 {
 	auto newParent = CreateEntity(node->mName.C_Str());
-	newParent.AddComponent<Transform>(glm::mat4(1.0), glm::transpose(*(glm::mat4*)&node->mTransformation));
+	newParent.AddComponent<Transform>(glm::mat4(1.0),
+									  glm::transpose(*(glm::mat4*)&node->mTransformation));
 	newParent.AddComponent<Relationship>(parent);
 	for (int i = 0; i < node->mNumMeshes; i++)
 	{
@@ -517,11 +519,13 @@ void Neon::Scene::ProcessNode(const aiScene* scene, aiNode* node, std::vector<Ve
 	}
 	for (int i = 0; i < node->mNumChildren; i++)
 	{
-		ProcessNode(scene, node->mChildren[i], vertices, indices, materials, textureImages, boneMap, boneOffsets);
+		ProcessNode(scene, node->mChildren[i], vertices, indices, materials, textureImages, boneMap,
+					boneOffsets);
 	}
 }
 
-void Neon::Scene::ProcessMesh(aiMesh* mesh, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)
+void Neon::Scene::ProcessMesh(aiMesh* mesh, std::vector<Vertex>& vertices,
+							  std::vector<uint32_t>& indices)
 {
 	int meshSizeBefore = vertices.size();
 	int newIndicesCount = 0;
@@ -661,7 +665,8 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, Entity parent)
 						  static_cast<uint32_t>(meshRenderer.m_TextureImages.size()),
 						  vk::ShaderStageFlagBits::eFragment);
 
-	vk::DescriptorBufferInfo materialBufferInfo{meshRenderer.m_MaterialBuffer->m_Buffer, 0, VK_WHOLE_SIZE};
+	vk::DescriptorBufferInfo materialBufferInfo{meshRenderer.m_MaterialBuffer->m_Buffer, 0,
+												VK_WHOLE_SIZE};
 
 	std::vector<vk::DescriptorImageInfo> texturesBufferInfo;
 	texturesBufferInfo.reserve(meshRenderer.m_TextureImages.size());
@@ -687,9 +692,10 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, Entity parent)
 	pipeline.LoadFragmentShader("src/Shaders/build/frag.spv");
 
 	vk::PushConstantRange pushConstantRange = {vk::ShaderStageFlagBits::eVertex |
-											   vk::ShaderStageFlagBits::eFragment,
+												   vk::ShaderStageFlagBits::eFragment,
 											   0, sizeof(PushConstant)};
-	pipeline.CreatePipelineLayout({meshRenderer.m_DescriptorSets[0].GetLayout()}, {pushConstantRange});
+	pipeline.CreatePipelineLayout({meshRenderer.m_DescriptorSets[0].GetLayout()},
+								  {pushConstantRange});
 	pipeline.CreatePipeline(VulkanRenderer::GetOffscreenRenderPass(),
 							VulkanRenderer::GetMsaaSamples(), VulkanRenderer::GetExtent2D(),
 							{Vertex::getBindingDescription()}, {Vertex::getAttributeDescriptions()},
@@ -844,9 +850,8 @@ void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, glm::mat4 pare
 							vk::CullModeFlagBits::eBack);
 }*/
 
-void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh,
-							  std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
-							  std::vector<Material>& materials,
+void Neon::Scene::ProcessMesh(const aiScene* scene, aiMesh* mesh, std::vector<Vertex>& vertices,
+							  std::vector<uint32_t>& indices, std::vector<Material>& materials,
 							  std::vector<TextureImage>& textureImages,
 							  std::unordered_map<std::string, uint32_t>& boneMap,
 							  std::vector<glm::mat4>& boneOffsets)
@@ -966,8 +971,7 @@ void Neon::Scene::Render(Neon::PerspectiveCamera camera)
 	{
 		auto [skyDomeRenderer, transform] = skyDomeGroup.get<SkyDomeRenderer, Transform>(entity);
 		glm::mat4 transformMatrix = transform.m_Global;
-		transformMatrix =
-			glm::translate(glm::mat4(1.0), camera.GetPosition()) * transform.m_Global;
+		transformMatrix = glm::translate(glm::mat4(1.0), camera.GetPosition()) * transform.m_Global;
 		transformMatrix = glm::translate(glm::mat4(1.0), {0, -1000, 0}) * transform.m_Global;
 		Transform newTransform(transformMatrix, glm::mat4(1.0));
 		VulkanRenderer::Render(newTransform, skyDomeRenderer);
@@ -983,8 +987,7 @@ void Neon::Scene::Render(Neon::PerspectiveCamera camera)
 	auto meshGroup = m_Registry.group<MeshRenderer>(entt::get<Transform>);
 	for (auto entity : meshGroup)
 	{
-		const auto& [meshRenderer, transform] =
-		meshGroup.get<MeshRenderer, Transform>(entity);
+		const auto& [meshRenderer, transform] = meshGroup.get<MeshRenderer, Transform>(entity);
 		VulkanRenderer::Render(transform, meshRenderer);
 	}
 	auto animationGroup = m_Registry.group<SkinnedMeshRenderer>(entt::get<Transform>);

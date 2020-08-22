@@ -1,13 +1,9 @@
-#include "neopch.h"
-
 #include "PerspectiveCameraController.h"
 
 #include "ApplicationEvent.h"
 #include "Core/Input.h"
 #include "Event.h"
-#include "Input.h"
 #include "KeyEvent.h"
-#include "PerspectiveCamera.h"
 
 #include <GLFW/glfw3.h>
 

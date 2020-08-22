@@ -1,5 +1,3 @@
-#include "neopch.h"
-
 #include "FileTools.h"
 
 std::vector<char> Neon::ReadFile(const std::string& filename)

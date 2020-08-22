@@ -20,7 +20,7 @@ public:
 		: m_ID(ID)
 		, m_OffsetMatrix(offsetMatrix)
 		, m_ParentTransform(parentTransform)
-	 	, m_LocalTransform(localTransform)
+		, m_LocalTransform(localTransform)
 	{
 	}
 	bool m_Animated = true;

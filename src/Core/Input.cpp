@@ -1,5 +1,3 @@
-#include "neopch.h"
-
 #include "Input.h"
 
 #include "Application.h"

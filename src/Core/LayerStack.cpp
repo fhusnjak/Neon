@@ -1,7 +1,5 @@
-#include "neopch.h"
-
-#include "Layer.h"
 #include "LayerStack.h"
+#include "Layer.h"
 
 LayerStack::~LayerStack()
 {

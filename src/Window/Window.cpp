@@ -1,10 +1,7 @@
-#include "neopch.h"
-
 #include "Window.h"
 
 #include "ApplicationEvent.h"
 #include "Event/KeyEvent.h"
-#include "KeyEvent.h"
 
 Neon::Window::Window(const std::string& name)
 	: m_Data{name, WIDTH, HEIGHT}

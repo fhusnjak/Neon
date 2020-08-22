@@ -111,8 +111,8 @@ public:
 
 		vk::BufferCopy copyRegion{0, 0, bufferSize};
 
-		commandBuffer.copyBuffer(stagingBufferAllocation->m_Buffer, resultBufferAllocation->m_Buffer, 1,
-								 &copyRegion);
+		commandBuffer.copyBuffer(stagingBufferAllocation->m_Buffer,
+								 resultBufferAllocation->m_Buffer, 1, &copyRegion);
 		s_Allocator.m_StagingBuffers.push_back(std::move(stagingBufferAllocation));
 		return std::move(resultBufferAllocation);
 	}

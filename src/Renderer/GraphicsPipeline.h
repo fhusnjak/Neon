@@ -11,7 +11,7 @@ class GraphicsPipeline
 {
 public:
 	GraphicsPipeline() = default;
-	operator vk::Pipeline() const
+	explicit operator vk::Pipeline() const
 	{
 		return m_Pipeline.get();
 	}

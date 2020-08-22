@@ -1,5 +1,3 @@
-#include "neopch.h"
-
 #include "Renderer/VulkanRenderer.h"
 
 #include "Application.h"
