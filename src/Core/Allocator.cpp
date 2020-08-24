@@ -129,6 +129,24 @@ void Neon::Allocator::TransitionImageLayout(vk::Image image, vk::ImageAspectFlag
 		sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
 		destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
 	}
+	else if (oldLayout == vk::ImageLayout::eUndefined &&
+			 newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits();
+		barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+		sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+		destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+	}
+	else if (oldLayout == vk::ImageLayout::eUndefined &&
+			 newLayout == vk::ImageLayout::eDepthStencilReadOnlyOptimal)
+	{
+		barrier.srcAccessMask = vk::AccessFlagBits();
+		barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+		sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+		destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+	}
 	else
 	{
 		assert(false);
