@@ -34,7 +34,7 @@ vk::RenderPass Neon::CreateRenderPass(const vk::Device& device, vk::Format color
 						   depthAttachmentFormat,
 						   samples,
 						   clearDepth ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
-						   vk::AttachmentStoreOp::eDontCare,
+						   vk::AttachmentStoreOp::eStore,
 						   vk::AttachmentLoadOp::eDontCare,
 						   vk::AttachmentStoreOp::eDontCare,
 						   depthInitialLayout,
@@ -52,7 +52,7 @@ vk::RenderPass Neon::CreateRenderPass(const vk::Device& device, vk::Format color
 											vk::AccessFlagBits::eColorAttachmentRead |
 												vk::AccessFlagBits::eColorAttachmentWrite};
 
-	vk::AttachmentReference colorAttachmentResolveRef;
+	std::vector<vk::AttachmentReference> resolveAttachments;
 	if (resolve)
 	{
 		vk::AttachmentDescription colorAttachmentResolve = {{},
@@ -64,9 +64,20 @@ vk::RenderPass Neon::CreateRenderPass(const vk::Device& device, vk::Format color
 															vk::AttachmentStoreOp::eDontCare,
 															colorInitialLayout,
 															colorFinalLayout};
+		vk::AttachmentDescription depthAttachmentResolve = {{},
+															depthAttachmentFormat,
+															vk::SampleCountFlagBits::e1,
+															vk::AttachmentLoadOp::eDontCare,
+															vk::AttachmentStoreOp::eStore,
+															vk::AttachmentLoadOp::eDontCare,
+															vk::AttachmentStoreOp::eDontCare,
+															depthInitialLayout,
+															depthFinalLayout};
 		attachments.push_back(colorAttachmentResolve);
-		colorAttachmentResolveRef = {2, vk::ImageLayout::eColorAttachmentOptimal};
-		subpassDescription.setPResolveAttachments(&colorAttachmentResolveRef);
+		attachments.push_back(depthAttachmentResolve);
+		resolveAttachments.emplace_back(2, vk::ImageLayout::eColorAttachmentOptimal);
+		resolveAttachments.emplace_back(3, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+		subpassDescription.setPResolveAttachments(resolveAttachments.data());
 	}
 
 	vk::RenderPassCreateInfo renderPassInfo = {{},
