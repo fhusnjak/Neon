@@ -19,6 +19,8 @@ layout(set = 0, binding = 0, scalar) readonly buffer MaterialBufferObject
 layout(set = 0, binding = 1) uniform sampler2D textureSamplerRefraction;
 layout(set = 0, binding = 2) uniform sampler2D textureSamplerReflection;
 layout(set = 0, binding = 3) uniform sampler2D dudvMap;
+layout(set = 0, binding = 4) uniform sampler2D normalMap;
+layout(set = 0, binding = 5) uniform sampler2D depthMap;
 
 layout(push_constant, scalar) uniform PushConstant
 {
@@ -39,7 +41,7 @@ layout(push_constant, scalar) uniform PushConstant
 }
 pushConstant;
 
-float waveStrength = 0.01;
+float waveStrength = 0.15;
 
 void main()
 {
@@ -48,19 +50,27 @@ void main()
     if (pushConstant.pointLight == 1)
     {
         lightDir = pushConstant.lightPosition - fragWorldPos;
-        float d = length(lightDir);
-        lightIntensity = pushConstant.lightIntensity / d;
+        lightIntensity /= length(lightDir);
+        lightDir = normalize(lightDir);
     }
 
-    vec2 distortion1 = (texture(dudvMap, vec2(fragTextureCoords.x + pushConstant.moveFactor, fragTextureCoords.y)).rg * 2 - 1) * waveStrength;
-    vec2 distortion2 = (texture(dudvMap, vec2(-fragTextureCoords.x + pushConstant.moveFactor, fragTextureCoords.y + pushConstant.moveFactor)).rg * 2 - 1) * waveStrength;
-    vec2 distortion = distortion1 + distortion2;
+    vec3 viewDir = pushConstant.cameraPos - fragWorldPos;
+    float distanceFromCamera = length(viewDir);
+    viewDir = normalize(viewDir);
 
+    float near = 0.1;
+    float far = 15000.0;
     vec2 textureCoords = fragClipSpace.xy / fragClipSpace.w;
     textureCoords = textureCoords / 2 + 0.5;
-
     vec2 refractTextureCoords = vec2(textureCoords.x, textureCoords.y);
     vec2 reflectTextureCoords = vec2(textureCoords.x, -textureCoords.y);
+    float depth = texture(depthMap, refractTextureCoords).r;
+    float floorDist = 2.0 * near * far / (far + near - (2.0 * depth - 1.0) * (far - near));
+    float waterDepth = floorDist - distanceFromCamera;
+
+    vec2 distortedTexCoords = texture(dudvMap, vec2(fragTextureCoords.x + pushConstant.moveFactor, fragTextureCoords.y)).rg * 0.1;
+    distortedTexCoords = fragTextureCoords + vec2(distortedTexCoords.x, distortedTexCoords.y + pushConstant.moveFactor);
+    vec2 distortion = (texture(dudvMap, distortedTexCoords).rg * 2.0 - 1.0) * waveStrength / distanceFromCamera;
 
     refractTextureCoords += distortion;
     refractTextureCoords = clamp(refractTextureCoords, 0.001, 0.999);
@@ -69,13 +79,16 @@ void main()
     reflectTextureCoords.x = clamp(reflectTextureCoords.x, 0.001, 0.999);
     reflectTextureCoords.y = clamp(reflectTextureCoords.y, -0.999, -0.001);
 
-    vec4 textureValue = 0.5 * texture(textureSamplerRefraction, refractTextureCoords) + 0.5 * texture(textureSamplerReflection, reflectTextureCoords);
+    float F0 = 0.1;
+    float reflectionFactor = F0 + (1 - F0) * pow(1 - abs(dot(viewDir, vec3(0, 1, 0))), 5);
+    vec4 textureValue = mix(texture(textureSamplerRefraction, refractTextureCoords), texture(textureSamplerReflection, reflectTextureCoords), reflectionFactor);
 
-    vec3 diffuse = computeDiffuse(material, lightDir, fragNorm) * textureValue.rgb;
+    vec4 normalMapColor = texture(normalMap, distortedTexCoords);
+    vec3 normal = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b, normalMapColor.g * 2.0 - 1.0));
 
-    vec3 viewDir = normalize(pushConstant.cameraPos - fragWorldPos);
-    vec3 specular = computeSpecular(material, viewDir, lightDir, fragNorm);
+    vec3 specular = computeSpecular(material, viewDir, lightDir, normal);
 
-    float gamma = 1. / 2.2;
-    outColor = pow(vec4(lightIntensity * (diffuse + specular), 1.0), vec4(gamma));
+    outColor = (mix(textureValue, vec4(0.0, 0.3, 0.5, 1.0), 0.2) + lightIntensity * vec4(specular, 0.0));
+    //outColor.a = clamp(waterDepth, 0.0, 1.0);
+    //outColor = vec4(depth, depth, depth, 1.0);
 }
