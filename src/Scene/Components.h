@@ -215,17 +215,22 @@ struct WaterRenderer
 
 	std::unique_ptr<BufferAllocation> m_MaterialBuffer{};
 
-	TextureImage m_RefractionSampledTextureImage;
-	TextureImage m_RefractionDepthTextureImage;
+	vk::UniqueRenderPass m_RenderPass{};
+
+	TextureImage m_RefractionSampledColorTextureImage;
+	TextureImage m_RefractionSampledDepthTextureImage;
 	TextureImage m_RefractionColorTextureImage;
+	TextureImage m_RefractionDepthTextureImage;
 	std::vector<vk::UniqueFramebuffer> m_RefractionFrameBuffers;
 
-	TextureImage m_ReflectionSampledTextureImage;
-	TextureImage m_ReflectionDepthTextureImage;
+	TextureImage m_ReflectionSampledColorTextureImage;
+	TextureImage m_ReflectionSampledDepthTextureImage;
 	TextureImage m_ReflectionColorTextureImage;
+	TextureImage m_ReflectionDepthTextureImage;
 	std::vector<vk::UniqueFramebuffer> m_ReflectionFrameBuffers;
 
 	TextureImage m_DuDvMapTextureImage;
+	TextureImage m_NormalMapTextureImage;
 
 	WaterRenderer();
 

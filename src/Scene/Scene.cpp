@@ -467,6 +467,7 @@ Neon::Entity Neon::Scene::LoadWater()
 	material.ambient = {0.1, 0.1, 0.1};
 	material.diffuse = {0.8, 0.8, 0.8};
 	material.specular = {0.1, 0.1, 0.1};
+	material.shininess = 20;
 
 	auto cmdBuff = VulkanRenderer::BeginSingleTimeCommands();
 
@@ -498,11 +499,16 @@ Neon::Entity Neon::Scene::LoadWater()
 						  vk::ShaderStageFlagBits::eFragment);
 	bindings.emplace_back(3, vk::DescriptorType::eCombinedImageSampler, 1,
 						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(4, vk::DescriptorType::eCombinedImageSampler, 1,
+						  vk::ShaderStageFlagBits::eFragment);
+	bindings.emplace_back(5, vk::DescriptorType::eCombinedImageSampler, 1,
+						  vk::ShaderStageFlagBits::eFragment);
 
 	vk::DescriptorBufferInfo materialBufferInfo{waterRenderer.m_MaterialBuffer->m_Buffer, 0,
 												VK_WHOLE_SIZE};
 
 	CreateTextureImage("textures/waterDUDV.png", waterRenderer.m_DuDvMapTextureImage);
+	CreateTextureImage("textures/normalMap.png", waterRenderer.m_NormalMapTextureImage);
 
 	waterRenderer.m_DescriptorSets.resize(MAX_SWAP_CHAIN_IMAGES);
 	for (int i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
@@ -517,6 +523,10 @@ Neon::Entity Neon::Scene::LoadWater()
 			wavefrontDescriptorSet.CreateWrite(
 				2, &waterRenderer.m_ReflectionColorTextureImage.m_Descriptor, 0),
 			wavefrontDescriptorSet.CreateWrite(3, &waterRenderer.m_DuDvMapTextureImage.m_Descriptor,
+											   0),
+			wavefrontDescriptorSet.CreateWrite(4, &waterRenderer.m_NormalMapTextureImage.m_Descriptor,
+											   0),
+			wavefrontDescriptorSet.CreateWrite(5, &waterRenderer.m_RefractionDepthTextureImage.m_Descriptor,
 											   0)};
 		wavefrontDescriptorSet.Update(descriptorWrites);
 	}
@@ -569,9 +579,14 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 		const auto& [waterRenderer, transform] = waterGroup.get<WaterRenderer, Transform>(entity);
 
 		float waterHeight = transform.m_Global[3][1];
+		float yNormal = -1;
+		if (camera.GetPosition().y < waterHeight)
+		{
+			yNormal *= -1;
+		}
 		VulkanRenderer::BeginScene(waterRenderer.m_RefractionFrameBuffers,
 								   refractionReflectionResolution, clearColor, camera,
-								   {0, -1, 0, (waterHeight + 0.5)}, pointLight, lightIntensity,
+								   {0, yNormal, 0, waterHeight}, pointLight, lightIntensity,
 								   lightDirection, lightPosition);
 		Render(camera, refractionReflectionResolution);
 		VulkanRenderer::EndScene();
@@ -582,7 +597,7 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 
 		VulkanRenderer::BeginScene(waterRenderer.m_ReflectionFrameBuffers,
 								   refractionReflectionResolution, clearColor, camera,
-								   {0, 1, 0, -(waterHeight - 0.5)}, pointLight, lightIntensity,
+								   {0, -yNormal, 0, -waterHeight}, pointLight, lightIntensity,
 								   lightDirection, lightPosition);
 		Render(camera, refractionReflectionResolution);
 		VulkanRenderer::EndScene();
@@ -592,13 +607,13 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 	VulkanRenderer::BeginScene(VulkanRenderer::GetOffscreenFramebuffers(),
 							   VulkanRenderer::GetExtent2D(), clearColor, camera, {0, 1, 0, 100000},
 							   pointLight, lightIntensity, lightDirection, lightPosition);
+	Render(camera, VulkanRenderer::GetExtent2D());
 	for (auto entity : waterGroup)
 	{
 		const auto& [water, transform] = waterGroup.get<WaterRenderer, Transform>(entity);
 		water.Update(ts / 1000.0f);
 		VulkanRenderer::Render(transform, water, VulkanRenderer::GetExtent2D(), water.m_MoveFactor);
 	}
-	Render(camera, VulkanRenderer::GetExtent2D());
 	VulkanRenderer::EndScene();
 }
 

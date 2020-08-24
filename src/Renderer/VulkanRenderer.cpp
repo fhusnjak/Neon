@@ -75,10 +75,10 @@ void Neon::VulkanRenderer::BeginScene(const std::vector<vk::UniqueFramebuffer>& 
 
 	auto& commandBuffer =
 		s_Instance.m_CommandBuffers[s_Instance.m_SwapChain->GetImageIndex()].get();
-	std::array<vk::ClearValue, 3> clearValues = {};
+	std::array<vk::ClearValue, 2> clearValues = {};
 	memcpy(&clearValues[0].color.float32, &clearColor, sizeof(clearValues[0].color.float32));
 	clearValues[1].depthStencil = vk::ClearDepthStencilValue{1.0f, 0};
-	memcpy(&clearValues[2].color.float32, &clearColor, sizeof(clearValues[0].color.float32));
+	//memcpy(&clearValues[2].color.float32, &clearColor, sizeof(clearValues[0].color.float32));
 	vk::RenderPassBeginInfo renderPassInfo{
 		s_Instance.m_OffscreenRenderPass.get(),
 		frameBuffers[s_Instance.m_SwapChain->GetImageIndex()].get(),
@@ -174,8 +174,8 @@ void Neon::VulkanRenderer::InitRenderer(Window* window)
 		Neon::CreateRenderPass(logicalDevice.GetHandle(), vk::Format::eR32G32B32A32Sfloat,
 							   s_MsaaSamples, true, vk::ImageLayout::eGeneral,
 							   vk::ImageLayout::eGeneral, vk::Format::eD32Sfloat, true,
-							   vk::ImageLayout::eDepthStencilAttachmentOptimal,
-							   vk::ImageLayout::eDepthStencilAttachmentOptimal, true),
+							   vk::ImageLayout::eDepthStencilReadOnlyOptimal,
+							   vk::ImageLayout::eDepthStencilReadOnlyOptimal, false),
 		logicalDevice.GetHandle());
 
 	CreateCommandPool();
@@ -251,15 +251,22 @@ void Neon::VulkanRenderer::IntegrateImGui()
 	EndSingleTimeCommands(commandBuffer);
 
 	m_ImGuiOffscreenTextureDescSet = ImGui_ImplVulkan_CreateTexture();
+	m_ImGuiOffscreenDepthTextureDescSet = ImGui_ImplVulkan_CreateTexture();
 }
 
 void Neon::VulkanRenderer::CreateOffscreenRenderer()
 {
-	CreateFrameBuffers(m_SwapChain->GetExtent(), m_SampledOffscreenTextureImage, m_OffscreenColorTextureImage, m_OffscreenDepthTextureImage, m_OffscreenFrameBuffers);
+	const auto& extent = s_Instance.m_SwapChain->GetExtent();
+	CreateFrameBuffers(extent, m_SampledOffscreenColorTextureImage, m_SampledOffscreenDepthTextureImage, m_OffscreenColorTextureImage,
+					   m_OffscreenDepthTextureImage, m_OffscreenFrameBuffers);
 	ImGui_ImplVulkan_UpdateTexture(
 		m_ImGuiOffscreenTextureDescSet, m_OffscreenColorTextureImage.m_Descriptor.sampler,
 		m_OffscreenColorTextureImage.m_Descriptor.imageView,
 		(VkImageLayout)m_OffscreenColorTextureImage.m_Descriptor.imageLayout);
+	ImGui_ImplVulkan_UpdateTexture(
+		m_ImGuiOffscreenDepthTextureDescSet, m_OffscreenDepthTextureImage.m_Descriptor.sampler,
+		m_OffscreenDepthTextureImage.m_Descriptor.imageView,
+		(VkImageLayout)m_OffscreenDepthTextureImage.m_Descriptor.imageLayout);
 }
 
 void Neon::VulkanRenderer::CreateImGuiRenderer()
@@ -300,45 +307,39 @@ void Neon::VulkanRenderer::CreateCommandBuffers()
 	m_CommandBuffers = device.allocateCommandBuffersUnique(allocInfo);
 }
 
-void Neon::VulkanRenderer::CreateFrameBuffers(
-	vk::Extent2D extent,
-	Neon::TextureImage& sampledTextureImage, Neon::TextureImage& colorTextureImage,
-	Neon::TextureImage& depthTextureImage,
-	std::vector<vk::UniqueFramebuffer>& frameBuffers)
+void Neon::VulkanRenderer::CreateFrameBuffers(vk::Extent2D extent, Neon::TextureImage& sampledColorTextureImage,
+											  Neon::TextureImage& sampledDepthTextureImage,
+											  Neon::TextureImage& colorTextureImage,
+											  Neon::TextureImage& depthTextureImage,
+											  std::vector<vk::UniqueFramebuffer>& frameBuffers)
 {
     const auto& device = Neon::Context::GetInstance().GetLogicalDevice().GetHandle();
-
-	sampledTextureImage.m_TextureAllocation = Allocator::CreateImage(
+/*
+	sampledColorTextureImage.m_TextureAllocation = Allocator::CreateImage(
             extent.width, extent.height, VulkanRenderer::GetMsaaSamples(),
             vk::Format::eR32G32B32A32Sfloat, vk::ImageTiling::eOptimal,
             vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
             VMA_MEMORY_USAGE_GPU_ONLY);
-    Neon::Allocator::TransitionImageLayout(sampledTextureImage.m_TextureAllocation->m_Image,
+    Neon::Allocator::TransitionImageLayout(sampledColorTextureImage.m_TextureAllocation->m_Image,
                                            vk::ImageAspectFlagBits::eColor,
                                            vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
-	sampledTextureImage.m_Descriptor.imageView = VulkanRenderer::CreateImageView(
-		sampledTextureImage.m_TextureAllocation->m_Image, vk::Format::eR32G32B32A32Sfloat,
+	sampledColorTextureImage.m_Descriptor.imageView = VulkanRenderer::CreateImageView(
+		sampledColorTextureImage.m_TextureAllocation->m_Image, vk::Format::eR32G32B32A32Sfloat,
             vk::ImageAspectFlagBits::eColor);
 
-	depthTextureImage.m_TextureAllocation = Neon::Allocator::CreateImage(
+	sampledDepthTextureImage.m_TextureAllocation = Neon::Allocator::CreateImage(
             extent.width, extent.height, VulkanRenderer::GetMsaaSamples(), vk::Format::eD32Sfloat,
             vk::ImageTiling::eOptimal,
-            vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc |
-            vk::ImageUsageFlagBits::eTransferDst,
+            vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
             VMA_MEMORY_USAGE_GPU_ONLY);
-    Neon::Allocator::TransitionImageLayout(
-		depthTextureImage.m_TextureAllocation->m_Image, vk::ImageAspectFlagBits::eDepth,
-            vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-	depthTextureImage.m_Descriptor.imageView =
-            VulkanRenderer::CreateImageView(depthTextureImage.m_TextureAllocation->m_Image,
+	sampledDepthTextureImage.m_Descriptor.imageView =
+            VulkanRenderer::CreateImageView(sampledDepthTextureImage.m_TextureAllocation->m_Image,
                                             vk::Format::eD32Sfloat, vk::ImageAspectFlagBits::eDepth);
-
+*/
     colorTextureImage.m_TextureAllocation = Neon::Allocator::CreateImage(
             extent.width, extent.height, vk::SampleCountFlagBits::e1, vk::Format::eR32G32B32A32Sfloat,
             vk::ImageTiling::eOptimal,
-            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled |
-            vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eTransferSrc |
-            vk::ImageUsageFlagBits::eTransferDst,
+            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
             VMA_MEMORY_USAGE_GPU_ONLY);
     Neon::Allocator::TransitionImageLayout(colorTextureImage.m_TextureAllocation->m_Image,
                                            vk::ImageAspectFlagBits::eColor,
@@ -350,13 +351,27 @@ void Neon::VulkanRenderer::CreateFrameBuffers(
             VulkanRenderer::CreateSampler(vk::SamplerCreateInfo());
     colorTextureImage.m_Descriptor.imageLayout = vk::ImageLayout::eGeneral;
 
+	depthTextureImage.m_TextureAllocation = Neon::Allocator::CreateImage(
+		extent.width, extent.height, vk::SampleCountFlagBits::e1, vk::Format::eD32Sfloat,
+		vk::ImageTiling::eOptimal,
+		vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled,
+		VMA_MEMORY_USAGE_GPU_ONLY);
+	Neon::Allocator::TransitionImageLayout(depthTextureImage.m_TextureAllocation->m_Image,
+										   vk::ImageAspectFlagBits::eDepth,
+										   vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+	depthTextureImage.m_Descriptor.imageView = VulkanRenderer::CreateImageView(
+		depthTextureImage.m_TextureAllocation->m_Image, vk::Format::eD32Sfloat,
+		vk::ImageAspectFlagBits::eDepth);
+	depthTextureImage.m_Descriptor.sampler =
+		VulkanRenderer::CreateSampler(vk::SamplerCreateInfo());
+	depthTextureImage.m_Descriptor.imageLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
+
     frameBuffers.clear();
     frameBuffers.reserve(MAX_SWAP_CHAIN_IMAGES);
     for (size_t i = 0; i < MAX_SWAP_CHAIN_IMAGES; i++)
     {
-        std::vector<vk::ImageView> attachments = {sampledTextureImage.m_Descriptor.imageView,
-                                                  depthTextureImage.m_Descriptor.imageView,
-                                                  colorTextureImage.m_Descriptor.imageView};
+        std::vector<vk::ImageView> attachments = {colorTextureImage.m_Descriptor.imageView,
+												  depthTextureImage.m_Descriptor.imageView};
 
         vk::FramebufferCreateInfo framebufferInfo;
         framebufferInfo.setRenderPass(VulkanRenderer::GetOffscreenRenderPass());

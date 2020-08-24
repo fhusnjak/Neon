@@ -70,6 +70,11 @@ public:
 		assert(s_Instance.m_ImGuiOffscreenTextureDescSet);
 		return s_Instance.m_ImGuiOffscreenTextureDescSet;
 	}
+	static void* GetOffscreenImageIDDepth()
+	{
+		assert(s_Instance.m_ImGuiOffscreenDepthTextureDescSet);
+		return s_Instance.m_ImGuiOffscreenDepthTextureDescSet;
+	}
 	static vk::Extent2D GetExtent2D()
 	{
 		assert(s_Instance.m_SwapChain);
@@ -145,7 +150,8 @@ private:
 	void CreateCommandBuffers();
 
 public:
-	static void CreateFrameBuffers(vk::Extent2D extent, Neon::TextureImage& sampledTextureImage,
+	static void CreateFrameBuffers(vk::Extent2D extent, Neon::TextureImage& sampledColorTextureImage,
+								   Neon::TextureImage& sampledDepthTextureImage,
 								   Neon::TextureImage& colorTextureImage,
 								   Neon::TextureImage& depthTextureImage,
 								   std::vector<vk::UniqueFramebuffer>& frameBuffers);
@@ -153,14 +159,15 @@ public:
 private:
 	static VulkanRenderer s_Instance;
 
-	static const auto s_MsaaSamples = vk::SampleCountFlagBits::e8;
+	static const auto s_MsaaSamples = vk::SampleCountFlagBits::e1;
 
 	size_t m_DynamicAlignment = -1;
 
 	std::unique_ptr<SwapChain> m_SwapChain;
 
 	vk::UniqueRenderPass m_OffscreenRenderPass;
-	TextureImage m_SampledOffscreenTextureImage;
+	TextureImage m_SampledOffscreenColorTextureImage;
+	TextureImage m_SampledOffscreenDepthTextureImage;
 	TextureImage m_OffscreenColorTextureImage;
 	TextureImage m_OffscreenDepthTextureImage;
 	std::vector<vk::UniqueFramebuffer> m_OffscreenFrameBuffers;
@@ -168,6 +175,7 @@ private:
 	vk::UniqueRenderPass m_ImGuiRenderPass;
 	std::vector<vk::UniqueFramebuffer> m_ImGuiFrameBuffers;
 	VkDescriptorSet m_ImGuiOffscreenTextureDescSet = nullptr;
+	VkDescriptorSet m_ImGuiOffscreenDepthTextureDescSet = nullptr;
 
 	vk::UniqueCommandPool m_CommandPool;
 
