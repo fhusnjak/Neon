@@ -46,7 +46,7 @@ private:
 	PerspectiveCamera m_Camera;
 	float m_AspectRatio;
 	bool m_Rotation = false;
-	float m_CameraSpeed = 0.003f;
+	float m_CameraSpeed = 0.02f;
 	float m_ZoomLevel = 1.0f;
 	bool m_Cursor = true;
 };
