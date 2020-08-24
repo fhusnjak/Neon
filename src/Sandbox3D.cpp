@@ -17,15 +17,15 @@ Sandbox3D::Sandbox3D()
 
 	auto modelTransform = glm::scale(glm::mat4(1.0f), {0.05, 0.05, 0.05});
 	modelTransform = glm::rotate(glm::mat4(1.0), 3.14f, {0, 1, 0}) * modelTransform;
-	modelTransform = glm::translate(glm::mat4(1.0), {-8, -5.0, -2}) * modelTransform;
+	modelTransform = glm::translate(glm::mat4(1.0), {-12, 2, -16}) * modelTransform;
 
-	auto ugly = m_ActiveScene->LoadModel("models/boblampclean.md5mesh");
+	auto ugly = m_ActiveScene->LoadAnimatedModel("models/boblampclean.md5mesh");
 	auto& transformComponent2 = ugly.GetComponent<Neon::Transform>();
 	transformComponent2.m_Global = modelTransform;
 
 	auto water = m_ActiveScene->LoadWater();
 	auto& waterTransform = water.GetComponent<Neon::Transform>();
-	waterTransform.m_Global = glm::scale(glm::mat4(1.0), {30.0, 30.0, 30.0});
+	waterTransform.m_Global = glm::scale(glm::mat4(1.0), {100.0, 100.0, 100.0});
 
 	m_ActiveScene->LoadTerrain(100, 100, 20.0f);
 }
@@ -101,7 +101,7 @@ void Sandbox3D::OnImGuiRender()
 
 	ImGui::Begin("Settings");
 	ImGui::Text("FPS %.0f", 1000.0f * static_cast<float>(m_FrameCount) / m_TimePassed);
-	ImGui::SliderFloat("Light Intensity", &lightIntensity, 1.0f, 10.0f);
+	ImGui::SliderFloat("Light Intensity", &lightIntensity, 0.01f, 2.0f);
 	ImGui::Checkbox("Point Light", &pointLight);
 	ImGui::SliderFloat3("Light Direction", &lightDirection.x, -5.f, 5.f);
 	ImGui::SliderFloat3("Light Position", &lightPosition.x, -20.f, 20.f);
@@ -111,6 +111,12 @@ void Sandbox3D::OnImGuiRender()
 	vk::Extent2D extent = Neon::VulkanRenderer::GetExtent2D();
 	ImGui::Image(Neon::VulkanRenderer::GetOffscreenImageID(),
 				 ImVec2{(float)extent.width, (float)extent.height});
+	ImGui::End();
+
+	ImGui::Begin("Depth");
+	vk::Extent2D extent2 = {1280, 720};
+	ImGui::Image(Neon::VulkanRenderer::GetOffscreenImageIDDepth(),
+				 ImVec2{(float)extent2.width, (float)extent2.height});
 	ImGui::End();
 
 	ImGui::End();
