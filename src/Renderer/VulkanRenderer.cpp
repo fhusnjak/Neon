@@ -251,7 +251,6 @@ void Neon::VulkanRenderer::IntegrateImGui()
 	EndSingleTimeCommands(commandBuffer);
 
 	m_ImGuiOffscreenTextureDescSet = ImGui_ImplVulkan_CreateTexture();
-	m_ImGuiOffscreenDepthTextureDescSet = ImGui_ImplVulkan_CreateTexture();
 }
 
 void Neon::VulkanRenderer::CreateOffscreenRenderer()
@@ -263,10 +262,6 @@ void Neon::VulkanRenderer::CreateOffscreenRenderer()
 		m_ImGuiOffscreenTextureDescSet, m_OffscreenColorTextureImage.m_Descriptor.sampler,
 		m_OffscreenColorTextureImage.m_Descriptor.imageView,
 		(VkImageLayout)m_OffscreenColorTextureImage.m_Descriptor.imageLayout);
-	ImGui_ImplVulkan_UpdateTexture(
-		m_ImGuiOffscreenDepthTextureDescSet, m_OffscreenDepthTextureImage.m_Descriptor.sampler,
-		m_OffscreenDepthTextureImage.m_Descriptor.imageView,
-		(VkImageLayout)m_OffscreenDepthTextureImage.m_Descriptor.imageLayout);
 }
 
 void Neon::VulkanRenderer::CreateImGuiRenderer()

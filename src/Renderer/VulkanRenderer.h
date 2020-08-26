@@ -70,11 +70,6 @@ public:
 		assert(s_Instance.m_ImGuiOffscreenTextureDescSet);
 		return s_Instance.m_ImGuiOffscreenTextureDescSet;
 	}
-	static void* GetOffscreenImageIDDepth()
-	{
-		assert(s_Instance.m_ImGuiOffscreenDepthTextureDescSet);
-		return s_Instance.m_ImGuiOffscreenDepthTextureDescSet;
-	}
 	static vk::Extent2D GetExtent2D()
 	{
 		assert(s_Instance.m_SwapChain);
@@ -175,7 +170,6 @@ private:
 	vk::UniqueRenderPass m_ImGuiRenderPass;
 	std::vector<vk::UniqueFramebuffer> m_ImGuiFrameBuffers;
 	VkDescriptorSet m_ImGuiOffscreenTextureDescSet = nullptr;
-	VkDescriptorSet m_ImGuiOffscreenDepthTextureDescSet = nullptr;
 
 	vk::UniqueCommandPool m_CommandPool;
 

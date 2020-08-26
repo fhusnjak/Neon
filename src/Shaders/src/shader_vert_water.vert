@@ -12,7 +12,7 @@ layout(location = 1) out vec3 fragNorm;
 layout(location = 2) out vec4 fragClipSpace;
 layout(location = 3) out vec2 fragTextureCoords;
 
-const float tiling = 12;
+const float tiling = 10;
 
 layout(push_constant, scalar) uniform PushConstant
 {

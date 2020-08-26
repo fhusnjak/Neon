@@ -583,6 +583,11 @@ void Neon::Scene::OnUpdate(float ts, Neon::PerspectiveCameraController controlle
 		if (camera.GetPosition().y < waterHeight)
 		{
 			yNormal *= -1;
+			waterHeight -= 0.1;
+		}
+		else
+		{
+			waterHeight += 0.1;
 		}
 		VulkanRenderer::BeginScene(waterRenderer.m_RefractionFrameBuffers,
 								   refractionReflectionResolution, clearColor, camera,

@@ -54,23 +54,23 @@ void main()
         lightDir = normalize(lightDir);
     }
 
-    vec3 viewDir = pushConstant.cameraPos - fragWorldPos;
-    float distanceFromCamera = length(viewDir);
-    viewDir = normalize(viewDir);
+    vec3 viewDir = normalize(pushConstant.cameraPos - fragWorldPos);
 
     float near = 0.1;
-    float far = 15000.0;
+    float far = 10000.0;
     vec2 textureCoords = fragClipSpace.xy / fragClipSpace.w;
     textureCoords = textureCoords / 2 + 0.5;
     vec2 refractTextureCoords = vec2(textureCoords.x, textureCoords.y);
     vec2 reflectTextureCoords = vec2(textureCoords.x, -textureCoords.y);
     float depth = texture(depthMap, refractTextureCoords).r;
-    float floorDist = 2.0 * near * far / (far + near - (2.0 * depth - 1.0) * (far - near));
-    float waterDepth = floorDist - distanceFromCamera;
+    float floorDist = 2.0 * near * far / (far + near - depth * (far - near));
+    depth = gl_FragCoord.z;
+    float waterDist = 2.0 * near * far / (far + near - depth * (far - near));
+    float waterDepth = floorDist - waterDist;
 
     vec2 distortedTexCoords = texture(dudvMap, vec2(fragTextureCoords.x + pushConstant.moveFactor, fragTextureCoords.y)).rg * 0.1;
     distortedTexCoords = fragTextureCoords + vec2(distortedTexCoords.x, distortedTexCoords.y + pushConstant.moveFactor);
-    vec2 distortion = (texture(dudvMap, distortedTexCoords).rg * 2.0 - 1.0) * waveStrength / distanceFromCamera;
+    vec2 distortion = (texture(dudvMap, distortedTexCoords).rg * 2.0 - 1.0) * waveStrength / waterDist;
 
     refractTextureCoords += distortion;
     refractTextureCoords = clamp(refractTextureCoords, 0.001, 0.999);
@@ -89,6 +89,5 @@ void main()
     vec3 specular = computeSpecular(material, viewDir, lightDir, normal);
 
     outColor = (mix(textureValue, vec4(0.0, 0.3, 0.5, 1.0), 0.2) + lightIntensity * vec4(specular, 0.0));
-    //outColor.a = clamp(waterDepth, 0.0, 1.0);
-    //outColor = vec4(depth, depth, depth, 1.0);
+    outColor.a = clamp(waterDepth / 5.0, 0.0, 1.0);
 }

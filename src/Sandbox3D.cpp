@@ -113,12 +113,6 @@ void Sandbox3D::OnImGuiRender()
 				 ImVec2{(float)extent.width, (float)extent.height});
 	ImGui::End();
 
-	ImGui::Begin("Depth");
-	vk::Extent2D extent2 = {1280, 720};
-	ImGui::Image(Neon::VulkanRenderer::GetOffscreenImageIDDepth(),
-				 ImVec2{(float)extent2.width, (float)extent2.height});
-	ImGui::End();
-
 	ImGui::End();
 }
 
