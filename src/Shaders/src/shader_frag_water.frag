@@ -79,14 +79,13 @@ void main()
     reflectTextureCoords.x = clamp(reflectTextureCoords.x, 0.001, 0.999);
     reflectTextureCoords.y = clamp(reflectTextureCoords.y, -0.999, -0.001);
 
-    float F0 = 0.1;
-    float reflectionFactor = F0 + (1 - F0) * pow(1 - abs(dot(viewDir, vec3(0, 1, 0))), 5);
-    vec4 textureValue = mix(texture(textureSamplerRefraction, refractTextureCoords), texture(textureSamplerReflection, reflectTextureCoords), reflectionFactor);
-
     vec4 normalMapColor = texture(normalMap, distortedTexCoords);
-    vec3 normal = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b, normalMapColor.g * 2.0 - 1.0));
+    vec3 normal = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 3, normalMapColor.g * 2.0 - 1.0));
 
-    vec3 specular = computeSpecular(material, viewDir, lightDir, normal);
+    float refractiveFactor = pow(abs(dot(viewDir, normal)), 0.5);
+    vec4 textureValue = mix(texture(textureSamplerReflection, reflectTextureCoords), texture(textureSamplerRefraction, refractTextureCoords), refractiveFactor);
+
+    vec3 specular = computeSpecular(material, viewDir, lightDir, normal) * clamp(waterDepth / 5.0, 0.0, 1.0);
 
     outColor = (mix(textureValue, vec4(0.0, 0.3, 0.5, 1.0), 0.2) + lightIntensity * vec4(specular, 0.0));
     outColor.a = clamp(waterDepth / 5.0, 0.0, 1.0);
