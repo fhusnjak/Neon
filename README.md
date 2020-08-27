@@ -8,3 +8,12 @@ Personal project for practicing Vulkan and graphics programming principles.
 
 ### Skeletal animation<br/>
 ![Skeletal Animation Demo](resources/skeletalAnimation.gif)<br/>
+
+### Terrain generation from heightmaps<br/>
+![Terrain Generation](resources/terrainGeneration.png)<br/>
+
+### Multitexturing<br/>
+![Multitexturing](resources/multiTexturing.png)<br/>
+
+### Water<br/>
+![Terrain Generation](resources/water.gif)<br/>
