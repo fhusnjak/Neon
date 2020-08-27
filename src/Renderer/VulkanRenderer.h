@@ -145,7 +145,8 @@ private:
 	void CreateCommandBuffers();
 
 public:
-	static void CreateFrameBuffers(vk::Extent2D extent, Neon::TextureImage& sampledColorTextureImage,
+	static void CreateFrameBuffers(vk::Extent2D extent,
+								   Neon::TextureImage& sampledColorTextureImage,
 								   Neon::TextureImage& sampledDepthTextureImage,
 								   Neon::TextureImage& colorTextureImage,
 								   Neon::TextureImage& depthTextureImage,
@@ -154,7 +155,7 @@ public:
 private:
 	static VulkanRenderer s_Instance;
 
-	static const auto s_MsaaSamples = vk::SampleCountFlagBits::e1;
+	static const auto s_MsaaSamples = vk::SampleCountFlagBits::e8;
 
 	size_t m_DynamicAlignment = -1;
 
