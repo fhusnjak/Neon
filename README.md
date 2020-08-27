@@ -16,4 +16,4 @@ Personal project for practicing Vulkan and graphics programming principles.
 ![Multitexturing](resources/multiTexturing.png)<br/>
 
 ### Water<br/>
-![Terrain Generation](resources/water.gif)<br/>
+![Water](resources/water.gif)<br/>
