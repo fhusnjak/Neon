@@ -11,7 +11,7 @@ public:
 
 	void LoadFromFile(const std::string& fileName);
 
-	[[nodiscard]] vk::PipelineShaderStageCreateInfo GetShaderStageCreateInfo() const;
+	vk::PipelineShaderStageCreateInfo GetShaderStageCreateInfo() const;
 
 private:
 	vk::Device m_Device;

@@ -13,10 +13,13 @@
 
 #include <chrono>
 
+namespace Neon
+{
+
 class Application
 {
 public:
-	explicit Application(const std::string& name) noexcept;
+	explicit Application(const std::string& name = "Neon Engine") noexcept;
 	~Application();
 	Application(const Application& other) = delete;
 	Application& operator=(const Application& other) = delete;
@@ -28,7 +31,7 @@ public:
 	void PushLayer(Neon::Layer* layer);
 	void PushOverlay(Neon::Layer* layer);
 
-	[[nodiscard]] const inline Neon::Window& GetWindow() const noexcept
+	const inline Neon::Window& GetWindow() const noexcept
 	{
 		return m_Window;
 	}
@@ -53,3 +56,7 @@ private:
 	std::chrono::time_point<std::chrono::steady_clock> m_LastFrameTime =
 		std::chrono::high_resolution_clock::now();
 };
+
+Application* CreateApplication();
+
+} // namespace Neon

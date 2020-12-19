@@ -4,16 +4,15 @@
 
 #include "Renderer/PerspectiveCameraController.h"
 
-#include "Event.h"
-#include "Layer.h"
-#include "PerspectiveCameraController.h"
+#include "Core/Layer.h"
+#include "Event/Event.h"
+#include "Renderer/PerspectiveCameraController.h"
 #include "Scene/Scene.h"
 
 class Sandbox3D : public Neon::Layer
 {
 public:
 	Sandbox3D();
-	~Sandbox3D() override = default;
 
 	void OnAttach() override;
 	void OnDetach() override;

@@ -3,8 +3,6 @@
   <ItemGroup>
     <ClCompile Include="src\Window\Window.cpp" />
     <ClCompile Include="src\Application.cpp" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\Sandbox3D.cpp" />
     <ClCompile Include="src\Core\Allocator.cpp" />
     <ClCompile Include="src\Core\ImGuiLayer.cpp" />
     <ClCompile Include="src\Core\Input.cpp" />
@@ -36,7 +34,6 @@
     <ClInclude Include="src\Window\Window.h" />
     <ClInclude Include="src\Application.h" />
     <ClInclude Include="src\neopch.h" />
-    <ClInclude Include="src\Sandbox3D.h" />
     <ClInclude Include="src\Core\Allocator.h" />
     <ClInclude Include="src\Core\ImGuiLayer.h" />
     <ClInclude Include="src\Core\Input.h" />
@@ -64,5 +61,6 @@
     <ClInclude Include="src\Scene\Entity.h" />
     <ClInclude Include="src\Scene\Scene.h" />
     <ClInclude Include="src\Core\Core.h" />
+    <ClInclude Include="src\Core\EntryPoint.h" />
   </ItemGroup>
 </Project>

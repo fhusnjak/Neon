@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Event.h"
 #include "Event/Event.h"
 
 namespace Neon
@@ -24,7 +23,7 @@ public:
 
 	virtual void OnEvent(Event& event) { }
 
-	[[nodiscard]] inline const std::string& GetName() const
+	inline const std::string& GetName() const
 	{
 		return m_DebugName;
 	}

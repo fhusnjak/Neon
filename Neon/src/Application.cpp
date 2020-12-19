@@ -8,8 +8,9 @@
 #include "Event.h"
 #include "ImGuiLayer.h"
 #include "Layer.h"
-#include "Sandbox3D.h"
 
+namespace Neon
+{
 Application* Application::s_Instance = nullptr;
 
 Application::Application(const std::string& name) noexcept
@@ -21,7 +22,6 @@ Application::Application(const std::string& name) noexcept
 	m_ImGuiLayer = new Neon::ImGuiLayer();
 	PushOverlay(m_ImGuiLayer);
 	Neon::VulkanRenderer::Init(&m_Window);
-	PushLayer(new Sandbox3D());
 }
 
 Application::~Application()
@@ -100,3 +100,4 @@ bool Application::OnWindowResize(Neon::WindowResizeEvent& e)
 	m_Minimized = false;
 	return false;
 }
+} // namespace Neon

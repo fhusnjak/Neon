@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ApplicationEvent.h"
+#include "Event/ApplicationEvent.h"
 #include "Event.h"
 #include "Event/ApplicationEvent.h"
 #include "Event/Event.h"
@@ -23,12 +23,12 @@ public:
 		return m_Camera;
 	}
 
-	[[nodiscard]] const PerspectiveCamera& GetCamera() const
+	const PerspectiveCamera& GetCamera() const
 	{
 		return m_Camera;
 	}
 
-	[[nodiscard]] float GetZoomLevel() const
+	float GetZoomLevel() const
 	{
 		return m_ZoomLevel;
 	}

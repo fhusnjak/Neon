@@ -21,7 +21,7 @@ public:
 	{
 		return s_Instance;
 	}
-	[[nodiscard]] const vk::Instance& GetVkInstance() const
+	const vk::Instance& GetVkInstance() const
 	{
 		return m_VkInstance.get();
 	}

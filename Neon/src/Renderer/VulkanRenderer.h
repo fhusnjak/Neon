@@ -33,9 +33,9 @@ struct PushConstant
 	glm::mat4 model;
 
 	int pointLight;
-	[[maybe_unused]] float lightIntensity;
-	[[maybe_unused]] glm::vec3 lightDirection;
-	[[maybe_unused]] glm::vec3 lightPosition;
+	float lightIntensity;
+	glm::vec3 lightDirection;
+	glm::vec3 lightPosition;
 
 	float moveFactor;
 };

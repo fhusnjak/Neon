@@ -1,0 +1,2 @@
+C:\VisualStudioProjects\Neon\bin\Debug-x64\Neon\Neon.pdb
+C:\VisualStudioProjects\Neon\bin-int\Debug-x64\Neon\Neon.pdb

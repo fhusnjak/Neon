@@ -8,6 +8,7 @@
 #include "LogicalDevice.h"
 #include "PhysicalDevice.h"
 #include "vulkan/vulkan.hpp"
+
 #include <Window/Window.h>
 
 namespace Neon
@@ -23,30 +24,30 @@ public:
 											 const vk::SurfaceKHR& surface,
 											 const PhysicalDevice& physicalDevice,
 											 const LogicalDevice& logicalDevice);
-	[[nodiscard]] vk::Result AcquireNextImage();
-	[[nodiscard]] vk::Result Present(const vk::CommandBuffer& commandBuffer);
-	[[nodiscard]] const vk::SwapchainKHR& GetHandle() const
+	vk::Result AcquireNextImage();
+	vk::Result Present(const vk::CommandBuffer& commandBuffer);
+	const vk::SwapchainKHR& GetHandle() const
 	{
 		return m_Handle.get();
 	}
-	[[nodiscard]] size_t GetImageViewSize() const
+	size_t GetImageViewSize() const
 	{
 		return m_SwapChainImageViews.size();
 	}
-	[[nodiscard]] const vk::ImageView& GetImageView(size_t index) const
+	const vk::ImageView& GetImageView(size_t index) const
 	{
 		assert(index >= 0 && index < m_SwapChainImageViews.size());
 		return m_SwapChainImageViews[index].get();
 	}
-	[[nodiscard]] vk::Format GetSwapChainImageFormat() const
+	vk::Format GetSwapChainImageFormat() const
 	{
 		return m_SwapChainImageFormat;
 	}
-	[[nodiscard]] const vk::Extent2D& GetExtent() const
+	const vk::Extent2D& GetExtent() const
 	{
 		return m_Extent;
 	}
-	[[nodiscard]] uint32_t GetImageIndex() const
+	uint32_t GetImageIndex() const
 	{
 		return m_ImageIndex;
 	}
