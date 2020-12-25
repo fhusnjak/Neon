@@ -25,6 +25,10 @@ namespace Neon
 	public:
 		virtual ~RendererAPI() = default;
 
+		virtual void Init() = 0;
+		virtual void Render() = 0;
+		virtual void Shutdown() = 0;
+
 		static API Current()
 		{
 			return s_API;

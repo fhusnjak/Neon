@@ -4,10 +4,6 @@
 
 #include <GLFW/glfw3.h>
 
-#define IMGUI_IMPL_API
-#include <examples/imgui_impl_glfw.h>
-#include <examples/imgui_impl_vulkan.h>
-
 namespace Neon
 {
 	static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugReportCallback(VkDebugReportFlagsEXT flags,
@@ -80,41 +76,6 @@ namespace Neon
 
 	void VulkanContext::SwapBuffers()
 	{
-		vk::CommandBuffer drawCommandBuffer = m_SwapChain.GetCurrentDrawCommandBuffer();
-
-		// TODO: Temporary
-
-		vk::ClearValue clearValues[2];
-		std::array<float, 4> clearColor = {0.2f, 0.2f, 0.2f, 1.0f};
-		clearValues[0].color = vk::ClearColorValue(clearColor);
-		clearValues[1].depthStencil = {1.0f, 0};
-
-		uint32_t width = m_SwapChain.GetWidth();
-		uint32_t height = m_SwapChain.GetHeight();
-
-		vk::RenderPassBeginInfo renderPassBeginInfo = {};
-		renderPassBeginInfo.renderPass = m_SwapChain.GetRenderPass();
-		renderPassBeginInfo.renderArea.offset.x = 0;
-		renderPassBeginInfo.renderArea.offset.y = 0;
-		renderPassBeginInfo.renderArea.extent.width = width;
-		renderPassBeginInfo.renderArea.extent.height = height;
-		renderPassBeginInfo.clearValueCount = 2;
-		renderPassBeginInfo.pClearValues = clearValues;
-		renderPassBeginInfo.framebuffer = m_SwapChain.GetCurrentFramebuffer();
-
-		vk::CommandBufferBeginInfo beginInfo{vk::CommandBufferUsageFlagBits::eOneTimeSubmit};
-		drawCommandBuffer.begin(beginInfo);
-		drawCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
-
-		// ImGui Pass
-		{
-			ImGui::Render();
-			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), drawCommandBuffer);
-		}
-
-		drawCommandBuffer.endRenderPass();
-		drawCommandBuffer.end();
-
 		m_SwapChain.Present();
 	}
 

@@ -9,9 +9,15 @@ namespace Neon
 	class Renderer
 	{
 	public:
+		static void Init();
+
+		static void Render();
+
+		static void Shutdown();
+
 		static RendererAPI::API GetAPI()
 		{
-			return s_RendererAPI->Current();
+			return RendererAPI::Current();
 		}
 
 		static SharedPtr<RendererContext> GetContext()

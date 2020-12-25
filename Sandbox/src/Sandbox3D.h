@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Neon/Core/Layer.h>
-#include <Neon/Event/Event.h>
+#include <Neon/Core/Event/Event.h>
 
 #include <glm/glm.hpp>
 

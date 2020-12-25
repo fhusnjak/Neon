@@ -4,11 +4,8 @@
 #include "VulkanContext.h"
 #include "VulkanImGuiLayer.h"
 
-#include "imgui.h"
-
-#define IMGUI_IMPL_API
-#include "examples/imgui_impl_glfw.h"
-#include "examples/imgui_impl_vulkan.h"
+#include <examples/imgui_impl_glfw.h>
+#include <examples/imgui_impl_vulkan.h>
 
 namespace Neon
 {
@@ -74,7 +71,7 @@ namespace Neon
 		GLFWwindow* window = static_cast<GLFWwindow*>(app.GetWindow().GetNativeWindow());
 
 		auto vulkanContext = VulkanContext::Get();
-		auto device = vulkanContext->GetDevice();
+		auto device = VulkanContext::GetDevice();
 
 		VkDescriptorPool descriptorPool;
 
@@ -101,19 +98,19 @@ namespace Neon
 
 		// Setup Platform/Renderer bindings
 		ImGui_ImplGlfw_InitForVulkan(window, true);
-		ImGui_ImplVulkan_InitInfo init_info = {};
-		init_info.Instance = VulkanContext::GetInstance();
-		init_info.PhysicalDevice = device->GetPhysicalDevice()->GetHandle();
-		init_info.Device = device->GetHandle();
-		init_info.QueueFamily = device->GetPhysicalDevice()->GetGraphicsQueueIndex();
-		init_info.Queue = device->GetGraphicsQueue();
-		init_info.PipelineCache = nullptr;
-		init_info.DescriptorPool = descriptorPool;
-		init_info.Allocator = nullptr;
-		init_info.MinImageCount = 2;
-		init_info.ImageCount = vulkanContext->GetSwapChain().GetImageCount();
-		init_info.CheckVkResultFn = CheckVkResult;
-		ImGui_ImplVulkan_Init(&init_info, vulkanContext->GetSwapChain().GetRenderPass());
+		ImGui_ImplVulkan_InitInfo imguiInitInfo = {};
+		imguiInitInfo.Instance = VulkanContext::GetInstance();
+		imguiInitInfo.PhysicalDevice = device->GetPhysicalDevice()->GetHandle();
+		imguiInitInfo.Device = device->GetHandle();
+		imguiInitInfo.QueueFamily = device->GetPhysicalDevice()->GetGraphicsQueueIndex();
+		imguiInitInfo.Queue = device->GetGraphicsQueue();
+		imguiInitInfo.PipelineCache = nullptr;
+		imguiInitInfo.DescriptorPool = descriptorPool;
+		imguiInitInfo.Allocator = nullptr;
+		imguiInitInfo.MinImageCount = 2;
+		imguiInitInfo.ImageCount = vulkanContext->GetSwapChain().GetImageCount();
+		imguiInitInfo.CheckVkResultFn = CheckVkResult;
+		ImGui_ImplVulkan_Init(&imguiInitInfo, vulkanContext->GetSwapChain().GetRenderPass());
 
 		// Load Fonts
 		// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -122,18 +119,18 @@ namespace Neon
 		// - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
 		// - Read 'docs/FONTS.md' for more instructions and details.
 		// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-		//io.Fonts->AddFontDefault();
-		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-		//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-		//IM_ASSERT(font != NULL);
+		/*io.Fonts->AddFontDefault();
+		io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+		io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+		io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+		io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
+		ImFont* font = io.Fonts->AddFontFromFileTTF(R"(c:\Windows\Fonts\ArialUni.ttf)", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
+		//IM_ASSERT(font != NULL);*/
 
 		// Upload Fonts
-		VkCommandBuffer commandBuffer = vulkanContext->GetDevice()->GetCommandBuffer(true);
+		VkCommandBuffer commandBuffer = VulkanContext::GetDevice()->GetCommandBuffer(true);
 		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-		vulkanContext->GetDevice()->FlushCommandBuffer(commandBuffer);
+		VulkanContext::GetDevice()->FlushCommandBuffer(commandBuffer);
 
 		err = vkDeviceWaitIdle(device->GetHandle());
 		CheckVkResult(err);
@@ -142,7 +139,7 @@ namespace Neon
 
 	void VulkanImGuiLayer::OnDetach()
 	{
-		auto device = VulkanContext::Get()->GetDevice()->GetHandle();
+		auto device = VulkanContext::GetDevice()->GetHandle();
 
 		auto err = vkDeviceWaitIdle(device);
 		CheckVkResult(err);

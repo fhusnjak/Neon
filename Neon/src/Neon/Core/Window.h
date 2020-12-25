@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Neon/Event/ApplicationEvent.h"
-#include "Neon/Event/Event.h"
+#include "Event/ApplicationEvent.h"
+#include "Event/Event.h"
 #include "Neon/Renderer/RendererContext.h"
 
 #include <functional>

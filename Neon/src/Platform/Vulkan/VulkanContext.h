@@ -22,11 +22,6 @@ namespace Neon
 
 		void OnResize(uint32 width, uint32 height) override;
 
-		SharedPtr<VulkanDevice> GetDevice() const
-		{
-			return m_Device;
-		}
-
 		const VulkanSwapChain& GetSwapChain() const
 		{
 			return m_SwapChain;
@@ -40,6 +35,11 @@ namespace Neon
 		static SharedPtr<VulkanContext> Get()
 		{
 			return std::dynamic_pointer_cast<VulkanContext>(Renderer::GetContext());
+		}
+
+		static SharedPtr<VulkanDevice> GetDevice()
+		{
+			return Get()->m_Device;
 		}
 
 	private:

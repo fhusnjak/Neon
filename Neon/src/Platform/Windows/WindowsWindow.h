@@ -30,7 +30,6 @@ namespace Neon
 		}
 		std::pair<float, float> GetWindowPos() const override;
 
-		// Window attributes
 		void SetEventCallback(const EventCallbackFn& callback) override
 		{
 			m_Data.EventCallback = callback;

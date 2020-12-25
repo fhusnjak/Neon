@@ -2,6 +2,7 @@
 
 #include "Application.h"
 #include "Neon/ImGui/ImGuiLayer.h"
+#include "Neon/Renderer/Renderer.h"
 
 #include <imgui/imgui.h>
 
@@ -21,10 +22,13 @@ namespace Neon
 
 		m_ImGuiLayer = ImGuiLayer::Create();
 		PushOverlay(m_ImGuiLayer);
+
+		Renderer::Init();
 	}
 
 	Application::~Application()
 	{
+		Renderer::Shutdown();
 	}
 
 	void Application::OnEvent(Event& e)
@@ -74,6 +78,8 @@ namespace Neon
 					layer->OnUpdate(timeStepMilis);
 				}
 
+				m_Window->GetRenderContext()->BeginFrame();
+
 				m_ImGuiLayer->Begin();
 				ImGui::Begin("Renderer");
 				ImGui::Text("Vendor: %s", "Vulkan");
@@ -86,11 +92,12 @@ namespace Neon
 				{
 					layer->OnImGuiRender();
 				}
-
-				m_Window->GetRenderContext()->BeginFrame();
-				m_Window->SwapBuffers();
+				
+				Renderer::Render();
 
 				m_ImGuiLayer->End();
+
+				m_Window->SwapBuffers();
 			}
 		}
 	}

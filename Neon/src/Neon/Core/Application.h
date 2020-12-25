@@ -1,10 +1,10 @@
 #pragma once
 
+#include "Event/ApplicationEvent.h"
+#include "Event/Event.h"
 #include "Layer.h"
 #include "Neon/Core/LayerStack.h"
 #include "Neon/Core/Window.h"
-#include "Neon/Event/ApplicationEvent.h"
-#include "Neon/Event/Event.h"
 
 #include <chrono>
 
@@ -57,7 +57,7 @@ namespace Neon
 
 	private:
 		SharedPtr<Window> m_Window;
-		
+
 		bool m_Running = true;
 		bool m_Minimized = false;
 

@@ -34,9 +34,6 @@
     <ClInclude Include="src\Neon\Core\EntryPoint.h" />
     <ClInclude Include="src\Neon\Core\Layer.h" />
     <ClInclude Include="src\Neon\Core\LayerStack.h" />
-    <ClInclude Include="src\Neon\Event\ApplicationEvent.h" />
-    <ClInclude Include="src\Neon\Event\Event.h" />
-    <ClInclude Include="src\Neon\Event\KeyEvent.h" />
     <ClInclude Include="src\Neon\Tools\FileTools.h" />
     <ClInclude Include="src\Platform\Vulkan\VulkanRendererAPI.h" />
     <ClInclude Include="src\Platform\Vulkan\VulkanSwapChain.h" />
@@ -49,12 +46,10 @@
     <ClInclude Include="vendor\glfw-3.3.2\include\GLFW\glfw3.h" />
     <ClInclude Include="vendor\glfw-3.3.2\include\GLFW\glfw3native.h" />
     <ClInclude Include="vendor\stb_image\stb_image.h" />
-    <ClInclude Include="src\Neon\Renderer\Renderer.h" />
     <ClInclude Include="src\Neon\Renderer\RendererAPI.h" />
     <ClInclude Include="src\Neon\Renderer\RendererContext.h" />
     <ClInclude Include="src\Platform\Vulkan\VulkanImGuiLayer.h" />
     <ClInclude Include="src\Neon\Core\Window.h" />
-    <ClInclude Include="src\Neon\Event\MouseEvent.h" />
     <ClInclude Include="src\Neon\Core\Log.h" />
     <ClInclude Include="src\Neon\Core\Assert.h" />
     <ClInclude Include="vendor\imgui\imgui_internal.h" />
@@ -64,6 +59,11 @@
     <ClInclude Include="vendor\imgui\imgui.h" />
     <ClInclude Include="vendor\imgui\imconfig.h" />
     <ClInclude Include="src\Neon\ImGui\ImGuiLayer.h" />
+    <ClInclude Include="src\Neon\Core\Event\ApplicationEvent.h" />
+    <ClInclude Include="src\Neon\Core\Event\Event.h" />
+    <ClInclude Include="src\Neon\Core\Event\KeyEvent.h" />
+    <ClInclude Include="src\Neon\Core\Event\MouseEvent.h" />
+    <ClInclude Include="src\Neon\Renderer\Renderer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vendor\glfw-3.3.2\docs\html\search\all_0.html" />

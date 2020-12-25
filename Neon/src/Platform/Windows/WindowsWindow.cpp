@@ -1,6 +1,6 @@
 #include "neopch.h"
 
-#include "Neon/Event/KeyEvent.h"
+#include "Neon/Core/Event/KeyEvent.h"
 #include "Neon/Renderer/RendererAPI.h"
 #include "WindowsWindow.h"
 

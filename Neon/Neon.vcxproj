@@ -130,15 +130,19 @@
     <ClCompile Include="src\Platform\Vulkan\VulkanImGuiLayer.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="vendor\imgui\imgui_demo.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="vendor\imgui\imgui_draw.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="vendor\imgui\imgui_widgets.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -148,12 +152,12 @@
     <ClInclude Include="src\Neon\Core\Application.h" />
     <ClInclude Include="src\Neon\Core\Core.h" />
     <ClInclude Include="src\Neon\Core\EntryPoint.h" />
-    <ClInclude Include="src\Neon\Event\MouseEvent.h" />
+    <ClInclude Include="src\Neon\Core\Event\MouseEvent.h" />
     <ClInclude Include="src\Neon\Core\Layer.h" />
     <ClInclude Include="src\Neon\Core\LayerStack.h" />
-    <ClInclude Include="src\Neon\Event\ApplicationEvent.h" />
-    <ClInclude Include="src\Neon\Event\Event.h" />
-    <ClInclude Include="src\Neon\Event\KeyEvent.h" />
+    <ClInclude Include="src\Neon\Core\Event\ApplicationEvent.h" />
+    <ClInclude Include="src\Neon\Core\Event\Event.h" />
+    <ClInclude Include="src\Neon\Core\Event\KeyEvent.h" />
     <ClInclude Include="src\Neon\ImGui\ImGuiLayer.h" />
     <ClInclude Include="src\Neon\Renderer\Renderer.h" />
     <ClInclude Include="src\Neon\Renderer\RendererAPI.h" />

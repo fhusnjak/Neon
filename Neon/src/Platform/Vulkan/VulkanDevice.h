@@ -89,6 +89,11 @@ namespace Neon
 			return m_GraphicsQueue;
 		}
 
+		vk::CommandPool GetCommandPool() const
+		{
+			return m_CommandPool.get();
+		}
+
 		vk::CommandBuffer GetCommandBuffer(bool begin);
 		void FlushCommandBuffer(vk::CommandBuffer commandBuffer);
 
