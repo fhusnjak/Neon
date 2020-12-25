@@ -1,19 +1,25 @@
 #pragma once
 
+// Needed for windows.h header
+#ifndef NOMINMAX
+	#define NOMINMAX
+#endif
+
 #include <algorithm>
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <utility>
 
 #include <array>
-#include <map>
-#include <set>
 #include <sstream>
 #include <string>
+#include <map>
 #include <unordered_map>
+#include <set>
 #include <unordered_set>
 #include <vector>
 
-#include <cassert>
+#include "Neon/Core/Core.h"
+
+#include <Windows.h>

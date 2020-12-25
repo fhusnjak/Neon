@@ -1,19 +1,19 @@
 #include "Sandbox3D.h"
 
-#include <Core/EntryPoint.h>
+#include <Neon/Core/EntryPoint.h>
 
-class Sandbox : public Neon::Application
+class SandboxApp : public Neon::Application
 {
 public:
-	Sandbox()
+	SandboxApp()
 	{
-		PushLayer(new Sandbox3D());
+		PushLayer(new Neon::Sandbox3D());
 	}
 
-	~Sandbox() = default;
+	~SandboxApp() = default;
 };
 
 Neon::Application* Neon::CreateApplication()
 {
-	return new Sandbox();
+	return new SandboxApp();
 }

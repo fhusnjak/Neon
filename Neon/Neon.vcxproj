@@ -59,9 +59,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);NOMINMAX;NOMINMAX</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NEO_DEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(ProjectDir)src;$(ProjectDir)src\Window;$(ProjectDir)src\Tools;$(ProjectDir)src\Renderer;$(ProjectDir)src\Event;$(ProjectDir)src\Core;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\glfw-3.3.2\include;$(ProjectDir)vendor\glm-0.9.9.7;$(ProjectDir)vendor\stb_image;$(ProjectDir)vendor\assimp;$(ProjectDir)vendor\entt;$(ProjectDir)vendor\allocator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(ProjectDir)src;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\glfw-3.3.2\include;$(ProjectDir)vendor\glm-0.9.9.7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>neopch.h</PrecompiledHeaderFile>
@@ -83,9 +83,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);NOMINMAX;NOMINMAX</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(ProjectDir)src;$(ProjectDir)src\Window;$(ProjectDir)src\Tools;$(ProjectDir)src\Renderer;$(ProjectDir)src\Event;$(ProjectDir)src\Core;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\glfw-3.3.2\include;$(ProjectDir)vendor\glm-0.9.9.7;$(ProjectDir)vendor\stb_image;$(ProjectDir)vendor\assimp;$(ProjectDir)vendor\entt;$(ProjectDir)vendor\allocator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(ProjectDir)src;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\glfw-3.3.2\include;$(ProjectDir)vendor\glm-0.9.9.7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>neopch.h</PrecompiledHeaderFile>
@@ -106,85 +106,205 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Application.cpp" />
-    <ClCompile Include="src\Core\Allocator.cpp" />
-    <ClCompile Include="src\Core\ImGuiLayer.cpp" />
-    <ClCompile Include="src\Core\Input.cpp" />
-    <ClCompile Include="src\Core\LayerStack.cpp" />
+    <ClCompile Include="src\Neon\Core\Core.cpp" />
+    <ClCompile Include="src\Neon\Core\Log.cpp" />
+    <ClCompile Include="src\Neon\Core\Application.cpp" />
+    <ClCompile Include="src\Neon\Core\LayerStack.cpp" />
+    <ClCompile Include="src\Neon\ImGui\ImGuiBuild.cpp" />
+    <ClCompile Include="src\Neon\ImGui\ImGuiLayer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\Renderer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\RendererAPI.cpp" />
+    <ClCompile Include="src\Neon\Renderer\RendererContext.cpp" />
     <ClCompile Include="src\neopch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\Renderer\Context.cpp" />
-    <ClCompile Include="src\Renderer\DescriptorPool.cpp" />
-    <ClCompile Include="src\Renderer\DescriptorSet.cpp" />
-    <ClCompile Include="src\Renderer\GraphicsPipeline.cpp" />
-    <ClCompile Include="src\Renderer\LogicalDevice.cpp" />
-    <ClCompile Include="src\Renderer\PerspectiveCamera.cpp" />
-    <ClCompile Include="src\Renderer\PerspectiveCameraController.cpp" />
-    <ClCompile Include="src\Renderer\PhysicalDevice.cpp" />
-    <ClCompile Include="src\Renderer\RenderPass.cpp" />
-    <ClCompile Include="src\Renderer\SwapChain.cpp" />
-    <ClCompile Include="src\Renderer\VulkanRenderer.cpp" />
-    <ClCompile Include="src\Renderer\VulkanShader.cpp" />
-    <ClCompile Include="src\Scene\Animation.cpp" />
-    <ClCompile Include="src\Scene\Components.cpp" />
-    <ClCompile Include="src\Scene\Scene.cpp" />
-    <ClCompile Include="src\Tools\FileTools.cpp" />
-    <ClCompile Include="src\Window\Window.cpp" />
-    <ClCompile Include="vendor\imgui\examples\imgui_impl_glfw.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="vendor\imgui\examples\imgui_impl_vulkan.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="src\Neon\Tools\FileTools.cpp" />
+    <ClCompile Include="src\Neon\Core\Window.cpp" />
+    <ClCompile Include="src\Platform\Vulkan\VulkanContext.cpp" />
+    <ClCompile Include="src\Platform\Vulkan\VulkanRendererAPI.cpp" />
+    <ClCompile Include="src\Platform\Vulkan\VulkanSwapChain.cpp" />
+    <ClCompile Include="src\Platform\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="src\Platform\Windows\WindowsWindow.cpp" />
+    <ClCompile Include="src\Platform\Vulkan\VulkanAllocator.cpp" />
+    <ClCompile Include="src\Platform\Vulkan\VulkanImGuiLayer.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="vendor\imgui\imgui_demo.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="vendor\imgui\imgui_draw.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="vendor\imgui\imgui_widgets.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Application.h" />
-    <ClInclude Include="src\Core\Allocator.h" />
-    <ClInclude Include="src\Core\Core.h" />
-    <ClInclude Include="src\Core\EntryPoint.h" />
-    <ClInclude Include="src\Core\ImGuiLayer.h" />
-    <ClInclude Include="src\Core\Input.h" />
-    <ClInclude Include="src\Core\Layer.h" />
-    <ClInclude Include="src\Core\LayerStack.h" />
-    <ClInclude Include="src\Event\ApplicationEvent.h" />
-    <ClInclude Include="src\Event\Event.h" />
-    <ClInclude Include="src\Event\KeyEvent.h" />
+    <ClInclude Include="src\Neon\Core\Assert.h" />
+    <ClInclude Include="src\Neon\Core\Log.h" />
+    <ClInclude Include="src\Neon.h" />
+    <ClInclude Include="src\Neon\Core\Application.h" />
+    <ClInclude Include="src\Neon\Core\Core.h" />
+    <ClInclude Include="src\Neon\Core\EntryPoint.h" />
+    <ClInclude Include="src\Neon\Event\MouseEvent.h" />
+    <ClInclude Include="src\Neon\Core\Layer.h" />
+    <ClInclude Include="src\Neon\Core\LayerStack.h" />
+    <ClInclude Include="src\Neon\Event\ApplicationEvent.h" />
+    <ClInclude Include="src\Neon\Event\Event.h" />
+    <ClInclude Include="src\Neon\Event\KeyEvent.h" />
+    <ClInclude Include="src\Neon\ImGui\ImGuiLayer.h" />
+    <ClInclude Include="src\Neon\Renderer\Renderer.h" />
+    <ClInclude Include="src\Neon\Renderer\RendererAPI.h" />
+    <ClInclude Include="src\Neon\Renderer\RendererContext.h" />
     <ClInclude Include="src\neopch.h" />
-    <ClInclude Include="src\Renderer\Context.h" />
-    <ClInclude Include="src\Renderer\DescriptorPool.h" />
-    <ClInclude Include="src\Renderer\DescriptorSet.h" />
-    <ClInclude Include="src\Renderer\GraphicsPipeline.h" />
-    <ClInclude Include="src\Renderer\LogicalDevice.h" />
-    <ClInclude Include="src\Renderer\PerspectiveCamera.h" />
-    <ClInclude Include="src\Renderer\PerspectiveCameraController.h" />
-    <ClInclude Include="src\Renderer\PhysicalDevice.h" />
-    <ClInclude Include="src\Renderer\RenderPass.h" />
-    <ClInclude Include="src\Renderer\SwapChain.h" />
-    <ClInclude Include="src\Renderer\VulkanRenderer.h" />
-    <ClInclude Include="src\Renderer\VulkanShader.h" />
-    <ClInclude Include="src\Scene\Animation.h" />
-    <ClInclude Include="src\Scene\Bone.h" />
-    <ClInclude Include="src\Scene\Components.h" />
-    <ClInclude Include="src\Scene\Entity.h" />
-    <ClInclude Include="src\Scene\Scene.h" />
-    <ClInclude Include="src\Tools\FileTools.h" />
-    <ClInclude Include="src\Window\Window.h" />
+    <ClInclude Include="src\Neon\Tools\FileTools.h" />
+    <ClInclude Include="src\Neon\Core\Window.h" />
+    <ClInclude Include="src\Platform\Vulkan\Vulkan.h" />
+    <ClInclude Include="src\Platform\Vulkan\VulkanContext.h" />
+    <ClInclude Include="src\Platform\Vulkan\VulkanRendererAPI.h" />
+    <ClInclude Include="src\Platform\Vulkan\VulkanSwapChain.h" />
+    <ClInclude Include="src\Platform\Vulkan\VulkanDevice.h" />
+    <ClInclude Include="src\Platform\Windows\WindowsWindow.h" />
+    <ClInclude Include="src\Platform\Vulkan\VulkanAllocator.h" />
+    <ClInclude Include="vendor\allocator\vk_mem_alloc.h" />
+    <ClInclude Include="vendor\entt\entt.h" />
+    <ClInclude Include="vendor\glfw-3.3.2\include\GLFW\glfw3.h" />
+    <ClInclude Include="vendor\glfw-3.3.2\include\GLFW\glfw3native.h" />
+    <ClInclude Include="vendor\imgui\imconfig.h" />
+    <ClInclude Include="vendor\imgui\imgui.h" />
+    <ClInclude Include="vendor\imgui\imgui_internal.h" />
+    <ClInclude Include="vendor\imgui\imstb_rectpack.h" />
+    <ClInclude Include="vendor\imgui\imstb_textedit.h" />
+    <ClInclude Include="vendor\imgui\imstb_truetype.h" />
+    <ClInclude Include="vendor\stb_image\stb_image.h" />
+    <ClInclude Include="src\Platform\Vulkan\VulkanImGuiLayer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="vendor\glfw-3.3.2\docs\html\bug.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\build_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\build_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\compat_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\compat_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\compile_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\compile_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\context_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\context_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\deprecated.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\dir_15a5176d7c9cc5c407ed4f611edf0684.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\dir_a58ef735c5cc5a9a31d321e1abe7c42e.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\dir_abae1f34c5d965773b98e3c915cdaeb5.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\dir_bc6505cac00d7a6291dbfd9af70666b7.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\files.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\glfw3native_8h.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\glfw3native_8h_source.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\glfw3_8h.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\glfw3_8h_source.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__buttons.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__context.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__errors.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__gamepad__axes.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__gamepad__buttons.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__hat__state.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__init.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__input.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__joysticks.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__keys.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__mods.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__monitor.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__native.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__shapes.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__vulkan.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\group__window.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\index.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\input_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\input_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\internals_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\internal_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\intro_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\intro_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\main_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\modules.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\monitor_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\monitor_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\moving_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\moving_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\news.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\news_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\pages.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\quick_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\quick_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_0.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_1.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_10.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_11.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_2.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_3.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_4.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_5.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_6.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_7.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_8.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_9.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_a.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_b.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_c.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_d.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_e.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\all_f.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\classes_0.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\defines_0.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\files_0.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\files_1.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\files_2.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\files_3.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\files_4.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\files_5.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\files_6.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\files_7.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\files_8.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\functions_0.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_0.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_1.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_2.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_3.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_4.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_5.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_6.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_7.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_8.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_9.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\groups_a.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\nomatches.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_0.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_1.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_2.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_3.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_4.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_5.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_6.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_7.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_8.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_9.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\pages_a.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\typedefs_0.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\variables_0.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\variables_1.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\variables_2.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\variables_3.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\variables_4.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\variables_5.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\variables_6.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\search\variables_7.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\structGLFWgamepadstate.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\structGLFWgammaramp.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\structGLFWimage.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\structGLFWvidmode.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\vulkan_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\vulkan_guide.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\window_8dox.html" />
+    <None Include="vendor\glfw-3.3.2\docs\html\window_guide.html" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

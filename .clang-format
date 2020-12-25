@@ -2,7 +2,7 @@ BasedOnStyle: WebKit
 TabWidth: 4
 IndentWidth: 4
 UseTab: Always
-ColumnLimit: 100
+ColumnLimit: 132
 
 Language: Cpp
 
@@ -16,10 +16,10 @@ AlignConsecutiveDeclarations: false
 AlignOperands: true
 AlignTrailingComments: false
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: Always
-AllowShortCaseLabelsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: Empty
-AllowShortIfStatementsOnASingleLine: Always
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
@@ -33,7 +33,7 @@ BreakAfterJavaFieldAnnotations: true
 BreakBeforeInheritanceComma: false
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
-BreakConstructorInitializersBeforeComma: true
+BreakConstructorInitializersBeforeComma: false
 BreakStringLiterals: true
 
 CompactNamespaces: false
@@ -44,7 +44,7 @@ Cpp11BracedListStyle: true
 SpaceBeforeCpp11BracedList: false
 DerivePointerAlignment: false
 ExperimentalAutoDetectBinPacking: false
-IndentCaseLabels: false
+IndentCaseLabels: true
 FixNamespaceComments: true
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: true
@@ -52,7 +52,7 @@ MacroBlockBegin: ''
 MacroBlockEnd: ''
 JavaScriptQuotes: Double
 MaxEmptyLinesToKeep: 1
-NamespaceIndentation: None
+NamespaceIndentation: All
 ObjCBlockIndentWidth: 4
 ObjCSpaceAfterProperty: true
 ObjCSpaceBeforeProtocolList: true
@@ -83,4 +83,4 @@ SortIncludes: true
 ReflowComments: false
 
 IncludeBlocks: Preserve
-IndentPPDirectives: AfterHash
+IndentPPDirectives: BeforeHash

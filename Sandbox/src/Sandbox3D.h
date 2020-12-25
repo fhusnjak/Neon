@@ -1,38 +1,31 @@
 #pragma once
 
-#include "Core/Layer.h"
+#include <Neon/Core/Layer.h>
+#include <Neon/Event/Event.h>
 
-#include "Renderer/PerspectiveCameraController.h"
+#include <glm/glm.hpp>
 
-#include "Core/Layer.h"
-#include "Event/Event.h"
-#include "Renderer/PerspectiveCameraController.h"
-#include "Scene/Scene.h"
+#include <queue>
 
-class Sandbox3D : public Neon::Layer
+namespace Neon
 {
-public:
-	Sandbox3D();
+	class Sandbox3D : public Layer
+	{
+	public:
+		Sandbox3D();
 
-	void OnAttach() override;
-	void OnDetach() override;
+		void OnAttach() override;
+		void OnDetach() override;
 
-	void OnUpdate(float ts) override;
-	void OnImGuiRender() override;
-	void OnEvent(Neon::Event& e) override;
+		void OnUpdate(float ts) override;
+		void OnImGuiRender() override;
+		void OnEvent(Event& e) override;
 
-private:
-	Neon::PerspectiveCameraController m_CameraController;
+	private:
+		std::queue<float> m_Times;
+		float m_TimePassed = 0.0f;
+		int m_FrameCount = 0;
 
-	std::shared_ptr<Neon::Scene> m_ActiveScene;
-
-	std::queue<float> m_Times;
-	float m_TimePassed = 0.0f;
-	int m_FrameCount = 0;
-
-	glm::vec4 clearColor{1, 1, 1, 1.00f};
-	bool pointLight = false;
-	glm::vec3 lightDirection = {0, -1, 0};
-	float lightIntensity = 0.6f;
-	glm::vec3 lightPosition = {-0.896, 15.821, -12.353};
-};
+		glm::vec4 clearColor{1.f, 1.f, 1.f, 1.f};
+	};
+} // namespace Neon
