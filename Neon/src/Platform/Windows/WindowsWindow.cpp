@@ -25,7 +25,6 @@ namespace Neon
 	{
 		if (!s_GLFWInitialized)
 		{
-			// TODO: glfwTerminate on system shutdown
 			int success = glfwInit();
 			NEO_CORE_ASSERT(success, "GLFW initialization failed");
 			glfwSetErrorCallback(GLFWErrorCallback);
@@ -146,6 +145,7 @@ namespace Neon
 
 	WindowsWindow::~WindowsWindow()
 	{
+		Shutdown();
 	}
 
 	void WindowsWindow::ProcessEvents()
@@ -184,7 +184,12 @@ namespace Neon
 
 	void WindowsWindow::Shutdown()
 	{
-		// TODO: Implement this
+		glfwDestroyWindow(m_Window);
+		if (s_GLFWInitialized)
+		{
+			glfwTerminate();
+			s_GLFWInitialized = false;
+		}
 	}
 
 } // namespace Neon

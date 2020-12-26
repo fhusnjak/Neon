@@ -23,10 +23,13 @@ using int64 = int64_t;
 #include "Log.h"
 #include "SharedRef.h"
 
+#ifndef NEO_PLATFORM_WINDOWS
+	#error Only Windows are supported!
+#endif
+
 namespace Neon
 {
 	void InitializeCore();
-
 	void ShutdownCore();
 
 	template<typename T>

@@ -25,6 +25,7 @@
     <ClCompile Include="vendor\imgui\imgui.cpp" />
     <ClCompile Include="src\Neon\ImGui\ImGuiLayer.cpp" />
     <ClCompile Include="src\Neon\Renderer\Shader.cpp" />
+    <ClCompile Include="src\Platform\Windows\WindowsInput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\neopch.h" />
@@ -60,13 +61,14 @@
     <ClInclude Include="vendor\imgui\imgui.h" />
     <ClInclude Include="vendor\imgui\imconfig.h" />
     <ClInclude Include="src\Neon\ImGui\ImGuiLayer.h" />
+    <ClInclude Include="src\Neon\Renderer\Renderer.h" />
+    <ClInclude Include="src\Neon\Renderer\Shader.h" />
+    <ClInclude Include="src\Neon\Core\SharedRef.h" />
+    <ClInclude Include="src\Neon\Core\Input.h" />
     <ClInclude Include="src\Neon\Core\Event\ApplicationEvent.h" />
     <ClInclude Include="src\Neon\Core\Event\Event.h" />
     <ClInclude Include="src\Neon\Core\Event\KeyEvent.h" />
     <ClInclude Include="src\Neon\Core\Event\MouseEvent.h" />
-    <ClInclude Include="src\Neon\Renderer\Renderer.h" />
-    <ClInclude Include="src\Neon\Renderer\Shader.h" />
-    <ClInclude Include="src\Neon\Core\SharedRef.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vendor\glfw-3.3.2\docs\html\search\all_0.html" />

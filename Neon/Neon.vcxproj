@@ -59,7 +59,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NEO_DEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NEO_PLATFORM_WINDOWS;NEO_DEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(ProjectDir)src;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\glfw-3.3.2\include;$(ProjectDir)vendor\glm-0.9.9.7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -83,7 +83,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NEO_PLATFORM_WINDOWS;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(ProjectDir)src;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\glfw-3.3.2\include;$(ProjectDir)vendor\glm-0.9.9.7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -126,6 +126,7 @@
     <ClCompile Include="src\Platform\Vulkan\VulkanRendererAPI.cpp" />
     <ClCompile Include="src\Platform\Vulkan\VulkanSwapChain.cpp" />
     <ClCompile Include="src\Platform\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="src\Platform\Windows\WindowsInput.cpp" />
     <ClCompile Include="src\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\Platform\Vulkan\VulkanAllocator.cpp" />
     <ClCompile Include="src\Platform\Vulkan\VulkanImGuiLayer.cpp" />
@@ -147,6 +148,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Neon\Core\Event\ApplicationEvent.h" />
+    <ClInclude Include="src\Neon\Core\Event\Event.h" />
+    <ClInclude Include="src\Neon\Core\Event\KeyEvent.h" />
+    <ClInclude Include="src\Neon\Core\Event\MouseEvent.h" />
+    <ClInclude Include="src\Neon\Core\Input.h" />
     <ClInclude Include="src\Neon\Core\SharedRef.h" />
     <ClInclude Include="src\Neon\Renderer\Shader.h" />
     <ClInclude Include="src\Neon\Core\Assert.h" />
@@ -155,12 +161,8 @@
     <ClInclude Include="src\Neon\Core\Application.h" />
     <ClInclude Include="src\Neon\Core\Core.h" />
     <ClInclude Include="src\Neon\Core\EntryPoint.h" />
-    <ClInclude Include="src\Neon\Core\Event\MouseEvent.h" />
     <ClInclude Include="src\Neon\Core\Layer.h" />
     <ClInclude Include="src\Neon\Core\LayerStack.h" />
-    <ClInclude Include="src\Neon\Core\Event\ApplicationEvent.h" />
-    <ClInclude Include="src\Neon\Core\Event\Event.h" />
-    <ClInclude Include="src\Neon\Core\Event\KeyEvent.h" />
     <ClInclude Include="src\Neon\ImGui\ImGuiLayer.h" />
     <ClInclude Include="src\Neon\Renderer\Renderer.h" />
     <ClInclude Include="src\Neon\Renderer\RendererAPI.h" />
