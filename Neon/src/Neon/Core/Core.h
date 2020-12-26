@@ -19,8 +19,9 @@ using int64 = int64_t;
 
 #define BIT(x) (1 << x)
 
-#include "Log.h"
 #include "Assert.h"
+#include "Log.h"
+#include "SharedRef.h"
 
 namespace Neon
 {
@@ -29,19 +30,10 @@ namespace Neon
 	void ShutdownCore();
 
 	template<typename T>
-	using UniquePtr = std::unique_ptr<T>;
+	using UniqueRef = std::unique_ptr<T>;
 	template<typename T, typename... Args>
-	constexpr UniquePtr<T> CreateUnique(Args&&... args)
+	constexpr UniqueRef<T> CreateUnique(Args&&... args)
 	{
 		return std::make_unique<T>(std::forward<Args>(args)...);
 	}
-
-	template<typename T>
-	using SharedPtr = std::shared_ptr<T>;
-	template<typename T, typename... Args>
-	constexpr SharedPtr<T> CreateShared(Args&&... args)
-	{
-		return std::make_shared<T>(std::forward<Args>(args)...);
-	}
-
 } // namespace Neon

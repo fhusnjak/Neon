@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Neon/Core/Core.h"
+
 namespace Neon
 {
 	class RendererAPI
@@ -29,11 +31,17 @@ namespace Neon
 		virtual void Render() = 0;
 		virtual void Shutdown() = 0;
 
+		static RenderAPICapabilities& GetCapabilities()
+		{
+			static RenderAPICapabilities capabilities;
+			return capabilities;
+		}
+
 		static API Current()
 		{
 			return s_API;
 		}
-		static UniquePtr<RendererAPI> Create();
+		static UniqueRef<RendererAPI> Create();
 
 	private:
 		static API s_API;

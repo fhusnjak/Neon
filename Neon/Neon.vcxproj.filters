@@ -24,6 +24,7 @@
     <ClCompile Include="vendor\imgui\imgui_widgets.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp" />
     <ClCompile Include="src\Neon\ImGui\ImGuiLayer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\neopch.h" />
@@ -64,6 +65,8 @@
     <ClInclude Include="src\Neon\Core\Event\KeyEvent.h" />
     <ClInclude Include="src\Neon\Core\Event\MouseEvent.h" />
     <ClInclude Include="src\Neon\Renderer\Renderer.h" />
+    <ClInclude Include="src\Neon\Renderer\Shader.h" />
+    <ClInclude Include="src\Neon\Core\SharedRef.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vendor\glfw-3.3.2\docs\html\search\all_0.html" />

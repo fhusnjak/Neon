@@ -1,8 +1,10 @@
 #pragma once
 
+#include "Neon/Core/Core.h"
+
 namespace Neon
 {
-	class RendererContext
+	class RendererContext : public RefCounted
 	{
 	public:
 		RendererContext() = default;
@@ -13,6 +15,6 @@ namespace Neon
 
 		virtual void OnResize(uint32 width, uint32 height) = 0;
 
-		static UniquePtr<RendererContext> Create(void* window);
+		static SharedRef<RendererContext> Create(void* window);
 	};
 } // namespace Neon

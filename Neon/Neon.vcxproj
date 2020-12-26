@@ -106,6 +106,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Neon\Renderer\Shader.cpp" />
     <ClCompile Include="src\Neon\Core\Core.cpp" />
     <ClCompile Include="src\Neon\Core\Log.cpp" />
     <ClCompile Include="src\Neon\Core\Application.cpp" />
@@ -146,6 +147,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Neon\Core\SharedRef.h" />
+    <ClInclude Include="src\Neon\Renderer\Shader.h" />
     <ClInclude Include="src\Neon\Core\Assert.h" />
     <ClInclude Include="src\Neon\Core\Log.h" />
     <ClInclude Include="src\Neon.h" />

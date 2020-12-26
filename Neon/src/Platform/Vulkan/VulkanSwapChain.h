@@ -14,7 +14,7 @@ namespace Neon
 		VulkanSwapChain() = default;
 		~VulkanSwapChain();
 
-		void Init(vk::Instance instance, SharedPtr<VulkanDevice>& device);
+		void Init(vk::Instance instance, SharedRef<VulkanDevice>& device);
 		void InitSurface(GLFWwindow* windowHandle);
 		void Create(uint32* width, uint32* height, bool vsync = false);
 
@@ -92,7 +92,7 @@ namespace Neon
 
 	private:
 		vk::Instance m_Instance;
-		SharedPtr<VulkanDevice> m_Device;
+		SharedRef<VulkanDevice> m_Device;
 		vk::UniqueSurfaceKHR m_Surface;
 		VulkanAllocator m_Allocator;
 
@@ -119,12 +119,12 @@ namespace Neon
 		vk::UniqueCommandPool m_CommandPool;
 		std::vector<vk::UniqueCommandBuffer> m_RenderCommandBuffers;
 
-		struct
+		struct Semaphores
 		{
-			vk::UniqueSemaphore PresentComplete;
+			vk::UniqueSemaphore ImageAcquired;
 			vk::UniqueSemaphore RenderComplete;
-		} m_Semaphores;
-		vk::SubmitInfo m_SubmitInfo;
+		};
+		std::vector<Semaphores> m_Semaphores;
 
 		std::vector<vk::UniqueFence> m_WaitFences;
 
@@ -134,6 +134,8 @@ namespace Neon
 
 		uint32 m_QueueNodeIndex = UINT32_MAX;
 		uint32 m_Width, m_Height;
+
+		uint32 m_CurrentFrame = 0;
 
 		friend class VulkanContext;
 	};

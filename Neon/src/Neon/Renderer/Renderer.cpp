@@ -22,5 +22,5 @@ namespace Neon
 		s_RendererAPI->Shutdown();
 	}
 
-	UniquePtr<RendererAPI> Renderer::s_RendererAPI = RendererAPI::Create();
+	UniqueRef<RendererAPI> Renderer::s_RendererAPI = RendererAPI::Create();
 }

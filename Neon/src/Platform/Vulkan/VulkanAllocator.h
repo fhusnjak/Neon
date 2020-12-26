@@ -12,14 +12,14 @@ namespace Neon
 	public:
 		VulkanAllocator() = default;
 		VulkanAllocator(const std::string& tag);
-		VulkanAllocator(const SharedPtr<VulkanDevice>& device, const std::string& tag = "");
+		VulkanAllocator(const SharedRef<VulkanDevice>& device, const std::string& tag = "");
 		~VulkanAllocator();
 
 		void Allocate(vk::MemoryRequirements requirements, vk::UniqueDeviceMemory& dest,
 					  vk::MemoryPropertyFlags flags = vk::MemoryPropertyFlagBits::eDeviceLocal);
 
 	private:
-		SharedPtr<VulkanDevice> m_Device;
+		SharedRef<VulkanDevice> m_Device;
 		std::string m_Tag;
 	};
 } // namespace Neon

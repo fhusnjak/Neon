@@ -7,7 +7,7 @@ namespace Neon
 {
 	RendererAPI::API RendererAPI::s_API = RendererAPI::API::Vulkan;
 
-	UniquePtr<RendererAPI> RendererAPI::Create()
+	UniqueRef<RendererAPI> RendererAPI::Create()
 	{
 		switch (s_API)
 		{

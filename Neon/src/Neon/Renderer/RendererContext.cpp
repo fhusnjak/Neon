@@ -6,7 +6,7 @@
 
 namespace Neon
 {
-	UniquePtr<RendererContext> RendererContext::Create(void* window)
+	SharedRef<RendererContext> RendererContext::Create(void* window)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -14,7 +14,7 @@ namespace Neon
 				NEO_CORE_ASSERT(false, "RendererAPI is not selected");
 				return nullptr;
 			case RendererAPI::API::Vulkan:
-				return CreateUnique<VulkanContext>(static_cast<GLFWwindow*>(window));
+				return SharedRef<VulkanContext>::Create(static_cast<GLFWwindow*>(window));
 		}
 		NEO_CORE_ASSERT(false, "Unknown RendererAPI is selected");
 		return nullptr;

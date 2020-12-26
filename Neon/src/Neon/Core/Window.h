@@ -47,7 +47,7 @@ namespace Neon
 
 		virtual void* GetNativeWindow() const = 0;
 
-		virtual SharedPtr<RendererContext> GetRenderContext() = 0;
+		virtual SharedRef<RendererContext> GetRenderContext() = 0;
 
 		static Window* Create(const WindowProps& props = WindowProps());
 

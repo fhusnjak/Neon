@@ -2,7 +2,9 @@
 
 #include "Sandbox3D.h"
 
-#define AVG_FRAME_COUNT 100
+#include "imgui/imgui.h"
+
+#define AVG_FRAME_COUNT 1000
 
 namespace Neon
 {
@@ -34,6 +36,9 @@ namespace Neon
 
 	void Sandbox3D::OnImGuiRender()
 	{
+		ImGui::Begin("Frame time");
+		ImGui::Text("Frame Time: %.2fms\n", m_TimePassed / AVG_FRAME_COUNT);
+		ImGui::End();
 	}
 
 	void Sandbox3D::OnEvent(Event& e)

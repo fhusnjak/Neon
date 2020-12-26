@@ -10,7 +10,7 @@
 
 namespace Neon
 {
-	static vk::CommandBuffer s_ImGuiCommandBuffer;
+	static vk::CommandBuffer s_ImGuiCommandBuffers[10];
 
 	VulkanRendererAPI::~VulkanRendererAPI()
 	{
@@ -18,7 +18,17 @@ namespace Neon
 
 	void VulkanRendererAPI::Init()
 	{
-		s_ImGuiCommandBuffer = VulkanContext::GetDevice()->CreateSecondaryCommandBuffer();
+		for (auto& cmdBuff : s_ImGuiCommandBuffers)
+		{
+			cmdBuff = VulkanContext::GetDevice()->CreateSecondaryCommandBuffer();
+		}
+
+		vk::PhysicalDeviceProperties props = VulkanContext::GetDevice()->GetPhysicalDevice()->GetProperties();
+
+		RendererAPI::RenderAPICapabilities& caps = RendererAPI::GetCapabilities();
+		caps.Vendor = props.deviceName;
+		caps.Renderer = "Vulkan";
+		caps.Version = "1.0";
 	}
 
 	void VulkanRendererAPI::Render()
@@ -58,7 +68,7 @@ namespace Neon
 			beginInfo.flags = vk::CommandBufferUsageFlagBits::eRenderPassContinue;
 			beginInfo.pInheritanceInfo = &inheritanceInfo;
 
-			s_ImGuiCommandBuffer.begin(beginInfo);
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].begin(beginInfo);
 
 			// Update dynamic viewport state
 			vk::Viewport viewport = {};
@@ -69,7 +79,7 @@ namespace Neon
 			viewport.minDepth = 0.0f;
 			viewport.maxDepth = 1.0f;
 
-			s_ImGuiCommandBuffer.setViewport(0, 1, &viewport);
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].setViewport(0, 1, &viewport);
 
 			// Update dynamic scissor state
 			vk::Rect2D scissor = {};
@@ -78,15 +88,15 @@ namespace Neon
 			scissor.offset.x = 0;
 			scissor.offset.y = 0;
 
-			s_ImGuiCommandBuffer.setScissor(0, 1, &scissor);
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].setScissor(0, 1, &scissor);
 
 			// TODO: Move to VulkanImGuiLayer
 			ImGui::Render();
-			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), s_ImGuiCommandBuffer);
+			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()]);
 
-			s_ImGuiCommandBuffer.end();
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].end();
 
-			commandBuffers.push_back(s_ImGuiCommandBuffer);
+			commandBuffers.push_back(s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()]);
 		}
 
 		renderCommandBuffer.executeCommands(commandBuffers);
@@ -97,8 +107,12 @@ namespace Neon
 
 	void VulkanRendererAPI::Shutdown()
 	{
-		VulkanContext::GetDevice()->GetHandle().freeCommandBuffers(VulkanContext::GetDevice()->GetCommandPool(),
-																   s_ImGuiCommandBuffer);
+		VulkanContext::GetDevice()->GetHandle().waitIdle();
+		for (auto& cmdBuff : s_ImGuiCommandBuffers)
+		{
+			VulkanContext::GetDevice()->GetHandle().freeCommandBuffers(VulkanContext::GetDevice()->GetCommandPool(),
+																	   cmdBuff);
+		}	
 	}
 
 } // namespace Neon

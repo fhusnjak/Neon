@@ -32,12 +32,12 @@ namespace Neon
 			return s_Instance.get();
 		}
 
-		static SharedPtr<VulkanContext> Get()
+		static SharedRef<VulkanContext> Get()
 		{
-			return std::dynamic_pointer_cast<VulkanContext>(Renderer::GetContext());
+			return SharedRef<VulkanContext>(Renderer::GetContext());
 		}
 
-		static SharedPtr<VulkanDevice> GetDevice()
+		static SharedRef<VulkanDevice> GetDevice()
 		{
 			return Get()->m_Device;
 		}
@@ -49,8 +49,8 @@ namespace Neon
 
 		vk::DebugReportCallbackEXT m_DebugReportCallback;
 
-		SharedPtr<VulkanPhysicalDevice> m_PhysicalDevice;
-		SharedPtr<VulkanDevice> m_Device;
+		SharedRef<VulkanPhysicalDevice> m_PhysicalDevice;
+		SharedRef<VulkanDevice> m_Device;
 
 		VulkanSwapChain m_SwapChain;
 

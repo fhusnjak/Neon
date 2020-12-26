@@ -20,12 +20,12 @@ namespace Neon
 			return RendererAPI::Current();
 		}
 
-		static SharedPtr<RendererContext> GetContext()
+		static SharedRef<RendererContext> GetContext()
 		{
 			return Application::Get().GetWindow().GetRenderContext();
 		}
 
 	private:
-		static UniquePtr<RendererAPI> s_RendererAPI;
+		static UniqueRef<RendererAPI> s_RendererAPI;
 	};
 } // namespace Neon

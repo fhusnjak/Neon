@@ -48,7 +48,7 @@ namespace Neon
 			return m_Window;
 		}
 
-		SharedPtr<RendererContext> GetRenderContext() override
+		SharedRef<RendererContext> GetRenderContext() override
 		{
 			return m_RendererContext;
 		}
@@ -62,6 +62,6 @@ namespace Neon
 
 		float m_LastFrameTime = 0.0f;
 
-		SharedPtr<RendererContext> m_RendererContext;
+		SharedRef<RendererContext> m_RendererContext;
 	};
 } // namespace Neon

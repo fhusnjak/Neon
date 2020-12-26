@@ -56,7 +56,7 @@ namespace Neon
 		bool OnWindowResize(WindowResizeEvent& e);
 
 	private:
-		SharedPtr<Window> m_Window;
+		UniqueRef<Window> m_Window;
 
 		bool m_Running = true;
 		bool m_Minimized = false;

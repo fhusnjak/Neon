@@ -11,7 +11,7 @@ namespace Neon
 		m_Device->GetHandle().destroySwapchainKHR(m_Handle);
 	}
 
-	void VulkanSwapChain::Init(vk::Instance instance, SharedPtr<VulkanDevice>& device)
+	void VulkanSwapChain::Init(vk::Instance instance, SharedRef<VulkanDevice>& device)
 	{
 		m_Instance = instance;
 		m_Device = device;
@@ -207,22 +207,12 @@ namespace Neon
 		// Synchronization Objects
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		vk::SemaphoreCreateInfo semaphoreCreateInfo{};
-		// Create a semaphore used to synchronize image presentation
-		// Ensures that the image is displayed before we start submitting new commands to the queue
-		m_Semaphores.PresentComplete = m_Device->GetHandle().createSemaphoreUnique(semaphoreCreateInfo);
-		// Create a semaphore used to synchronize command submission
-		// Ensures that the image is not presented until all commands have been sumbitted and executed
-		m_Semaphores.RenderComplete = m_Device->GetHandle().createSemaphoreUnique(semaphoreCreateInfo);
-
-		// Set up submit info structure
-		// Semaphores will stay the same during application lifetime
-		// Command buffer submission info is set by each example
-		vk::PipelineStageFlags pipelineStageFlags = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		m_SubmitInfo.pWaitDstStageMask = &pipelineStageFlags;
-		m_SubmitInfo.waitSemaphoreCount = 1;
-		m_SubmitInfo.pWaitSemaphores = &m_Semaphores.PresentComplete.get();
-		m_SubmitInfo.signalSemaphoreCount = 1;
-		m_SubmitInfo.pSignalSemaphores = &m_Semaphores.RenderComplete.get();
+		m_Semaphores.resize(images.size());
+		for (uint32 i = 0; i < images.size(); i++)
+		{
+			m_Semaphores[i].ImageAcquired = m_Device->GetHandle().createSemaphoreUnique(semaphoreCreateInfo);
+			m_Semaphores[i].RenderComplete = m_Device->GetHandle().createSemaphoreUnique(semaphoreCreateInfo);
+		}
 
 		// Wait fences to sync command buffer access
 		vk::FenceCreateInfo fenceCreateInfo{};
@@ -309,25 +299,23 @@ namespace Neon
 
 	void VulkanSwapChain::BeginFrame()
 	{
-		VK_CHECK_RESULT(AcquireNextImage(m_Semaphores.PresentComplete.get(), &m_CurrentBufferIndex));
-	}
-
-	void VulkanSwapChain::Present()
-	{
-		const uint64 DEFAULT_FENCE_TIMEOUT = 100000000000;
+		VK_CHECK_RESULT(AcquireNextImage(m_Semaphores[m_CurrentFrame].ImageAcquired.get(), &m_CurrentBufferIndex));
 
 		// Use a fence to wait until the command buffer has finished execution before using it again
 		VK_CHECK_RESULT(m_Device->GetHandle().waitForFences(m_WaitFences[m_CurrentBufferIndex].get(), VK_TRUE, UINT64_MAX));
 		VK_CHECK_RESULT(m_Device->GetHandle().resetFences(1, &m_WaitFences[m_CurrentBufferIndex].get()));
+	}
 
+	void VulkanSwapChain::Present()
+	{
 		// Pipeline stage at which the queue submission will wait (via pWaitSemaphores)
 		vk::PipelineStageFlags waitStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 		// The submit info structure specifices a command buffer queue submission batch
 		vk::SubmitInfo submitInfo = {};
 		submitInfo.pWaitDstStageMask = &waitStageMask;
-		submitInfo.pWaitSemaphores = &m_Semaphores.PresentComplete.get();
+		submitInfo.pWaitSemaphores = &m_Semaphores[m_CurrentFrame].ImageAcquired.get();
 		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &m_Semaphores.RenderComplete.get();
+		submitInfo.pSignalSemaphores = &m_Semaphores[m_CurrentFrame].RenderComplete.get();
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pCommandBuffers = &m_RenderCommandBuffers[m_CurrentBufferIndex].get();
 		submitInfo.commandBufferCount = 1;
@@ -338,7 +326,7 @@ namespace Neon
 		// Present the current buffer to the swap chain
 		// Pass the semaphore signaled by the command buffer submission from the submit info as the wait semaphore for swap chain presentation
 		// This ensures that the image is not presented to the windowing system until all commands have been submitted
-		vk::Result result = QueuePresent(m_Device->GetGraphicsQueue(), m_CurrentBufferIndex, m_Semaphores.RenderComplete.get());
+		vk::Result result = QueuePresent(m_Device->GetGraphicsQueue(), m_CurrentBufferIndex, m_Semaphores[m_CurrentFrame].RenderComplete.get());
 
 		if (result != vk::Result::eSuccess || result == vk::Result::eSuboptimalKHR)
 		{
@@ -353,13 +341,11 @@ namespace Neon
 			}
 		}
 
-		VK_CHECK_RESULT(
-			m_Device->GetHandle().waitForFences(m_WaitFences[m_CurrentBufferIndex].get(), VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+		m_CurrentFrame++;
+		m_CurrentFrame %= m_Buffers.size();
 
-		// vkQueueWaitIdle(m_Queue);
-
-		// TODO: Do we need this anywhere?
-		//vkResetCommandPool(m_Device->GetVulkanDevice(), m_CommandPool, 0);
+		// TODO: Benchmark this
+		//VK_CHECK_RESULT(m_Device->GetHandle().waitForFences(m_WaitFences[m_CurrentBufferIndex].get(), VK_TRUE, UINT64_MAX));
 	}
 
 	vk::Result VulkanSwapChain::AcquireNextImage(vk::Semaphore presentCompleteSemaphore, uint32* imageIndex)

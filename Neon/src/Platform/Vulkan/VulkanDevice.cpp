@@ -5,9 +5,9 @@
 
 namespace Neon
 {
-	SharedPtr<VulkanPhysicalDevice> VulkanPhysicalDevice::Select()
+	SharedRef<VulkanPhysicalDevice> VulkanPhysicalDevice::Select()
 	{
-		return CreateShared<VulkanPhysicalDevice>();
+		return SharedRef<VulkanPhysicalDevice>::Create();
 	}
 
 	VulkanPhysicalDevice::VulkanPhysicalDevice()
@@ -164,7 +164,7 @@ namespace Neon
 		return vk::Format::eUndefined;
 	}
 
-	VulkanDevice::VulkanDevice(SharedPtr<VulkanPhysicalDevice>& physicalDevice)
+	VulkanDevice::VulkanDevice(SharedRef<VulkanPhysicalDevice>& physicalDevice)
 		: m_PhysicalDevice(physicalDevice)
 	{
 		NEO_CORE_ASSERT(physicalDevice, "Vulkan device initialized with non existant physical device");
@@ -267,9 +267,9 @@ namespace Neon
 		return cmdBuffer;
 	}
 
-	SharedPtr<VulkanDevice> VulkanDevice::Create(SharedPtr<VulkanPhysicalDevice>& physicalDevice)
+	SharedRef<VulkanDevice> VulkanDevice::Create(SharedRef<VulkanPhysicalDevice>& physicalDevice)
 	{
-		return CreateShared<VulkanDevice>(physicalDevice);
+		return SharedRef<VulkanDevice>::Create(physicalDevice);
 	}
 
 } // namespace Neon

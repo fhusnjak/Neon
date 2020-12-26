@@ -15,7 +15,7 @@ namespace Neon
 		NEO_ASSERT(s_Instance == nullptr, "Application already exists");
 		s_Instance = this;
 
-		m_Window = UniquePtr<Window>(
+		m_Window = std::unique_ptr<Window>(
 			Window::Create(WindowProps{applicationProps.Name, applicationProps.WindowWidth, applicationProps.WindowHeight}));
 		m_Window->SetEventCallback([this](Event& e) { OnEvent(e); });
 		m_Window->SetVSync(false);
@@ -81,10 +81,12 @@ namespace Neon
 				m_Window->GetRenderContext()->BeginFrame();
 
 				m_ImGuiLayer->Begin();
+
+				RendererAPI::RenderAPICapabilities& caps = RendererAPI::GetCapabilities();
 				ImGui::Begin("Renderer");
-				ImGui::Text("Vendor: %s", "Vulkan");
-				ImGui::Text("Renderer: %s", "Vulkan");
-				ImGui::Text("Version: %s", "1.0");
+				ImGui::Text("Vendor: %s", caps.Vendor.c_str());
+				ImGui::Text("Renderer: %s", caps.Renderer.c_str());
+				ImGui::Text("Version: %s", caps.Version.c_str());
 				ImGui::Text("Frame Time: %.2fms\n", timeStepMilis);
 				ImGui::End();
 
@@ -92,7 +94,7 @@ namespace Neon
 				{
 					layer->OnImGuiRender();
 				}
-				
+
 				Renderer::Render();
 
 				m_ImGuiLayer->End();

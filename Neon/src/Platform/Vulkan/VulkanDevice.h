@@ -6,7 +6,7 @@
 
 namespace Neon
 {
-	class VulkanPhysicalDevice
+	class VulkanPhysicalDevice : public RefCounted
 	{
 	public:
 		VulkanPhysicalDevice();
@@ -29,7 +29,12 @@ namespace Neon
 			return m_DepthFormat;
 		}
 
-		static SharedPtr<VulkanPhysicalDevice> Select();
+		vk::PhysicalDeviceProperties GetProperties()
+		{
+			return m_Properties;
+		}
+
+		static SharedRef<VulkanPhysicalDevice> Select();
 
 	private:
 		struct QueueFamilyIndices
@@ -68,10 +73,10 @@ namespace Neon
 		friend class VulkanDevice;
 	};
 
-	class VulkanDevice
+	class VulkanDevice : public RefCounted
 	{
 	public:
-		VulkanDevice(SharedPtr<VulkanPhysicalDevice>& physicalDevice);
+		VulkanDevice(SharedRef<VulkanPhysicalDevice>& physicalDevice);
 		~VulkanDevice() = default;
 
 		vk::Device GetHandle() const
@@ -79,7 +84,7 @@ namespace Neon
 			return m_Handle.get();
 		}
 
-		SharedPtr<VulkanPhysicalDevice>GetPhysicalDevice() const
+		SharedRef<VulkanPhysicalDevice>GetPhysicalDevice() const
 		{
 			return m_PhysicalDevice;
 		}
@@ -99,11 +104,11 @@ namespace Neon
 
 		vk::CommandBuffer CreateSecondaryCommandBuffer();
 
-		static SharedPtr<VulkanDevice> Create(SharedPtr<VulkanPhysicalDevice>& physicalDevice);
+		static SharedRef<VulkanDevice> Create(SharedRef<VulkanPhysicalDevice>& physicalDevice);
 
 	private:
 		vk::UniqueDevice m_Handle;
-		SharedPtr<VulkanPhysicalDevice> m_PhysicalDevice;
+		SharedRef<VulkanPhysicalDevice> m_PhysicalDevice;
 
 		vk::Queue m_GraphicsQueue;
 

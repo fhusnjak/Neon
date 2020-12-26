@@ -9,7 +9,7 @@ namespace Neon
 	{
 	}
 
-	VulkanAllocator::VulkanAllocator(const SharedPtr<VulkanDevice>& device, const std::string& tag /*= ""*/)
+	VulkanAllocator::VulkanAllocator(const SharedRef<VulkanDevice>& device, const std::string& tag /*= ""*/)
 		: m_Device(device)
 		, m_Tag(tag)
 	{
