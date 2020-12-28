@@ -21,7 +21,7 @@ namespace Neon
 		m_Window->SetVSync(false);
 
 		m_ImGuiLayer = ImGuiLayer::Create();
-		PushOverlay(m_ImGuiLayer);
+		//PushOverlay(m_ImGuiLayer);
 
 		Renderer::Init();
 	}
@@ -80,24 +80,24 @@ namespace Neon
 
 				m_Window->GetRenderContext()->BeginFrame();
 
-				m_ImGuiLayer->Begin();
+//				m_ImGuiLayer->Begin();
 
-				RendererAPI::RenderAPICapabilities& caps = RendererAPI::GetCapabilities();
-				ImGui::Begin("Renderer");
-				ImGui::Text("Vendor: %s", caps.Vendor.c_str());
-				ImGui::Text("Renderer: %s", caps.Renderer.c_str());
-				ImGui::Text("Version: %s", caps.Version.c_str());
-				ImGui::Text("Frame Time: %.2fms\n", timeStepMilis);
-				ImGui::End();
+//				RendererAPI::RenderAPICapabilities& caps = RendererAPI::GetCapabilities();
+//				ImGui::Begin("Renderer");
+//				ImGui::Text("Vendor: %s", caps.Vendor.c_str());
+//				ImGui::Text("Renderer: %s", caps.Renderer.c_str());
+//				ImGui::Text("Version: %s", caps.Version.c_str());
+//				ImGui::Text("Frame Time: %.2fms\n", timeStepMilis);
+//				ImGui::End();
 
 				for (Layer* layer : m_LayerStack)
 				{
-					layer->OnImGuiRender();
+//					layer->OnImGuiRender();
 				}
 
 				Renderer::Render();
 
-				m_ImGuiLayer->End();
+//				m_ImGuiLayer->End();
 
 				m_Window->SwapBuffers();
 			}

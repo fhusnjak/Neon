@@ -326,7 +326,8 @@ namespace Neon
 		// Present the current buffer to the swap chain
 		// Pass the semaphore signaled by the command buffer submission from the submit info as the wait semaphore for swap chain presentation
 		// This ensures that the image is not presented to the windowing system until all commands have been submitted
-		vk::Result result = QueuePresent(m_Device->GetGraphicsQueue(), m_CurrentBufferIndex, m_Semaphores[m_CurrentFrame].RenderComplete.get());
+		vk::Result result =
+			QueuePresent(m_Device->GetGraphicsQueue(), m_CurrentBufferIndex, m_Semaphores[m_CurrentFrame].RenderComplete.get());
 
 		if (result != vk::Result::eSuccess || result == vk::Result::eSuboptimalKHR)
 		{
@@ -345,7 +346,7 @@ namespace Neon
 		m_CurrentFrame %= m_Buffers.size();
 
 		// TODO: Benchmark this
-		//VK_CHECK_RESULT(m_Device->GetHandle().waitForFences(m_WaitFences[m_CurrentBufferIndex].get(), VK_TRUE, UINT64_MAX));
+		VK_CHECK_RESULT(m_Device->GetHandle().waitForFences(m_WaitFences[m_CurrentBufferIndex].get(), VK_TRUE, UINT64_MAX));
 	}
 
 	vk::Result VulkanSwapChain::AcquireNextImage(vk::Semaphore presentCompleteSemaphore, uint32* imageIndex)

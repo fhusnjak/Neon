@@ -4,53 +4,53 @@
 
 namespace Neon
 {
+	enum class ShaderType
+	{
+		Vertex,
+		Fragment
+	};
+
 	enum class UniformType
 	{
-		None = 0,
-		Int32,
-		Uint32,
-		Float,
-		Float2,
-		Float3,
-		Float4,
-		Matrix3x3,
-		Matrix4x4
+		Sampler,
+		CombinedImageSampler,
+		SampledImage,
+		StorageImage,
+		UniformTexelBuffer,
+		StorageTexelBuffer,
+		UniformBuffer,
+		StorageBuffer,
+		UniformBufferDynamic,
+		StorageBufferDynamic,
+		InputAttachment,
+		InlineUniformBlockEXT,
+		AccelerationStructureNV
 	};
 
-	struct UniformDecl
+	enum ShaderStageFlag
 	{
+		Vertex = BIT(0),
+		Fragment = BIT(1)
+	};
+
+	struct UniformBinding
+	{
+		uint32 Binding;
 		UniformType Type;
-		std::ptrdiff_t Offset;
-		std::string Name;
-	};
-
-	enum class ShaderUniformType
-	{
-		None = 0,
-		Bool,
-		Int,
-		Float,
-		Vec2,
-		Vec3,
-		Vec4,
-		Mat3,
-		Mat4
+		uint32 Count;
+		uint32 Size;
+		uint32 ShaderStageFlags;
 	};
 
 	class Shader : public RefCounted
 	{
 	public:
-		virtual void Reload() = 0;
+		virtual ~Shader() = default;
 
-		virtual void Bind() = 0;
+		virtual void LoadShader(const std::string& path, ShaderType type) = 0;
 
-		virtual void SetUniformBuffer(const std::string& name, const void* data, uint32_t size) = 0;
-		virtual void SetUniform(const std::string& fullname, float value) = 0;
-		virtual void SetUniform(const std::string& fullname, int value) = 0;
-		virtual void SetUniform(const std::string& fullname, const glm::vec2& value) = 0;
-		virtual void SetUniform(const std::string& fullname, const glm::vec3& value) = 0;
-		virtual void SetUniform(const std::string& fullname, const glm::vec4& value) = 0;
-		virtual void SetUniform(const std::string& fullname, const glm::mat3& value) = 0;
-		virtual void SetUniform(const std::string& fullname, const glm::mat4& value) = 0;
+		virtual void SetUniformBuffer(uint32 binding, uint32 index, const void* data) = 0;
+
+		static SharedRef<Shader> Create(const std::vector<UniformBinding>& bindings);
 	};
-}
+} // namespace Neon

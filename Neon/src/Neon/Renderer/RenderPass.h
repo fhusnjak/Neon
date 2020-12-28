@@ -1,12 +1,19 @@
-#include <vulkan/vulkan.hpp>
+#pragma once
 
 namespace Neon
 {
-vk::RenderPass CreateRenderPass(const vk::Device& device, vk::Format colorAttachmentFormat,
-								vk::SampleCountFlagBits samples, bool clearColor,
-								vk::ImageLayout colorInitialLayout,
-								vk::ImageLayout colorFinalLayout,
-								vk::Format depthAttachmentFormat = vk::Format::eUndefined, bool clearDepth = true,
-								vk::ImageLayout depthInitialLayout = vk::ImageLayout::eUndefined,
-								vk::ImageLayout depthFinalLayout = vk::ImageLayout::eUndefined, bool resolve = false);
+	struct RenderPassSpecification
+	{
+	};
+
+	class RenderPass : public RefCounted
+	{
+	public:
+		virtual ~RenderPass() = default;
+
+		virtual RenderPassSpecification& GetSpecification() = 0;
+		virtual const RenderPassSpecification& GetSpecification() const = 0;
+
+		static SharedRef<RenderPass> Create(const RenderPassSpecification& spec);
+	};
 } // namespace Neon

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Neon/Renderer/Renderer.h"
-#include "Neon/Renderer/RendererContext.h"
+#include "Renderer/Renderer.h"
+#include "Renderer/RendererContext.h"
 
 #include "Vulkan.h"
 #include "VulkanDevice.h"

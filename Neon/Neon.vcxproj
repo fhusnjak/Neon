@@ -61,7 +61,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NEO_PLATFORM_WINDOWS;NEO_DEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(ProjectDir)src;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\glfw-3.3.2\include;$(ProjectDir)vendor\glm-0.9.9.7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(ProjectDir)src;$(ProjectDir)src\Neon;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\glfw-3.3.2\include;$(ProjectDir)vendor\glm-0.9.9.7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>neopch.h</PrecompiledHeaderFile>
@@ -85,7 +85,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NEO_PLATFORM_WINDOWS;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(ProjectDir)src;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\glfw-3.3.2\include;$(ProjectDir)vendor\glm-0.9.9.7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(ProjectDir)src;$(ProjectDir)src\Neon;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\glfw-3.3.2\include;$(ProjectDir)vendor\glm-0.9.9.7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>neopch.h</PrecompiledHeaderFile>
@@ -106,7 +106,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Neon\Renderer\Shader.cpp" />
+    <ClCompile Include="src\Neon\Renderer\RenderPass.cpp" />
+    <ClCompile Include="src\Neon\Renderer\Pipeline.cpp" />
     <ClCompile Include="src\Neon\Core\Core.cpp" />
     <ClCompile Include="src\Neon\Core\Log.cpp" />
     <ClCompile Include="src\Neon\Core\Application.cpp" />
@@ -116,20 +117,21 @@
     <ClCompile Include="src\Neon\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Neon\Renderer\RendererAPI.cpp" />
     <ClCompile Include="src\Neon\Renderer\RendererContext.cpp" />
+    <ClCompile Include="src\Neon\Renderer\Shader.cpp" />
     <ClCompile Include="src\neopch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Neon\Tools\FileTools.cpp" />
     <ClCompile Include="src\Neon\Core\Window.cpp" />
-    <ClCompile Include="src\Platform\Vulkan\VulkanContext.cpp" />
-    <ClCompile Include="src\Platform\Vulkan\VulkanRendererAPI.cpp" />
-    <ClCompile Include="src\Platform\Vulkan\VulkanSwapChain.cpp" />
-    <ClCompile Include="src\Platform\Vulkan\VulkanDevice.cpp" />
-    <ClCompile Include="src\Platform\Windows\WindowsInput.cpp" />
-    <ClCompile Include="src\Platform\Windows\WindowsWindow.cpp" />
-    <ClCompile Include="src\Platform\Vulkan\VulkanAllocator.cpp" />
-    <ClCompile Include="src\Platform\Vulkan\VulkanImGuiLayer.cpp" />
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanContext.cpp" />
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanRendererAPI.cpp" />
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanSwapChain.cpp" />
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="src\Neon\Platform\Windows\WindowsInput.cpp" />
+    <ClCompile Include="src\Neon\Platform\Windows\WindowsWindow.cpp" />
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanAllocator.cpp" />
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanImGuiLayer.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -146,15 +148,21 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanShader.cpp" />
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanPipeline.cpp" />
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanRenderPass.cpp" />
+    <ClCompile Include="src\Neon\Renderer\VertexBuffer.cpp" />
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanVertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Neon\Renderer\RenderPass.h" />
+    <ClInclude Include="src\Neon\Renderer\Pipeline.h" />
     <ClInclude Include="src\Neon\Core\Event\ApplicationEvent.h" />
     <ClInclude Include="src\Neon\Core\Event\Event.h" />
     <ClInclude Include="src\Neon\Core\Event\KeyEvent.h" />
     <ClInclude Include="src\Neon\Core\Event\MouseEvent.h" />
     <ClInclude Include="src\Neon\Core\Input.h" />
     <ClInclude Include="src\Neon\Core\SharedRef.h" />
-    <ClInclude Include="src\Neon\Renderer\Shader.h" />
     <ClInclude Include="src\Neon\Core\Assert.h" />
     <ClInclude Include="src\Neon\Core\Log.h" />
     <ClInclude Include="src\Neon.h" />
@@ -167,16 +175,17 @@
     <ClInclude Include="src\Neon\Renderer\Renderer.h" />
     <ClInclude Include="src\Neon\Renderer\RendererAPI.h" />
     <ClInclude Include="src\Neon\Renderer\RendererContext.h" />
+    <ClInclude Include="src\Neon\Renderer\Shader.h" />
     <ClInclude Include="src\neopch.h" />
     <ClInclude Include="src\Neon\Tools\FileTools.h" />
     <ClInclude Include="src\Neon\Core\Window.h" />
-    <ClInclude Include="src\Platform\Vulkan\Vulkan.h" />
-    <ClInclude Include="src\Platform\Vulkan\VulkanContext.h" />
-    <ClInclude Include="src\Platform\Vulkan\VulkanRendererAPI.h" />
-    <ClInclude Include="src\Platform\Vulkan\VulkanSwapChain.h" />
-    <ClInclude Include="src\Platform\Vulkan\VulkanDevice.h" />
-    <ClInclude Include="src\Platform\Windows\WindowsWindow.h" />
-    <ClInclude Include="src\Platform\Vulkan\VulkanAllocator.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\Vulkan.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanContext.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanRendererAPI.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanSwapChain.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanDevice.h" />
+    <ClInclude Include="src\Neon\Platform\Windows\WindowsWindow.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanAllocator.h" />
     <ClInclude Include="vendor\allocator\vk_mem_alloc.h" />
     <ClInclude Include="vendor\entt\entt.h" />
     <ClInclude Include="vendor\glfw-3.3.2\include\GLFW\glfw3.h" />
@@ -188,7 +197,12 @@
     <ClInclude Include="vendor\imgui\imstb_textedit.h" />
     <ClInclude Include="vendor\imgui\imstb_truetype.h" />
     <ClInclude Include="vendor\stb_image\stb_image.h" />
-    <ClInclude Include="src\Platform\Vulkan\VulkanImGuiLayer.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanImGuiLayer.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanShader.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanPipeline.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanRenderPass.h" />
+    <ClInclude Include="src\Neon\Renderer\VertexBuffer.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanVertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vendor\glfw-3.3.2\docs\html\bug.html" />

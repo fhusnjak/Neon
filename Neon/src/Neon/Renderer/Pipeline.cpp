@@ -1,12 +1,12 @@
 #include "neopch.h"
 
-#include "Platform/Vulkan/VulkanShader.h"
+#include "Pipeline.h"
+#include "Platform/Vulkan/VulkanPipeline.h"
 #include "Renderer.h"
-#include "Shader.h"
 
 namespace Neon
 {
-	SharedRef<Shader> Shader::Create(const std::vector<UniformBinding>& bindings)
+	SharedRef<Pipeline> Pipeline::Create(const PipelineSpecification& spec)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -14,7 +14,7 @@ namespace Neon
 				NEO_CORE_ASSERT(false, "Renderer API not selected!");
 				return nullptr;
 			case RendererAPI::API::Vulkan:
-				return SharedRef<VulkanShader>::Create(bindings);
+				return SharedRef<VulkanPipeline>::Create(spec);
 		}
 		NEO_CORE_ASSERT(false, "Renderer API not selected!");
 		return nullptr;

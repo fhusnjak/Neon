@@ -11,6 +11,13 @@
 namespace Neon
 {
 	static vk::CommandBuffer s_ImGuiCommandBuffers[10];
+	static SharedRef<VulkanShader> s_TestShader;
+	static SharedRef<VulkanPipeline> s_TestPipeline;
+
+	struct TestUBO
+	{
+		float color;
+	};
 
 	VulkanRendererAPI::~VulkanRendererAPI()
 	{
@@ -29,12 +36,29 @@ namespace Neon
 		caps.Vendor = props.deviceName;
 		caps.Renderer = "Vulkan";
 		caps.Version = "1.0";
+
+		std::vector<UniformBinding> bindings = {
+			{0, UniformType::UniformBuffer, 2, sizeof(TestUBO), ShaderStageFlag::Fragment}};
+
+		s_TestShader = SharedRef<VulkanShader>(Shader::Create(bindings));
+		s_TestShader->LoadShader("C:/VisualStudioProjects/Neon/Neon/src/Shaders/build/test_vert.spv", ShaderType::Vertex);
+		s_TestShader->LoadShader("C:/VisualStudioProjects/Neon/Neon/src/Shaders/build/test_frag.spv", ShaderType::Fragment);
+
+		PipelineSpecification pipelineSpecification;
+		pipelineSpecification.Shader = s_TestShader;
+		s_TestPipeline = SharedRef<VulkanPipeline>(Pipeline::Create(pipelineSpecification));
+
+		TestUBO test[2] = {};
+		test[0].color = 1.f;
+		test[1].color = 1.f;
+		s_TestShader->SetUniformBuffer(0, 0, &test[0]);
+		s_TestShader->SetUniformBuffer(0, 1, &test[1]);
 	}
 
 	void VulkanRendererAPI::Render()
 	{
 		const VulkanSwapChain& swapChain = VulkanContext::Get()->GetSwapChain();
-		vk::CommandBuffer renderCommandBuffer = swapChain.GetCurrentDrawCommandBuffer();
+		vk::CommandBuffer renderCommandBuffer = swapChain.GetCurrentDrawCommandBuffer();		
 
 		vk::ClearValue clearValues[2];
 		std::array<float, 4> clearColor = {0.2f, 0.2f, 0.2f, 1.0f};
@@ -56,9 +80,34 @@ namespace Neon
 
 		vk::CommandBufferBeginInfo beginInfo{vk::CommandBufferUsageFlagBits::eOneTimeSubmit};
 		renderCommandBuffer.begin(beginInfo);
-		renderCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eSecondaryCommandBuffers);
+		renderCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
-		vk::CommandBufferInheritanceInfo inheritanceInfo = {};
+		// Update dynamic viewport state
+		vk::Viewport viewport = {};
+		viewport.x = 0.f;
+		viewport.y = 0.f;
+		viewport.height = (float)height;
+		viewport.width = (float)width;
+		viewport.minDepth = 0.f;
+		viewport.maxDepth = 1.f;
+
+		renderCommandBuffer.setViewport(0, 1, &viewport);
+
+		// Update dynamic scissor state
+		vk::Rect2D scissor = {};
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		scissor.extent.width = width;
+		scissor.extent.height = height;
+
+		renderCommandBuffer.setScissor(0, 1, &scissor);
+
+		renderCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetHandle());
+		renderCommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetLayout(), 0, 1,
+											   &s_TestShader->GetDescriptorSet(), 0, nullptr);
+		renderCommandBuffer.draw(3, 1, 0, 0);
+
+	/*	vk::CommandBufferInheritanceInfo inheritanceInfo = {};
 		inheritanceInfo.renderPass = swapChain.GetRenderPass();
 		inheritanceInfo.framebuffer = swapChain.GetCurrentFramebuffer();
 		std::vector<vk::CommandBuffer> commandBuffers;
@@ -70,26 +119,6 @@ namespace Neon
 
 			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].begin(beginInfo);
 
-			// Update dynamic viewport state
-			vk::Viewport viewport = {};
-			viewport.x = 0.0f;
-			viewport.y = (float)height;
-			viewport.height = (float)height;
-			viewport.width = (float)width;
-			viewport.minDepth = 0.0f;
-			viewport.maxDepth = 1.0f;
-
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].setViewport(0, 1, &viewport);
-
-			// Update dynamic scissor state
-			vk::Rect2D scissor = {};
-			scissor.extent.width = width;
-			scissor.extent.height = height;
-			scissor.offset.x = 0;
-			scissor.offset.y = 0;
-
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].setScissor(0, 1, &scissor);
-
 			// TODO: Move to VulkanImGuiLayer
 			ImGui::Render();
 			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()]);
@@ -99,7 +128,7 @@ namespace Neon
 			commandBuffers.push_back(s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()]);
 		}
 
-		renderCommandBuffer.executeCommands(commandBuffers);
+		renderCommandBuffer.executeCommands(commandBuffers);*/
 
 		renderCommandBuffer.endRenderPass();
 		renderCommandBuffer.end();
@@ -110,9 +139,10 @@ namespace Neon
 		VulkanContext::GetDevice()->GetHandle().waitIdle();
 		for (auto& cmdBuff : s_ImGuiCommandBuffers)
 		{
-			VulkanContext::GetDevice()->GetHandle().freeCommandBuffers(VulkanContext::GetDevice()->GetCommandPool(),
-																	   cmdBuff);
-		}	
+			VulkanContext::GetDevice()->GetHandle().freeCommandBuffers(VulkanContext::GetDevice()->GetCommandPool(), cmdBuff);
+		}
+		s_TestShader.Reset();
+		s_TestPipeline.Reset();
 	}
 
 } // namespace Neon

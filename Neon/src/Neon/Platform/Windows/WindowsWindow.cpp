@@ -1,7 +1,7 @@
 #include "neopch.h"
 
-#include "Neon/Core/Event/KeyEvent.h"
-#include "Neon/Renderer/RendererAPI.h"
+#include "Core/Event/KeyEvent.h"
+#include "Renderer/RendererAPI.h"
 #include "WindowsWindow.h"
 
 #include <imgui/imgui.h>

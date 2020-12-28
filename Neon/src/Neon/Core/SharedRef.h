@@ -6,22 +6,22 @@ namespace Neon
 	class RefCounted
 	{
 	public:
-		void IncRefCount() const
+		void AddRef() const
 		{
 			m_RefCount++;
 		}
-		void DecRefCount() const
+		void RemoveRef() const
 		{
 			m_RefCount--;
 		}
 
-		uint32_t GetRefCount() const
+		uint32 GetRefCount() const
 		{
 			return m_RefCount;
 		}
 
 	private:
-		mutable uint32_t m_RefCount = 0;
+		mutable uint32 m_RefCount = 0;
 	};
 
 	template<typename T>
@@ -42,14 +42,14 @@ namespace Neon
 			: m_Ptr(ptr)
 		{
 			static_assert(std::is_base_of<RefCounted, T>::value, "Class is not RefCounted!");
-			IncRef();
+			AddRef();
 		}
 
 		template<typename T2>
 		SharedRef(const SharedRef<T2>& other)
 		{
 			m_Ptr = (T*)other.m_Ptr;
-			IncRef();
+			AddRef();
 		}
 
 		template<typename T2>
@@ -61,26 +61,26 @@ namespace Neon
 
 		~SharedRef()
 		{
-			DecRef();
+			RemoveRef();
 		}
 
 		SharedRef(const SharedRef<T>& other)
 			: m_Ptr(other.m_Ptr)
 		{
-			IncRef();
+			AddRef();
 		}
 
 		SharedRef& operator=(std::nullptr_t)
 		{
-			DecRef();
+			RemoveRef();
 			m_Ptr = nullptr;
 			return *this;
 		}
 
 		SharedRef& operator=(const SharedRef<T>& other)
 		{
-			other.IncRef();
-			DecRef();
+			other.AddRef();
+			RemoveRef();
 
 			m_Ptr = other.m_Ptr;
 			return *this;
@@ -89,8 +89,8 @@ namespace Neon
 		template<typename T2>
 		SharedRef& operator=(const SharedRef<T2>& other)
 		{
-			other.IncRef();
-			DecRef();
+			other.AddRef();
+			RemoveRef();
 
 			m_Ptr = other.m_Ptr;
 			return *this;
@@ -99,7 +99,7 @@ namespace Neon
 		template<typename T2>
 		SharedRef& operator=(SharedRef<T2>&& other)
 		{
-			DecRef();
+			RemoveRef();
 
 			m_Ptr = other.m_Ptr;
 			other.m_Ptr = nullptr;
@@ -133,18 +133,18 @@ namespace Neon
 			return *m_Ptr;
 		}
 
-		T* Raw()
+		T* Ptr()
 		{
 			return m_Ptr;
 		}
-		const T* Raw() const
+		const T* Ptr() const
 		{
 			return m_Ptr;
 		}
 
 		void Reset(T* ptr = nullptr)
 		{
-			DecRef();
+			RemoveRef();
 			m_Ptr = ptr;
 		}
 
@@ -164,19 +164,19 @@ namespace Neon
 		friend class SharedRef;
 
 	private:
-		void IncRef() const
+		void AddRef() const
 		{
 			if (m_Ptr)
 			{
-				m_Ptr->IncRefCount();
+				m_Ptr->AddRef();
 			}	
 		}
 
-		void DecRef() const
+		void RemoveRef() const
 		{
 			if (m_Ptr)
 			{
-				m_Ptr->DecRefCount();
+				m_Ptr->RemoveRef();
 				if (m_Ptr->GetRefCount() == 0)
 				{
 					delete m_Ptr;

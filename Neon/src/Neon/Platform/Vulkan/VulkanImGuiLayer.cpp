@@ -1,6 +1,6 @@
 #include "neopch.h"
 
-#include "Neon/Core/Application.h"
+#include "Core/Application.h"
 #include "VulkanContext.h"
 #include "VulkanImGuiLayer.h"
 

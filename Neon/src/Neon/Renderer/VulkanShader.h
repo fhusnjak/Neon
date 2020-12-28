@@ -9,8 +9,6 @@ class VulkanShader
 public:
 	explicit VulkanShader(vk::Device device, vk::ShaderStageFlagBits stage);
 
-	void LoadFromFile(const std::string& fileName);
-
 	vk::PipelineShaderStageCreateInfo GetShaderStageCreateInfo() const;
 
 private:

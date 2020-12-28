@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Neon/ImGui/ImGuiLayer.h"
+#include "ImGui/ImGuiLayer.h"
 
 namespace Neon
 {

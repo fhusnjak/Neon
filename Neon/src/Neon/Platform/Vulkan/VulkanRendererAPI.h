@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Neon/Renderer/RendererAPI.h"
+#include "Renderer/RendererAPI.h"
 #include "Vulkan.h"
+#include "VulkanPipeline.h"
+#include "VulkanShader.h"
 
 namespace Neon
 {

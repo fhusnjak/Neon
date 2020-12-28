@@ -137,7 +137,6 @@ vk::ImageView Neon::VulkanRenderer::CreateImageView(vk::Image image, vk::Format 
 	return logicalDevice.createImageView(imageViewCreateInfo);
 }
 
-vk::UniqueImageView
 Neon::VulkanRenderer::CreateImageViewUnique(vk::Image image, vk::Format format,
 											const vk::ImageAspectFlags& aspectFlags)
 {
