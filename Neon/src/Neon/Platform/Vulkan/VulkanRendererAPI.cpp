@@ -80,34 +80,9 @@ namespace Neon
 
 		vk::CommandBufferBeginInfo beginInfo{vk::CommandBufferUsageFlagBits::eOneTimeSubmit};
 		renderCommandBuffer.begin(beginInfo);
-		renderCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+		renderCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eSecondaryCommandBuffers);
 
-		// Update dynamic viewport state
-		vk::Viewport viewport = {};
-		viewport.x = 0.f;
-		viewport.y = 0.f;
-		viewport.height = (float)height;
-		viewport.width = (float)width;
-		viewport.minDepth = 0.f;
-		viewport.maxDepth = 1.f;
-
-		renderCommandBuffer.setViewport(0, 1, &viewport);
-
-		// Update dynamic scissor state
-		vk::Rect2D scissor = {};
-		scissor.offset.x = 0;
-		scissor.offset.y = 0;
-		scissor.extent.width = width;
-		scissor.extent.height = height;
-
-		renderCommandBuffer.setScissor(0, 1, &scissor);
-
-		renderCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetHandle());
-		renderCommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetLayout(), 0, 1,
-											   &s_TestShader->GetDescriptorSet(), 0, nullptr);
-		renderCommandBuffer.draw(3, 1, 0, 0);
-
-	/*	vk::CommandBufferInheritanceInfo inheritanceInfo = {};
+		vk::CommandBufferInheritanceInfo inheritanceInfo = {};
 		inheritanceInfo.renderPass = swapChain.GetRenderPass();
 		inheritanceInfo.framebuffer = swapChain.GetCurrentFramebuffer();
 		std::vector<vk::CommandBuffer> commandBuffers;
@@ -119,6 +94,33 @@ namespace Neon
 
 			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].begin(beginInfo);
 
+			// Update dynamic viewport state
+			vk::Viewport viewport = {};
+			viewport.x = 0.f;
+			viewport.y = 0.f;
+			viewport.height = (float)height;
+			viewport.width = (float)width;
+			viewport.minDepth = 0.f;
+			viewport.maxDepth = 1.f;
+
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].setViewport(0, 1, &viewport);
+
+			// Update dynamic scissor state
+			vk::Rect2D scissor = {};
+			scissor.offset.x = 0;
+			scissor.offset.y = 0;
+			scissor.extent.width = width;
+			scissor.extent.height = height;
+
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].setScissor(0, 1, &scissor);
+
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].bindPipeline(vk::PipelineBindPoint::eGraphics,
+																				  s_TestPipeline->GetHandle());
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].bindDescriptorSets(
+				vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetLayout(), 0, 1,
+												   &s_TestShader->GetDescriptorSet(), 0, nullptr);
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].draw(3, 1, 0, 0);
+
 			// TODO: Move to VulkanImGuiLayer
 			ImGui::Render();
 			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()]);
@@ -128,7 +130,7 @@ namespace Neon
 			commandBuffers.push_back(s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()]);
 		}
 
-		renderCommandBuffer.executeCommands(commandBuffers);*/
+		renderCommandBuffer.executeCommands(commandBuffers);
 
 		renderCommandBuffer.endRenderPass();
 		renderCommandBuffer.end();

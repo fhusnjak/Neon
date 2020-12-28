@@ -346,7 +346,7 @@ namespace Neon
 		m_CurrentFrame %= m_Buffers.size();
 
 		// TODO: Benchmark this
-		VK_CHECK_RESULT(m_Device->GetHandle().waitForFences(m_WaitFences[m_CurrentBufferIndex].get(), VK_TRUE, UINT64_MAX));
+		//VK_CHECK_RESULT(m_Device->GetHandle().waitForFences(m_WaitFences[m_CurrentBufferIndex].get(), VK_TRUE, UINT64_MAX));
 	}
 
 	vk::Result VulkanSwapChain::AcquireNextImage(vk::Semaphore presentCompleteSemaphore, uint32* imageIndex)
