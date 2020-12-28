@@ -55,15 +55,13 @@ namespace Neon
 		ShaderDataType Type;
 		uint32_t Size;
 		uint32_t Offset;
-		bool Normalized;
 
 		VertexBufferElement() = default;
 
-		VertexBufferElement(ShaderDataType type, bool normalized = false)
+		VertexBufferElement(ShaderDataType type)
 			: Type(type)
 			, Size(ShaderDataTypeSize(type))
 			, Offset(0)
-			, Normalized(normalized)
 		{
 		}
 	};
@@ -96,7 +94,7 @@ namespace Neon
 		}
 		uint32 GetElementCount() const
 		{
-			return m_Elements.size();
+			return static_cast<uint32>(m_Elements.size());
 		}
 
 		std::vector<VertexBufferElement>::iterator begin()
@@ -124,15 +122,23 @@ namespace Neon
 	class VertexBuffer : public RefCounted
 	{
 	public:
+		VertexBuffer(uint32 size, const VertexBufferLayout& layout);
 		virtual ~VertexBuffer() = default;
 
-		virtual void SetData(void* buffer, uint32 size, uint32 offset = 0) = 0;
+		uint32 GetSize() const
+		{
+			return m_Size;
+		}
 
-		virtual const VertexBufferLayout& GetLayout() const = 0;
-		virtual void SetLayout(const VertexBufferLayout& layout) = 0;
+		const VertexBufferLayout& GetLayout() const
+		{
+			return m_Layout;
+		}
 
-		virtual unsigned int GetSize() const = 0;
+		static SharedRef<VertexBuffer> Create(void* data, uint32 size, const VertexBufferLayout& layout);
 
-		static SharedRef<VertexBuffer> Create(void* data, uint32 size);
+	protected:
+		uint32 m_Size;
+		VertexBufferLayout m_Layout;
 	};
 } // namespace Neon

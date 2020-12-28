@@ -1,12 +1,17 @@
 #include "neopch.h"
 
-#include "Platform/Vulkan/VulkanShader.h"
+#include "IndexBuffer.h"
+#include "Platform/Vulkan/VulkanIndexBuffer.h"
 #include "Renderer.h"
-#include "Shader.h"
 
 namespace Neon
 {
-	SharedRef<Shader> Shader::Create(const std::vector<UniformBinding>& bindings)
+	IndexBuffer::IndexBuffer(uint32 size)
+		: m_Size(size)
+	{
+	}
+
+	SharedRef<IndexBuffer> IndexBuffer::Create(void* data, uint32 size)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -17,10 +22,11 @@ namespace Neon
 			}
 			case RendererAPI::API::Vulkan:
 			{
-				return SharedRef<VulkanShader>::Create(bindings);
+				return SharedRef<VulkanIndexBuffer>::Create(data, size);
 			}
 		}
 		NEO_CORE_ASSERT(false, "Renderer API not selected!");
 		return nullptr;
 	}
+
 } // namespace Neon

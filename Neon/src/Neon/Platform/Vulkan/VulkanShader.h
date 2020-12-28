@@ -39,6 +39,6 @@ namespace Neon
 		vk::UniqueDescriptorSetLayout m_DescriptorSetLayout;
 		vk::UniqueDescriptorSet m_DescriptorSet;
 
-		std::unordered_map<uint32, std::vector<UniformBuffer>> m_UniformBuffers;
+		std::unordered_map<uint32, std::vector<VulkanBuffer>> m_UniformBuffers;
 	};
 } // namespace Neon

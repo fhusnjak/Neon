@@ -2,12 +2,14 @@
 
 #include "RenderPass.h"
 #include "Shader.h"
+#include "VertexBuffer.h"
 
 namespace Neon
 {
 	struct PipelineSpecification
 	{
 		SharedRef<Shader> Shader;
+		VertexBufferLayout Layout;
 		SharedRef<RenderPass> RenderPass;
 	};
 

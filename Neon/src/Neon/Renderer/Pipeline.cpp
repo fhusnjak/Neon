@@ -11,10 +11,14 @@ namespace Neon
 		switch (Renderer::GetAPI())
 		{
 			case RendererAPI::API::None:
+			{
 				NEO_CORE_ASSERT(false, "Renderer API not selected!");
 				return nullptr;
+			}
 			case RendererAPI::API::Vulkan:
+			{
 				return SharedRef<VulkanPipeline>::Create(spec);
+			}
 		}
 		NEO_CORE_ASSERT(false, "Renderer API not selected!");
 		return nullptr;

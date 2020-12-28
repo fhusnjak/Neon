@@ -1,7 +1,9 @@
 #include "neopch.h"
 
 #include "VulkanContext.h"
+#include "VulkanIndexBuffer.h"
 #include "VulkanRendererAPI.h"
+#include "VulkanVertexBuffer.h"
 
 #include <imgui/imgui.h>
 
@@ -12,12 +14,18 @@ namespace Neon
 {
 	static vk::CommandBuffer s_ImGuiCommandBuffers[10];
 	static SharedRef<VulkanShader> s_TestShader;
+	static SharedRef<VulkanVertexBuffer> s_TestVertexBuffer;
+	static SharedRef<VulkanIndexBuffer> s_TestIndexBuffer;
 	static SharedRef<VulkanPipeline> s_TestPipeline;
 
 	struct TestUBO
 	{
 		float color;
 	};
+
+	glm::vec3 positions[3] = {glm::vec3(0.f, -0.5f, 0.f), glm::vec3(0.5f, 0.5f, 0.f), glm::vec3(-0.5f, 0.5f, 0.f)};
+
+	uint32 indices[3] = {0, 1, 2};
 
 	VulkanRendererAPI::~VulkanRendererAPI()
 	{
@@ -37,15 +45,20 @@ namespace Neon
 		caps.Renderer = "Vulkan";
 		caps.Version = "1.0";
 
-		std::vector<UniformBinding> bindings = {
-			{0, UniformType::UniformBuffer, 2, sizeof(TestUBO), ShaderStageFlag::Fragment}};
+		std::vector<UniformBinding> bindings = {{0, UniformType::UniformBuffer, 2, sizeof(TestUBO), ShaderStageFlag::Fragment}};
 
 		s_TestShader = SharedRef<VulkanShader>(Shader::Create(bindings));
 		s_TestShader->LoadShader("C:/VisualStudioProjects/Neon/Neon/src/Shaders/build/test_vert.spv", ShaderType::Vertex);
 		s_TestShader->LoadShader("C:/VisualStudioProjects/Neon/Neon/src/Shaders/build/test_frag.spv", ShaderType::Fragment);
 
+		VertexBufferLayout layout({ShaderDataType::Float3});
+		s_TestVertexBuffer = SharedRef<VulkanVertexBuffer>(VertexBuffer::Create(positions, sizeof(positions), layout));
+
+		s_TestIndexBuffer = SharedRef<VulkanIndexBuffer>(IndexBuffer::Create(indices, sizeof(indices)));
+
 		PipelineSpecification pipelineSpecification;
 		pipelineSpecification.Shader = s_TestShader;
+		pipelineSpecification.Layout = layout;
 		s_TestPipeline = SharedRef<VulkanPipeline>(Pipeline::Create(pipelineSpecification));
 
 		TestUBO test[2] = {};
@@ -58,7 +71,7 @@ namespace Neon
 	void VulkanRendererAPI::Render()
 	{
 		const VulkanSwapChain& swapChain = VulkanContext::Get()->GetSwapChain();
-		vk::CommandBuffer renderCommandBuffer = swapChain.GetCurrentDrawCommandBuffer();		
+		vk::CommandBuffer renderCommandBuffer = swapChain.GetCurrentDrawCommandBuffer();
 
 		vk::ClearValue clearValues[2];
 		std::array<float, 4> clearColor = {0.2f, 0.2f, 0.2f, 1.0f};
@@ -117,9 +130,11 @@ namespace Neon
 			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].bindPipeline(vk::PipelineBindPoint::eGraphics,
 																				  s_TestPipeline->GetHandle());
 			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].bindDescriptorSets(
-				vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetLayout(), 0, 1,
-												   &s_TestShader->GetDescriptorSet(), 0, nullptr);
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].draw(3, 1, 0, 0);
+				vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetLayout(), 0, 1, &s_TestShader->GetDescriptorSet(), 0, nullptr);
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].bindVertexBuffers(0, {s_TestVertexBuffer->GetHandle()}, {0});
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].bindIndexBuffer(s_TestIndexBuffer->GetHandle(), 0,
+																					 vk::IndexType::eUint32);
+			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].drawIndexed(s_TestIndexBuffer->GetCount(), 1, 0, 0, 0);
 
 			// TODO: Move to VulkanImGuiLayer
 			ImGui::Render();
@@ -143,8 +158,9 @@ namespace Neon
 		{
 			VulkanContext::GetDevice()->GetHandle().freeCommandBuffers(VulkanContext::GetDevice()->GetCommandPool(), cmdBuff);
 		}
-		s_TestShader.Reset();
 		s_TestPipeline.Reset();
+		s_TestVertexBuffer.Reset();
+		s_TestShader.Reset();
 	}
 
 } // namespace Neon

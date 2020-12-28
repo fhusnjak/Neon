@@ -8,7 +8,7 @@ namespace Neon
 {
 	VulkanShader::VulkanShader(const std::vector<UniformBinding>& bindings)
 	{
-		auto device = VulkanContext::GetDevice();
+		const auto& device = VulkanContext::GetDevice();
 
 		m_Allocator = VulkanAllocator(device, "Shader");
 
@@ -30,7 +30,9 @@ namespace Neon
 					m_UniformBuffers[binding.Binding].resize(binding.Count);
 					for (auto& uniformBuffer : m_UniformBuffers[binding.Binding])
 					{
-						m_Allocator.AllocateUniformBuffer(uniformBuffer, binding.Size);
+						m_Allocator.AllocateBuffer(uniformBuffer, binding.Size, vk::BufferUsageFlagBits::eUniformBuffer,
+												   vk::MemoryPropertyFlagBits::eHostVisible |
+													   vk::MemoryPropertyFlagBits::eHostCoherent);
 					}
 				}
 				break;
@@ -79,7 +81,7 @@ namespace Neon
 					std::vector<vk::DescriptorBufferInfo> bufferInfos(descBinding.descriptorCount);
 					for (uint32 i = 0; i < bufferInfos.size(); i++)
 					{
-						bufferInfos[i].buffer = m_UniformBuffers[descBinding.binding][i].Buffer.get();
+						bufferInfos[i].buffer = m_UniformBuffers[descBinding.binding][i].Handle.get();
 						bufferInfos[i].offset = 0;
 						bufferInfos[i].range = m_UniformBuffers[descBinding.binding][i].Size;
 					}
@@ -125,6 +127,6 @@ namespace Neon
 	{
 		NEO_CORE_ASSERT(m_UniformBuffers.find(binding) != m_UniformBuffers.end(), "Uniform binding is invalid!");
 		NEO_CORE_ASSERT(index < m_UniformBuffers[binding].size(), "Descriptor index out of range!");
-		m_Allocator.UpdateUniformBuffer(m_UniformBuffers[binding][index], data);
+		m_Allocator.UpdateBuffer(m_UniformBuffers[binding][index], data);
 	}
 } // namespace Neon

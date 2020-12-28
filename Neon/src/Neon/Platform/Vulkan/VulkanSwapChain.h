@@ -14,7 +14,7 @@ namespace Neon
 		VulkanSwapChain() = default;
 		~VulkanSwapChain();
 
-		void Init(vk::Instance instance, SharedRef<VulkanDevice>& device);
+		void Init(vk::Instance instance, const SharedRef<VulkanDevice>& device);
 		void InitSurface(GLFWwindow* windowHandle);
 		void Create(uint32* width, uint32* height, bool vsync = false);
 

@@ -5,22 +5,16 @@
 
 namespace Neon
 {
-	VulkanAllocator::VulkanAllocator(const std::string& tag)
+	VulkanAllocator::VulkanAllocator(const SharedRef<VulkanDevice>& device, const std::string& tag)
 		: m_Tag(tag)
-	{
-	}
-
-	VulkanAllocator::VulkanAllocator(const SharedRef<VulkanDevice>& device, const std::string& tag /*= ""*/)
-		: m_Device(device)
-		, m_Tag(tag)
+		, m_Device(device)
 	{
 	}
 
 	void VulkanAllocator::Allocate(vk::MemoryRequirements requirements, vk::UniqueDeviceMemory& outDeviceMemory,
 								   vk::MemoryPropertyFlags flags /*= vk::MemoryPropertyFlagBits::eDeviceLocal*/)
 	{
-		NEO_CORE_ASSERT(m_Device, "Allocator is not initialized with existing device");
-
+		NEO_CORE_ASSERT(m_Device, "Device not initialized!");
 		NEO_CORE_TRACE("VulkanAllocator ({0}): allocating {1} bytes", m_Tag, requirements.size);
 
 		vk::MemoryAllocateInfo memAlloc = {};
@@ -29,33 +23,33 @@ namespace Neon
 		outDeviceMemory = m_Device->GetHandle().allocateMemoryUnique(memAlloc);
 	}
 
-	void VulkanAllocator::AllocateUniformBuffer(UniformBuffer& outUniformBuffer, uint32 size)
+	void VulkanAllocator::AllocateBuffer(VulkanBuffer& outBuffer, uint32 size, vk::BufferUsageFlagBits usage,
+										 vk::MemoryPropertyFlags memPropFlags)
 	{
-		vk::Device device = VulkanContext::GetDevice()->GetHandle();
+		NEO_CORE_ASSERT(m_Device, "Device not initialized!");
 
 		vk::BufferCreateInfo bufferInfo{};
 		bufferInfo.size = size;
-		bufferInfo.usage = vk::BufferUsageFlagBits::eUniformBuffer;
+		bufferInfo.usage = usage;
 		bufferInfo.sharingMode = vk::SharingMode::eExclusive;
 
-		outUniformBuffer.Buffer = device.createBufferUnique(bufferInfo);
+		outBuffer.Handle = m_Device->GetHandle().createBufferUnique(bufferInfo);
 
-		vk::MemoryRequirements memRequirements = device.getBufferMemoryRequirements(outUniformBuffer.Buffer.get());
-		Allocate(memRequirements, outUniformBuffer.Memory,
-				 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+		vk::MemoryRequirements memRequirements = m_Device->GetHandle().getBufferMemoryRequirements(outBuffer.Handle.get());
+		Allocate(memRequirements, outBuffer.Memory, memPropFlags);
 
-		device.bindBufferMemory(outUniformBuffer.Buffer.get(), outUniformBuffer.Memory.get(), 0);
-		outUniformBuffer.Size = size;
+		m_Device->GetHandle().bindBufferMemory(outBuffer.Handle.get(), outBuffer.Memory.get(), 0);
+		outBuffer.Size = size;
 	}
 
-	void VulkanAllocator::UpdateUniformBuffer(UniformBuffer& outUniformBuffer, const void* data)
+	void VulkanAllocator::UpdateBuffer(VulkanBuffer& outBuffer, const void* data)
 	{
-		vk::Device device = VulkanContext::GetDevice()->GetHandle();
+		NEO_CORE_ASSERT(m_Device, "Device not initialized!");
 
 		void* dest;
-		device.mapMemory(outUniformBuffer.Memory.get(), 0, outUniformBuffer.Size, vk::MemoryMapFlags(), &dest);
-		memcpy(dest, data, outUniformBuffer.Size);
-		device.unmapMemory(outUniformBuffer.Memory.get());
+		m_Device->GetHandle().mapMemory(outBuffer.Memory.get(), 0, outBuffer.Size, vk::MemoryMapFlags(), &dest);
+		memcpy(dest, data, outBuffer.Size);
+		m_Device->GetHandle().unmapMemory(outBuffer.Memory.get());
 	}
 
 } // namespace Neon

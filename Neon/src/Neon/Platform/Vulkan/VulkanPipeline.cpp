@@ -34,22 +34,17 @@ namespace Neon
 
 		m_PipelineLayout = device.createPipelineLayoutUnique(pPipelineLayoutCreateInfo);
 
-		// Create the graphics pipeline used in this example
-		// Vulkan uses the concept of rendering pipelines to encapsulate fixed states, replacing OpenGL's complex state machine
-		// A pipeline is then stored and hashed on the GPU making pipeline changes very fast
-		// Note: There are still a few dynamic states that are not directly part of the pipeline (but the info that they are used is)
-
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo = {};
 		// The layout used for this pipeline (can be shared among multiple pipelines using the same layout)
 		pipelineCreateInfo.layout = m_PipelineLayout.get();
 		// Renderpass this pipeline is attached to
+		// TODO: Use renderpass from specification
 		// pipelineCreateInfo.renderPass = vulkanRenderPass->GetHandle();
 		pipelineCreateInfo.renderPass = VulkanContext::Get()->GetSwapChain().GetRenderPass();
 
 		// Construct the different states making up the pipeline
 
 		// Input assembly state describes how primitives are assembled
-		// This pipeline will assemble vertex data as a triangle lists (though we only use one triangle)
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState = {};
 		inputAssemblyState.topology = vk::PrimitiveTopology::eTriangleList;
 		inputAssemblyState.primitiveRestartEnable = VK_FALSE;
@@ -104,15 +99,40 @@ namespace Neon
 		depthStencilState.front = depthStencilState.back;
 
 		// Multi sampling state
-		// This example does not make use fo multi sampling (for anti-aliasing), the state must still be set and passed to the pipeline
 		vk::PipelineMultisampleStateCreateInfo multisampleState = {};
 		multisampleState.rasterizationSamples = vk::SampleCountFlagBits::e1;
 
-		// TODO: Vertex input descriptor
+		// Vertex input descriptor
+		VertexBufferLayout& layout = m_Specification.Layout;
+
+		vk::VertexInputBindingDescription vertexInputBinding = {};
+		vertexInputBinding.binding = 0;
+		vertexInputBinding.stride = layout.GetStride();
+		vertexInputBinding.inputRate = vk::VertexInputRate::eVertex;
+
+		// Input attribute bindings describe shader attribute locations and memory layouts
+		std::vector<vk::VertexInputAttributeDescription> vertexInputAttribs(layout.GetElementCount());
+
+		uint32_t location = 0;
+		for (auto element : layout)
+		{
+			vertexInputAttribs[location].binding = 0;
+			vertexInputAttribs[location].location = location;
+			vertexInputAttribs[location].format = ShaderDataTypeToVulkanFormat(element.Type);
+			vertexInputAttribs[location].offset = element.Offset;
+
+			location++;
+		}
 
 		// Vertex input state used for pipeline creation
 		vk::PipelineVertexInputStateCreateInfo vertexInputState = {};
-		vertexInputState.vertexBindingDescriptionCount = 0;
+		if (!vertexInputAttribs.empty())
+		{
+			vertexInputState.vertexBindingDescriptionCount = 1;
+			vertexInputState.pVertexBindingDescriptions = &vertexInputBinding;
+			vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32>(vertexInputAttribs.size());
+			vertexInputState.pVertexAttributeDescriptions = vertexInputAttribs.data();
+		}
 
 		const auto& shaderStages = vulkanShader->GetShaderStages();
 		// Set pipeline shader stage info
@@ -138,10 +158,6 @@ namespace Neon
 
 		// Create rendering pipeline using the specified states
 		m_Handle = device.createGraphicsPipelineUnique(nullptr, pipelineCreateInfo);
-
-		// Shader modules are no longer needed once the graphics pipeline has been created
-		// vkDestroyShaderModule(device, shaderStages[0].module, nullptr);
-		// vkDestroyShaderModule(device, shaderStages[1].module, nullptr);
 	}
 
 } // namespace Neon

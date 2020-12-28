@@ -11,7 +11,7 @@ namespace Neon
 		m_Device->GetHandle().destroySwapchainKHR(m_Handle);
 	}
 
-	void VulkanSwapChain::Init(vk::Instance instance, SharedRef<VulkanDevice>& device)
+	void VulkanSwapChain::Init(vk::Instance instance, const SharedRef<VulkanDevice>& device)
 	{
 		m_Instance = instance;
 		m_Device = device;

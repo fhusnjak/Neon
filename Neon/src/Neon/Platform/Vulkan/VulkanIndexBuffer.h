@@ -1,16 +1,16 @@
 #pragma once
 
-#include "Renderer/VertexBuffer.h"
+#include "Renderer/IndexBuffer.h"
 #include "Vulkan.h"
 #include "VulkanAllocator.h"
 
 namespace Neon
 {
-	class VulkanVertexBuffer : public VertexBuffer
+	class VulkanIndexBuffer : public IndexBuffer
 	{
 	public:
-		VulkanVertexBuffer(void* data, uint32 size, const VertexBufferLayout& layout);
-		~VulkanVertexBuffer() = default;
+		VulkanIndexBuffer(void* data, uint32 size);
+		~VulkanIndexBuffer() = default;
 
 		vk::Buffer GetHandle() const
 		{
