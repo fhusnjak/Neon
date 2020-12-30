@@ -16,8 +16,8 @@ namespace Neon
 		NEO_CORE_ASSERT(m_Specification.Shader, "Shader not initialized!");
 		SharedRef<VulkanShader> vulkanShader = SharedRef<VulkanShader>(m_Specification.Shader);
 
-		//NEO_CORE_ASSERT(m_Specification.RenderPass, "RenderPass not initialized!");
-		//SharedRef<VulkanRenderPass> vulkanRenderPass = SharedRef<VulkanRenderPass>(m_Specification.RenderPass);
+		NEO_CORE_ASSERT(m_Specification.Pass, "RenderPass not initialized!");
+		SharedRef<VulkanRenderPass> vulkanRenderPass = SharedRef<VulkanRenderPass>(m_Specification.Pass);
 
 		vk::DescriptorSetLayout descriptorSetLayout = vulkanShader->GetDescriptorSetLayout();
 
@@ -38,9 +38,7 @@ namespace Neon
 		// The layout used for this pipeline (can be shared among multiple pipelines using the same layout)
 		pipelineCreateInfo.layout = m_PipelineLayout.get();
 		// Renderpass this pipeline is attached to
-		// TODO: Use renderpass from specification
-		// pipelineCreateInfo.renderPass = vulkanRenderPass->GetHandle();
-		pipelineCreateInfo.renderPass = VulkanContext::Get()->GetSwapChain().GetRenderPass();
+		pipelineCreateInfo.renderPass = vulkanRenderPass->GetHandle();
 
 		// Construct the different states making up the pipeline
 

@@ -5,20 +5,26 @@
 
 namespace Neon
 {
+	static vk::Format FramebufferFormatToVulkanFormat(FramebufferFormat format)
+	{
+		switch (format)
+		{
+			case FramebufferFormat::None:
+				return vk::Format::eUndefined;
+			case FramebufferFormat::RGBA8:
+				return vk::Format::eR8G8B8A8Unorm;
+			case FramebufferFormat::RGBA16F:
+				return vk::Format::eR32G32Sfloat;
+		}
+		NEO_CORE_ASSERT(false, "Uknown framebuffer format!");
+		return vk::Format::eUndefined;
+	}
+
 	class VulkanRenderPass : public RenderPass
 	{
 	public:
 		VulkanRenderPass(RenderPassSpecification specification);
 		~VulkanRenderPass() = default;
-
-		RenderPassSpecification& GetSpecification() override
-		{
-			return m_Specification;
-		}
-		const RenderPassSpecification& GetSpecification() const override
-		{
-			return m_Specification;
-		}
 
 		vk::RenderPass GetHandle() const
 		{
@@ -26,8 +32,6 @@ namespace Neon
 		}
 
 	private:
-		RenderPassSpecification m_Specification;
-
 		vk::UniqueRenderPass m_Handle;
 	};
 } // namespace Neon

@@ -10,7 +10,7 @@ namespace Neon
 	{
 		SharedRef<Shader> Shader;
 		VertexBufferLayout Layout;
-		SharedRef<RenderPass> RenderPass;
+		SharedRef<RenderPass> Pass;
 	};
 
 	class Pipeline : public RefCounted

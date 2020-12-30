@@ -27,6 +27,11 @@ namespace Neon
 			return m_SwapChain;
 		}
 
+		uint32 GetTargetMaxFramesInFlight() const override
+		{
+			return m_SwapChain.GetTargetMaxFramesInFlight();
+		}
+
 		static vk::Instance GetInstance()
 		{
 			return s_Instance.get();
@@ -58,6 +63,8 @@ namespace Neon
 		std::vector<const char*> m_InstanceExtensions = {VK_KHR_SURFACE_EXTENSION_NAME,
 														 VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
 														 VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_EXT_DEBUG_REPORT_EXTENSION_NAME};
+
+		friend class VulkanSwapChain;
 	};
 
 } // namespace Neon

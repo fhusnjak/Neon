@@ -54,16 +54,16 @@ namespace Neon
 
 		vk::Framebuffer GetCurrentFramebuffer() const
 		{
-			return GetFramebuffer(m_CurrentBufferIndex);
+			return GetFramebuffer(m_CurrentSwapChainImageIndex);
 		}
 		vk::CommandBuffer GetCurrentDrawCommandBuffer() const
 		{
-			return GetRenderCommandBuffer(m_CurrentBufferIndex);
+			return GetRenderCommandBuffer(m_CurrentFrameIndex);
 		}
 
-		uint32 GetCurrentBufferIndex() const
+		uint32 GetCurrentFrameIndex() const
 		{
-			return m_CurrentBufferIndex;
+			return m_CurrentFrameIndex;
 		}
 		vk::Framebuffer GetFramebuffer(uint32 index) const
 		{
@@ -81,16 +81,22 @@ namespace Neon
 			return m_ColorFormat;
 		}
 
+		uint32 GetTargetMaxFramesInFlight() const
+		{
+			return m_TargetMaxFramesInFlight;
+		}
+
 	private:
-		vk::Result AcquireNextImage(vk::Semaphore presentCompleteSemaphore, uint32* imageIndex);
+		vk::Result AcquireNextImage(vk::Semaphore imageAcquiredSemaphore, uint32* imageIndex);
 		vk::Result QueuePresent(vk::Queue queue, uint32 imageIndex, vk::Semaphore waitSemaphore = vk::Semaphore{});
 
 		void CreateFramebuffers();
 		void CreateDepthStencil();
-		void CreateRenderCommandBuffers();
 		void FindSurfaceFormatAndColorSpace();
 
 	private:
+		uint32 m_TargetMaxFramesInFlight = 2;
+
 		vk::Instance m_Instance;
 		SharedRef<VulkanDevice> m_Device;
 		vk::UniqueSurfaceKHR m_Surface;
@@ -130,13 +136,15 @@ namespace Neon
 
 		vk::UniqueRenderPass m_RenderPass;
 
-		uint32_t m_CurrentBufferIndex = 0;
+		uint32 m_CurrentFrameIndex = 0;
+		uint32 m_CurrentSwapChainImageIndex = 0;
+
+		std::unordered_map<uint32, uint32> m_ImageIndexToFrameIndex;
+		std::unordered_map<uint32, uint32> m_ImageIndexToSemaphoreIndex;
+
+		std::vector<uint32> m_FreeSemaphoreIndices;
 
 		uint32 m_QueueNodeIndex = UINT32_MAX;
 		uint32 m_Width, m_Height;
-
-		uint32 m_CurrentFrame = 0;
-
-		friend class VulkanContext;
 	};
 } // namespace Neon

@@ -106,6 +106,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanFramebuffer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\Framebuffer.cpp" />
     <ClCompile Include="src\Neon\Renderer\IndexBuffer.cpp" />
     <ClCompile Include="src\Neon\Renderer\RenderPass.cpp" />
     <ClCompile Include="src\Neon\Renderer\Pipeline.cpp" />
@@ -157,6 +159,8 @@
     <ClCompile Include="src\Neon\Platform\Vulkan\VulkanIndexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanFramebuffer.h" />
+    <ClInclude Include="src\Neon\Renderer\Framebuffer.h" />
     <ClInclude Include="src\Neon\Renderer\IndexBuffer.h" />
     <ClInclude Include="src\Neon\Renderer\RenderPass.h" />
     <ClInclude Include="src\Neon\Renderer\Pipeline.h" />

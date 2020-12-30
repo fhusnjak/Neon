@@ -15,6 +15,8 @@ namespace Neon
 
 		virtual void OnResize(uint32 width, uint32 height) = 0;
 
+		virtual uint32 GetTargetMaxFramesInFlight() const = 0;
+
 		static SharedRef<RendererContext> Create(void* window);
 	};
 } // namespace Neon

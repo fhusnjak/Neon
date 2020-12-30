@@ -35,6 +35,8 @@
     <ClCompile Include="src\Neon\Platform\Vulkan\VulkanVertexBuffer.cpp" />
     <ClCompile Include="src\Neon\Renderer\IndexBuffer.cpp" />
     <ClCompile Include="src\Neon\Platform\Vulkan\VulkanIndexBuffer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\Framebuffer.cpp" />
+    <ClCompile Include="src\Neon\Platform\Vulkan\VulkanFramebuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\neopch.h" />
@@ -87,6 +89,8 @@
     <ClInclude Include="src\Neon\Platform\Vulkan\VulkanVertexBuffer.h" />
     <ClInclude Include="src\Neon\Renderer\IndexBuffer.h" />
     <ClInclude Include="src\Neon\Platform\Vulkan\VulkanIndexBuffer.h" />
+    <ClInclude Include="src\Neon\Renderer\Framebuffer.h" />
+    <ClInclude Include="src\Neon\Platform\Vulkan\VulkanFramebuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vendor\glfw-3.3.2\docs\html\search\all_0.html" />

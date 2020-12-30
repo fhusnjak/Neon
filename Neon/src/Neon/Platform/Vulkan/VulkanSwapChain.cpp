@@ -1,5 +1,6 @@
 #include "neopch.h"
 
+#include "VulkanContext.h"
 #include "VulkanSwapChain.h"
 
 #include <glfw/glfw3.h>
@@ -16,6 +17,39 @@ namespace Neon
 		m_Instance = instance;
 		m_Device = device;
 		m_Allocator = VulkanAllocator(device, "SwapChain");
+
+		// Create sync objects
+		vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+		m_Semaphores.resize(m_TargetMaxFramesInFlight + 1);
+		for (auto& semaphore : m_Semaphores)
+		{
+			semaphore.ImageAcquired = m_Device->GetHandle().createSemaphoreUnique(semaphoreCreateInfo);
+			semaphore.RenderComplete = m_Device->GetHandle().createSemaphoreUnique(semaphoreCreateInfo);
+		}
+
+		// Wait fences to sync command buffer access
+		vk::FenceCreateInfo fenceCreateInfo{};
+		fenceCreateInfo.flags = vk::FenceCreateFlagBits::eSignaled;
+		m_WaitFences.resize(m_TargetMaxFramesInFlight);
+		for (auto& fence : m_WaitFences)
+		{
+			fence = m_Device->GetHandle().createFenceUnique(fenceCreateInfo);
+		}
+
+		m_QueueNodeIndex = m_Device->GetPhysicalDevice()->GetGraphicsQueueIndex();
+
+		// Create command pool
+		vk::CommandPoolCreateInfo cmdPoolInfo = {};
+		cmdPoolInfo.queueFamilyIndex = m_QueueNodeIndex;
+		cmdPoolInfo.flags = vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+		m_CommandPool = m_Device->GetHandle().createCommandPoolUnique(cmdPoolInfo);
+
+		// Create command buffers
+		vk::CommandBufferAllocateInfo commandBufferAllocateInfo{};
+		commandBufferAllocateInfo.commandPool = m_CommandPool.get();
+		commandBufferAllocateInfo.level = vk::CommandBufferLevel::ePrimary;
+		commandBufferAllocateInfo.commandBufferCount = m_TargetMaxFramesInFlight;
+		m_RenderCommandBuffers = m_Device->GetHandle().allocateCommandBuffersUnique(commandBufferAllocateInfo);
 	}
 
 	void VulkanSwapChain::InitSurface(GLFWwindow* windowHandle)
@@ -35,13 +69,6 @@ namespace Neon
 		{
 			physicalDevice.getSurfaceSupportKHR(i, m_Surface.get(), &supportsPresent[i]);
 		}
-
-		m_QueueNodeIndex = m_Device->GetPhysicalDevice()->GetGraphicsQueueIndex();
-
-		vk::CommandPoolCreateInfo cmdPoolInfo = {};
-		cmdPoolInfo.queueFamilyIndex = m_QueueNodeIndex;
-		cmdPoolInfo.flags = vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-		m_CommandPool = m_Device->GetHandle().createCommandPoolUnique(cmdPoolInfo);
 
 		FindSurfaceFormatAndColorSpace();
 	}
@@ -201,28 +228,6 @@ namespace Neon
 			m_Buffers[i].View = m_Device->GetHandle().createImageViewUnique(colorAttachmentView);
 		}
 
-		CreateRenderCommandBuffers();
-
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// Synchronization Objects
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		vk::SemaphoreCreateInfo semaphoreCreateInfo{};
-		m_Semaphores.resize(images.size());
-		for (uint32 i = 0; i < images.size(); i++)
-		{
-			m_Semaphores[i].ImageAcquired = m_Device->GetHandle().createSemaphoreUnique(semaphoreCreateInfo);
-			m_Semaphores[i].RenderComplete = m_Device->GetHandle().createSemaphoreUnique(semaphoreCreateInfo);
-		}
-
-		// Wait fences to sync command buffer access
-		vk::FenceCreateInfo fenceCreateInfo{};
-		fenceCreateInfo.flags = vk::FenceCreateFlagBits::eSignaled;
-		m_WaitFences.resize(m_RenderCommandBuffers.size());
-		for (auto& fence : m_WaitFences)
-		{
-			fence = m_Device->GetHandle().createFenceUnique(fenceCreateInfo);
-		}
-
 		CreateDepthStencil();
 
 		vk::Format depthFormat = m_Device->GetPhysicalDevice()->GetDepthFormat();
@@ -286,6 +291,24 @@ namespace Neon
 		m_RenderPass = m_Device->GetHandle().createRenderPassUnique(renderPassInfo);
 
 		CreateFramebuffers();
+
+		m_ImageIndexToFrameIndex.clear();
+		m_ImageIndexToSemaphoreIndex.clear();
+
+		uint32 frameCounter = 0;
+		for (uint32 imageIndex = 0; imageIndex < images.size(); imageIndex++)
+		{
+			m_ImageIndexToFrameIndex[imageIndex] = frameCounter;
+			frameCounter++;
+			frameCounter %= m_TargetMaxFramesInFlight;
+			frameCounter = std::min(frameCounter, m_TargetMaxFramesInFlight);
+		}
+
+		m_FreeSemaphoreIndices.clear();
+		for (uint32 i = 0; i <= m_TargetMaxFramesInFlight; i++)
+		{
+			m_FreeSemaphoreIndices.push_back(i);
+		}
 	}
 
 	void VulkanSwapChain::OnResize(uint32 width, uint32 height)
@@ -299,11 +322,20 @@ namespace Neon
 
 	void VulkanSwapChain::BeginFrame()
 	{
-		VK_CHECK_RESULT(AcquireNextImage(m_Semaphores[m_CurrentFrame].ImageAcquired.get(), &m_CurrentBufferIndex));
+		uint32 semaphoreIndex = m_FreeSemaphoreIndices.front();
+		m_FreeSemaphoreIndices.pop_back();
+		VK_CHECK_RESULT(AcquireNextImage(m_Semaphores[semaphoreIndex].ImageAcquired.get(), &m_CurrentSwapChainImageIndex));
+		m_CurrentFrameIndex = m_ImageIndexToFrameIndex[m_CurrentSwapChainImageIndex];
+
+		if (m_ImageIndexToSemaphoreIndex.find(m_CurrentFrameIndex) != m_ImageIndexToSemaphoreIndex.end())
+		{
+			m_FreeSemaphoreIndices.push_back(m_ImageIndexToSemaphoreIndex[m_CurrentFrameIndex]);
+		}
+		m_ImageIndexToSemaphoreIndex[m_CurrentFrameIndex] = semaphoreIndex;
 
 		// Use a fence to wait until the command buffer has finished execution before using it again
-		VK_CHECK_RESULT(m_Device->GetHandle().waitForFences(m_WaitFences[m_CurrentBufferIndex].get(), VK_TRUE, UINT64_MAX));
-		VK_CHECK_RESULT(m_Device->GetHandle().resetFences(1, &m_WaitFences[m_CurrentBufferIndex].get()));
+		VK_CHECK_RESULT(m_Device->GetHandle().waitForFences(m_WaitFences[m_CurrentFrameIndex].get(), VK_TRUE, UINT64_MAX));
+		VK_CHECK_RESULT(m_Device->GetHandle().resetFences(1, &m_WaitFences[m_CurrentFrameIndex].get()));
 	}
 
 	void VulkanSwapChain::Present()
@@ -313,21 +345,21 @@ namespace Neon
 		// The submit info structure specifices a command buffer queue submission batch
 		vk::SubmitInfo submitInfo = {};
 		submitInfo.pWaitDstStageMask = &waitStageMask;
-		submitInfo.pWaitSemaphores = &m_Semaphores[m_CurrentFrame].ImageAcquired.get();
+		submitInfo.pWaitSemaphores = &m_Semaphores[m_ImageIndexToSemaphoreIndex[m_CurrentFrameIndex]].ImageAcquired.get();
 		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &m_Semaphores[m_CurrentFrame].RenderComplete.get();
+		submitInfo.pSignalSemaphores = &m_Semaphores[m_ImageIndexToSemaphoreIndex[m_CurrentFrameIndex]].RenderComplete.get();
 		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pCommandBuffers = &m_RenderCommandBuffers[m_CurrentBufferIndex].get();
+		submitInfo.pCommandBuffers = &m_RenderCommandBuffers[m_CurrentFrameIndex].get();
 		submitInfo.commandBufferCount = 1;
 
 		// Submit to the graphics queue passing a wait fence
-		m_Device->GetGraphicsQueue().submit(submitInfo, m_WaitFences[m_CurrentBufferIndex].get());
+		m_Device->GetGraphicsQueue().submit(submitInfo, m_WaitFences[m_CurrentFrameIndex].get());
 
 		// Present the current buffer to the swap chain
 		// Pass the semaphore signaled by the command buffer submission from the submit info as the wait semaphore for swap chain presentation
 		// This ensures that the image is not presented to the windowing system until all commands have been submitted
-		vk::Result result =
-			QueuePresent(m_Device->GetGraphicsQueue(), m_CurrentBufferIndex, m_Semaphores[m_CurrentFrame].RenderComplete.get());
+		vk::Result result = QueuePresent(m_Device->GetGraphicsQueue(), m_CurrentSwapChainImageIndex,
+										 m_Semaphores[m_ImageIndexToSemaphoreIndex[m_CurrentFrameIndex]].RenderComplete.get());
 
 		if (result != vk::Result::eSuccess || result == vk::Result::eSuboptimalKHR)
 		{
@@ -341,19 +373,13 @@ namespace Neon
 				VK_CHECK_RESULT(result);
 			}
 		}
-
-		m_CurrentFrame++;
-		m_CurrentFrame %= m_Buffers.size();
-
-		// TODO: Benchmark this
-		//VK_CHECK_RESULT(m_Device->GetHandle().waitForFences(m_WaitFences[m_CurrentBufferIndex].get(), VK_TRUE, UINT64_MAX));
 	}
 
-	vk::Result VulkanSwapChain::AcquireNextImage(vk::Semaphore presentCompleteSemaphore, uint32* imageIndex)
+	vk::Result VulkanSwapChain::AcquireNextImage(vk::Semaphore imageAcquiredSemaphore, uint32* imageIndex)
 	{
 		NEO_CORE_ASSERT(imageIndex);
 		vk::ResultValue resultValue =
-			m_Device->GetHandle().acquireNextImageKHR(m_Handle, UINT64_MAX, presentCompleteSemaphore, nullptr);
+			m_Device->GetHandle().acquireNextImageKHR(m_Handle, UINT64_MAX, imageAcquiredSemaphore, nullptr);
 		*imageIndex = resultValue.value;
 		return resultValue.result;
 	}
@@ -378,7 +404,6 @@ namespace Neon
 		// Setup Framebuffer
 		vk::ImageView ivAttachments[2];
 
-		ivAttachments[0] = m_Buffers[m_CurrentBufferIndex].View.get();
 		// Depth/Stencil attachment is the same for all frame buffers
 		ivAttachments[1] = m_DepthStencil.ImageView.get();
 
@@ -437,18 +462,6 @@ namespace Neon
 		}
 
 		m_DepthStencil.ImageView = device.createImageViewUnique(imageViewCI);
-	}
-
-	void VulkanSwapChain::CreateRenderCommandBuffers()
-	{
-		// Create one command buffer for each swap chain image and reuse for rendering
-		m_RenderCommandBuffers.resize(m_Buffers.size());
-
-		vk::CommandBufferAllocateInfo commandBufferAllocateInfo{};
-		commandBufferAllocateInfo.commandPool = m_CommandPool.get();
-		commandBufferAllocateInfo.level = vk::CommandBufferLevel::ePrimary;
-		commandBufferAllocateInfo.commandBufferCount = static_cast<uint32_t>(m_RenderCommandBuffers.size());
-		m_RenderCommandBuffers = m_Device->GetHandle().allocateCommandBuffersUnique(commandBufferAllocateInfo);
 	}
 
 	void VulkanSwapChain::FindSurfaceFormatAndColorSpace()

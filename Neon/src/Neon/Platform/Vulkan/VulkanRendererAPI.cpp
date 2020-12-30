@@ -1,7 +1,9 @@
 #include "neopch.h"
 
 #include "VulkanContext.h"
+#include "VulkanFramebuffer.h"
 #include "VulkanIndexBuffer.h"
+#include "VulkanRenderPass.h"
 #include "VulkanRendererAPI.h"
 #include "VulkanVertexBuffer.h"
 
@@ -17,6 +19,8 @@ namespace Neon
 	static SharedRef<VulkanVertexBuffer> s_TestVertexBuffer;
 	static SharedRef<VulkanIndexBuffer> s_TestIndexBuffer;
 	static SharedRef<VulkanPipeline> s_TestPipeline;
+	static SharedRef<VulkanRenderPass> s_TestRenderPass;
+	static SharedRef<VulkanFramebuffer> s_TestFramebuffer;
 
 	struct TestUBO
 	{
@@ -47,19 +51,27 @@ namespace Neon
 
 		std::vector<UniformBinding> bindings = {{0, UniformType::UniformBuffer, 2, sizeof(TestUBO), ShaderStageFlag::Fragment}};
 
-		s_TestShader = SharedRef<VulkanShader>(Shader::Create(bindings));
+		s_TestShader = Shader::Create(bindings).As<VulkanShader>();
 		s_TestShader->LoadShader("C:/VisualStudioProjects/Neon/Neon/src/Shaders/build/test_vert.spv", ShaderType::Vertex);
 		s_TestShader->LoadShader("C:/VisualStudioProjects/Neon/Neon/src/Shaders/build/test_frag.spv", ShaderType::Fragment);
 
 		VertexBufferLayout layout({ShaderDataType::Float3});
-		s_TestVertexBuffer = SharedRef<VulkanVertexBuffer>(VertexBuffer::Create(positions, sizeof(positions), layout));
+		s_TestVertexBuffer = VertexBuffer::Create(positions, sizeof(positions), layout).As<VulkanVertexBuffer>();
 
-		s_TestIndexBuffer = SharedRef<VulkanIndexBuffer>(IndexBuffer::Create(indices, sizeof(indices)));
+		s_TestIndexBuffer = IndexBuffer::Create(indices, sizeof(indices)).As<VulkanIndexBuffer>();
+
+		RenderPassSpecification renderPassSpecification;
+		s_TestRenderPass = RenderPass::Create(renderPassSpecification).As<VulkanRenderPass>();
+
+		FramebufferSpecification framebufferSpecification;
+		framebufferSpecification.Pass = s_TestRenderPass;
+		s_TestFramebuffer = Framebuffer::Create(framebufferSpecification).As<VulkanFramebuffer>();
 
 		PipelineSpecification pipelineSpecification;
 		pipelineSpecification.Shader = s_TestShader;
 		pipelineSpecification.Layout = layout;
-		s_TestPipeline = SharedRef<VulkanPipeline>(Pipeline::Create(pipelineSpecification));
+		pipelineSpecification.Pass = s_TestRenderPass;
+		s_TestPipeline = Pipeline::Create(pipelineSpecification).As<VulkanPipeline>();
 
 		TestUBO test[2] = {};
 		test[0].color = 1.f;
@@ -81,73 +93,98 @@ namespace Neon
 		uint32_t width = swapChain.GetWidth();
 		uint32_t height = swapChain.GetHeight();
 
+		vk::CommandBufferBeginInfo beginInfo{vk::CommandBufferUsageFlagBits::eOneTimeSubmit};
+		renderCommandBuffer.begin(beginInfo);
+
 		vk::RenderPassBeginInfo renderPassBeginInfo = {};
-		renderPassBeginInfo.renderPass = swapChain.GetRenderPass();
+		renderPassBeginInfo.renderPass = s_TestRenderPass->GetHandle();
 		renderPassBeginInfo.renderArea.offset.x = 0;
 		renderPassBeginInfo.renderArea.offset.y = 0;
 		renderPassBeginInfo.renderArea.extent.width = width;
 		renderPassBeginInfo.renderArea.extent.height = height;
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
-		renderPassBeginInfo.framebuffer = swapChain.GetCurrentFramebuffer();
+		renderPassBeginInfo.framebuffer = s_TestFramebuffer->GetHandle();
 
-		vk::CommandBufferBeginInfo beginInfo{vk::CommandBufferUsageFlagBits::eOneTimeSubmit};
-		renderCommandBuffer.begin(beginInfo);
-		renderCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eSecondaryCommandBuffers);
+		renderCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
-		vk::CommandBufferInheritanceInfo inheritanceInfo = {};
-		inheritanceInfo.renderPass = swapChain.GetRenderPass();
-		inheritanceInfo.framebuffer = swapChain.GetCurrentFramebuffer();
-		std::vector<vk::CommandBuffer> commandBuffers;
+		// Update dynamic viewport state
+		vk::Viewport viewport = {};
+		viewport.x = 0.f;
+		viewport.y = 0.f;
+		viewport.height = (float)height;
+		viewport.width = (float)width;
+		viewport.minDepth = 0.f;
+		viewport.maxDepth = 1.f;
+
+		renderCommandBuffer.setViewport(0, 1, &viewport);
+
+		// Update dynamic scissor state
+		vk::Rect2D scissor = {};
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		scissor.extent.width = width;
+		scissor.extent.height = height;
+
+		renderCommandBuffer.setScissor(0, 1, &scissor);
+
+		renderCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetHandle());
+		renderCommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetLayout(), 0, 1,
+											   &s_TestShader->GetDescriptorSet(), 0, nullptr);
+		renderCommandBuffer.bindVertexBuffers(0, {s_TestVertexBuffer->GetHandle()}, {0});
+		renderCommandBuffer.bindIndexBuffer(s_TestIndexBuffer->GetHandle(), 0, vk::IndexType::eUint32);
+		renderCommandBuffer.drawIndexed(s_TestIndexBuffer->GetCount(), 1, 0, 0, 0);
+
+		renderCommandBuffer.endRenderPass();
+
+		ImGui::Begin("Viewport");
+		ImGui::Image(s_TestFramebuffer->GetColorImageID(), ImVec2{static_cast<float>(width), static_cast<float>(height)});
+		ImGui::End();
+
+		ImGui::End();
+
 		// ImGui Pass
 		{
+			vk::RenderPassBeginInfo renderPassBeginInfo = {};
+			renderPassBeginInfo.renderPass = swapChain.GetRenderPass();
+			renderPassBeginInfo.renderArea.offset.x = 0;
+			renderPassBeginInfo.renderArea.offset.y = 0;
+			renderPassBeginInfo.renderArea.extent.width = width;
+			renderPassBeginInfo.renderArea.extent.height = height;
+			renderPassBeginInfo.clearValueCount = 2;
+			renderPassBeginInfo.pClearValues = clearValues;
+			renderPassBeginInfo.framebuffer = swapChain.GetCurrentFramebuffer();
+
+			renderCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eSecondaryCommandBuffers);
+
+			vk::CommandBufferInheritanceInfo inheritanceInfo = {};
+			inheritanceInfo.renderPass = swapChain.GetRenderPass();
+			inheritanceInfo.framebuffer = swapChain.GetCurrentFramebuffer();
+			std::vector<vk::CommandBuffer> commandBuffers;
+
 			vk::CommandBufferBeginInfo beginInfo = {};
 			beginInfo.flags = vk::CommandBufferUsageFlagBits::eRenderPassContinue;
 			beginInfo.pInheritanceInfo = &inheritanceInfo;
 
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].begin(beginInfo);
+			s_ImGuiCommandBuffers[swapChain.GetCurrentFrameIndex()].begin(beginInfo);
 
-			// Update dynamic viewport state
-			vk::Viewport viewport = {};
-			viewport.x = 0.f;
-			viewport.y = 0.f;
-			viewport.height = (float)height;
-			viewport.width = (float)width;
-			viewport.minDepth = 0.f;
-			viewport.maxDepth = 1.f;
+			s_ImGuiCommandBuffers[swapChain.GetCurrentFrameIndex()].setViewport(0, 1, &viewport);
 
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].setViewport(0, 1, &viewport);
-
-			// Update dynamic scissor state
-			vk::Rect2D scissor = {};
-			scissor.offset.x = 0;
-			scissor.offset.y = 0;
-			scissor.extent.width = width;
-			scissor.extent.height = height;
-
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].setScissor(0, 1, &scissor);
-
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].bindPipeline(vk::PipelineBindPoint::eGraphics,
-																				  s_TestPipeline->GetHandle());
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].bindDescriptorSets(
-				vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetLayout(), 0, 1, &s_TestShader->GetDescriptorSet(), 0, nullptr);
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].bindVertexBuffers(0, {s_TestVertexBuffer->GetHandle()}, {0});
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].bindIndexBuffer(s_TestIndexBuffer->GetHandle(), 0,
-																					 vk::IndexType::eUint32);
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].drawIndexed(s_TestIndexBuffer->GetCount(), 1, 0, 0, 0);
+			s_ImGuiCommandBuffers[swapChain.GetCurrentFrameIndex()].setScissor(0, 1, &scissor);
 
 			// TODO: Move to VulkanImGuiLayer
 			ImGui::Render();
-			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()]);
+			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), s_ImGuiCommandBuffers[swapChain.GetCurrentFrameIndex()]);
 
-			s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()].end();
+			s_ImGuiCommandBuffers[swapChain.GetCurrentFrameIndex()].end();
 
-			commandBuffers.push_back(s_ImGuiCommandBuffers[swapChain.GetCurrentBufferIndex()]);
+			commandBuffers.push_back(s_ImGuiCommandBuffers[swapChain.GetCurrentFrameIndex()]);
+
+			renderCommandBuffer.executeCommands(commandBuffers);
+
+			renderCommandBuffer.endRenderPass();
 		}
 
-		renderCommandBuffer.executeCommands(commandBuffers);
-
-		renderCommandBuffer.endRenderPass();
 		renderCommandBuffer.end();
 	}
 

@@ -19,6 +19,7 @@
 #include <set>
 #include <unordered_set>
 #include <vector>
+#include <queue>
 
 #include "Neon/Core/Core.h"
 

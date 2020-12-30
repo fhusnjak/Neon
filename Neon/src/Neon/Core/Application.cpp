@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "Neon/ImGui/ImGuiLayer.h"
 #include "Neon/Renderer/Renderer.h"
+#include "Neon/Renderer/Framebuffer.h"
 
 #include <imgui/imgui.h>
 
@@ -82,6 +83,39 @@ namespace Neon
 
 				m_ImGuiLayer->Begin();
 
+				static bool dockSpaceOpen = true;
+				static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+				ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+				ImGuiViewport* imGuiViewport = ImGui::GetMainViewport();
+				ImGui::SetNextWindowPos(imGuiViewport->GetWorkPos());
+				ImGui::SetNextWindowSize(imGuiViewport->GetWorkSize());
+				ImGui::SetNextWindowViewport(imGuiViewport->ID);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+				window_flags |=
+					ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+				window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+				// Important: note that we proceed even if Begin() returns false (aka window is collapsed).
+				// This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
+				// all active windows docked into it will lose their parent and become undocked.
+				// We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
+				// any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+				ImGui::Begin("DockSpace Demo", &dockSpaceOpen, window_flags);
+				ImGui::PopStyleVar();
+
+				ImGui::PopStyleVar(2);
+
+				// DockSpace
+				ImGuiIO& io = ImGui::GetIO();
+				if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+				{
+					ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+					ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+				}
+
 				RendererAPI::RenderAPICapabilities& caps = RendererAPI::GetCapabilities();
 				ImGui::Begin("Renderer");
 				ImGui::Text("Vendor: %s", caps.Vendor.c_str());
@@ -117,7 +151,15 @@ namespace Neon
 			m_Minimized = true;
 			return false;
 		}
+
 		m_Window->GetRenderContext()->OnResize(e.GetWidth(), e.GetHeight());
+
+		auto& fbs = FramebufferPool::Get().GetAll();
+		for (auto& fb : fbs)
+		{
+			fb->Resize(e.GetWidth(), e.GetHeight());
+		}
+
 		m_Minimized = false;
 		return false;
 	}

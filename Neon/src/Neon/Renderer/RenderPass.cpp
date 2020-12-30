@@ -6,6 +6,11 @@
 
 namespace Neon
 {
+	RenderPass::RenderPass(const RenderPassSpecification& spec)
+		: m_Specification(spec)
+	{
+	}
+
 	SharedRef<RenderPass> RenderPass::Create(const RenderPassSpecification& spec)
 	{
 		switch (Renderer::GetAPI())
