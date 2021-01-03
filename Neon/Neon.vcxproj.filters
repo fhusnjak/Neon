@@ -34,6 +34,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Neon.h" />
+    <ClInclude Include="src\Neon\Core\Allocator.h">
+      <Filter>Neon\Core</Filter>
+    </ClInclude>
     <ClInclude Include="src\Neon\Core\Application.h">
       <Filter>Neon\Core</Filter>
     </ClInclude>
@@ -121,10 +124,25 @@
     <ClInclude Include="src\Neon\Platform\Windows\WindowsWindow.h">
       <Filter>Neon\Platform\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="src\Neon\Renderer\Context.h">
+      <Filter>Neon\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Renderer\DescriptorPool.h">
+      <Filter>Neon\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Renderer\DescriptorSet.h">
+      <Filter>Neon\Renderer</Filter>
+    </ClInclude>
     <ClInclude Include="src\Neon\Renderer\Framebuffer.h">
       <Filter>Neon\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="src\Neon\Renderer\GraphicsPipeline.h">
+      <Filter>Neon\Renderer</Filter>
+    </ClInclude>
     <ClInclude Include="src\Neon\Renderer\IndexBuffer.h">
+      <Filter>Neon\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Renderer\LogicalDevice.h">
       <Filter>Neon\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="src\Neon\Renderer\Mesh.h">
@@ -134,6 +152,9 @@
       <Filter>Neon\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="src\Neon\Renderer\PerspectiveCameraController.h">
+      <Filter>Neon\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Renderer\PhysicalDevice.h">
       <Filter>Neon\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="src\Neon\Renderer\Pipeline.h">
@@ -154,8 +175,32 @@
     <ClInclude Include="src\Neon\Renderer\Shader.h">
       <Filter>Neon\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="src\Neon\Renderer\SwapChain.h">
+      <Filter>Neon\Renderer</Filter>
+    </ClInclude>
     <ClInclude Include="src\Neon\Renderer\VertexBuffer.h">
       <Filter>Neon\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Renderer\VulkanRenderer.h">
+      <Filter>Neon\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Renderer\VulkanShader.h">
+      <Filter>Neon\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Scene\Animation.h">
+      <Filter>Neon\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Scene\Bone.h">
+      <Filter>Neon\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Scene\Components.h">
+      <Filter>Neon\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Scene\Entity.h">
+      <Filter>Neon\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Neon\Scene\Scene.h">
+      <Filter>Neon\Scene</Filter>
     </ClInclude>
     <ClInclude Include="src\Neon\Tools\FileTools.h">
       <Filter>Neon\Tools</Filter>
@@ -163,6 +208,9 @@
     <ClInclude Include="src\neopch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Neon\Core\Allocator.cpp">
+      <Filter>Neon\Core</Filter>
+    </ClCompile>
     <ClCompile Include="src\Neon\Core\Application.cpp">
       <Filter>Neon\Core</Filter>
     </ClCompile>
@@ -226,10 +274,25 @@
     <ClCompile Include="src\Neon\Platform\Windows\WindowsWindow.cpp">
       <Filter>Neon\Platform\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\Neon\Renderer\Context.cpp">
+      <Filter>Neon\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Neon\Renderer\DescriptorPool.cpp">
+      <Filter>Neon\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Neon\Renderer\DescriptorSet.cpp">
+      <Filter>Neon\Renderer</Filter>
+    </ClCompile>
     <ClCompile Include="src\Neon\Renderer\Framebuffer.cpp">
       <Filter>Neon\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="src\Neon\Renderer\GraphicsPipeline.cpp">
+      <Filter>Neon\Renderer</Filter>
+    </ClCompile>
     <ClCompile Include="src\Neon\Renderer\IndexBuffer.cpp">
+      <Filter>Neon\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Neon\Renderer\LogicalDevice.cpp">
       <Filter>Neon\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="src\Neon\Renderer\Mesh.cpp">
@@ -239,6 +302,9 @@
       <Filter>Neon\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="src\Neon\Renderer\PerspectiveCameraController.cpp">
+      <Filter>Neon\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Neon\Renderer\PhysicalDevice.cpp">
       <Filter>Neon\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="src\Neon\Renderer\Pipeline.cpp">
@@ -259,8 +325,26 @@
     <ClCompile Include="src\Neon\Renderer\Shader.cpp">
       <Filter>Neon\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="src\Neon\Renderer\SwapChain.cpp">
+      <Filter>Neon\Renderer</Filter>
+    </ClCompile>
     <ClCompile Include="src\Neon\Renderer\VertexBuffer.cpp">
       <Filter>Neon\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Neon\Renderer\VulkanRenderer.cpp">
+      <Filter>Neon\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Neon\Renderer\VulkanShader.cpp">
+      <Filter>Neon\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Neon\Scene\Animation.cpp">
+      <Filter>Neon\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Neon\Scene\Components.cpp">
+      <Filter>Neon\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Neon\Scene\Scene.cpp">
+      <Filter>Neon\Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\Neon\Tools\FileTools.cpp">
       <Filter>Neon\Tools</Filter>

@@ -101,6 +101,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Neon.h" />
+    <ClInclude Include="src\Neon\Core\Allocator.h" />
     <ClInclude Include="src\Neon\Core\Application.h" />
     <ClInclude Include="src\Neon\Core\Assert.h" />
     <ClInclude Include="src\Neon\Core\Core.h" />
@@ -130,22 +131,37 @@
     <ClInclude Include="src\Neon\Platform\Vulkan\VulkanSwapChain.h" />
     <ClInclude Include="src\Neon\Platform\Vulkan\VulkanVertexBuffer.h" />
     <ClInclude Include="src\Neon\Platform\Windows\WindowsWindow.h" />
+    <ClInclude Include="src\Neon\Renderer\Context.h" />
+    <ClInclude Include="src\Neon\Renderer\DescriptorPool.h" />
+    <ClInclude Include="src\Neon\Renderer\DescriptorSet.h" />
     <ClInclude Include="src\Neon\Renderer\Framebuffer.h" />
+    <ClInclude Include="src\Neon\Renderer\GraphicsPipeline.h" />
     <ClInclude Include="src\Neon\Renderer\IndexBuffer.h" />
+    <ClInclude Include="src\Neon\Renderer\LogicalDevice.h" />
     <ClInclude Include="src\Neon\Renderer\Mesh.h" />
     <ClInclude Include="src\Neon\Renderer\PerspectiveCamera.h" />
     <ClInclude Include="src\Neon\Renderer\PerspectiveCameraController.h" />
+    <ClInclude Include="src\Neon\Renderer\PhysicalDevice.h" />
     <ClInclude Include="src\Neon\Renderer\Pipeline.h" />
     <ClInclude Include="src\Neon\Renderer\RenderPass.h" />
     <ClInclude Include="src\Neon\Renderer\Renderer.h" />
     <ClInclude Include="src\Neon\Renderer\RendererAPI.h" />
     <ClInclude Include="src\Neon\Renderer\RendererContext.h" />
     <ClInclude Include="src\Neon\Renderer\Shader.h" />
+    <ClInclude Include="src\Neon\Renderer\SwapChain.h" />
     <ClInclude Include="src\Neon\Renderer\VertexBuffer.h" />
+    <ClInclude Include="src\Neon\Renderer\VulkanRenderer.h" />
+    <ClInclude Include="src\Neon\Renderer\VulkanShader.h" />
+    <ClInclude Include="src\Neon\Scene\Animation.h" />
+    <ClInclude Include="src\Neon\Scene\Bone.h" />
+    <ClInclude Include="src\Neon\Scene\Components.h" />
+    <ClInclude Include="src\Neon\Scene\Entity.h" />
+    <ClInclude Include="src\Neon\Scene\Scene.h" />
     <ClInclude Include="src\Neon\Tools\FileTools.h" />
     <ClInclude Include="src\neopch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Neon\Core\Allocator.cpp" />
     <ClCompile Include="src\Neon\Core\Application.cpp" />
     <ClCompile Include="src\Neon\Core\Core.cpp" />
     <ClCompile Include="src\Neon\Core\LayerStack.cpp" />
@@ -167,18 +183,32 @@
     <ClCompile Include="src\Neon\Platform\Vulkan\VulkanVertexBuffer.cpp" />
     <ClCompile Include="src\Neon\Platform\Windows\WindowsInput.cpp" />
     <ClCompile Include="src\Neon\Platform\Windows\WindowsWindow.cpp" />
+    <ClCompile Include="src\Neon\Renderer\Context.cpp" />
+    <ClCompile Include="src\Neon\Renderer\DescriptorPool.cpp" />
+    <ClCompile Include="src\Neon\Renderer\DescriptorSet.cpp" />
     <ClCompile Include="src\Neon\Renderer\Framebuffer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\GraphicsPipeline.cpp" />
     <ClCompile Include="src\Neon\Renderer\IndexBuffer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\LogicalDevice.cpp" />
     <ClCompile Include="src\Neon\Renderer\Mesh.cpp" />
     <ClCompile Include="src\Neon\Renderer\PerspectiveCamera.cpp" />
     <ClCompile Include="src\Neon\Renderer\PerspectiveCameraController.cpp" />
+    <ClCompile Include="src\Neon\Renderer\PhysicalDevice.cpp" />
     <ClCompile Include="src\Neon\Renderer\Pipeline.cpp" />
     <ClCompile Include="src\Neon\Renderer\RenderPass.cpp" />
     <ClCompile Include="src\Neon\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Neon\Renderer\RendererAPI.cpp" />
     <ClCompile Include="src\Neon\Renderer\RendererContext.cpp" />
     <ClCompile Include="src\Neon\Renderer\Shader.cpp" />
+    <ClCompile Include="src\Neon\Renderer\SwapChain.cpp" />
     <ClCompile Include="src\Neon\Renderer\VertexBuffer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\VulkanRenderer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\VulkanShader.cpp">
+      <ObjectFileName>$(IntDir)\VulkanShader1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\Neon\Scene\Animation.cpp" />
+    <ClCompile Include="src\Neon\Scene\Components.cpp" />
+    <ClCompile Include="src\Neon\Scene\Scene.cpp" />
     <ClCompile Include="src\Neon\Tools\FileTools.cpp" />
     <ClCompile Include="src\neopch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
