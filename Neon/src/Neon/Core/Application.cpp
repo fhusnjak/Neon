@@ -4,12 +4,15 @@
 #include "Neon/ImGui/ImGuiLayer.h"
 #include "Neon/Renderer/Renderer.h"
 #include "Neon/Renderer/Framebuffer.h"
+#include "Neon/Renderer/PerspectiveCameraController.h"
 
 #include <imgui/imgui.h>
 
 namespace Neon
 {
 	Application* Application::s_Instance = nullptr;
+
+	static SharedRef<PerspectiveCameraController> s_Camera;
 
 	Application::Application(const ApplicationProps& applicationProps)
 	{
@@ -25,6 +28,8 @@ namespace Neon
 		PushOverlay(m_ImGuiLayer);
 
 		Renderer::Init();
+
+		s_Camera = SharedRef<PerspectiveCameraController>::Create(1920.f / 1080.f);
 	}
 
 	Application::~Application()
@@ -37,6 +42,8 @@ namespace Neon
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>([this](WindowCloseEvent& e) { return OnWindowClose(e); });
 		dispatcher.Dispatch<WindowResizeEvent>([this](WindowResizeEvent& e) { return OnWindowResize(e); });
+
+		s_Camera->OnEvent(e);
 
 		for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it)
 		{
@@ -78,6 +85,8 @@ namespace Neon
 				{
 					layer->OnUpdate(timeStepMilis);
 				}
+
+				s_Camera->OnUpdate(timeStepMilis);
 
 				m_Window->GetRenderContext()->BeginFrame();
 
@@ -129,7 +138,7 @@ namespace Neon
 					layer->OnImGuiRender();
 				}
 
-				Renderer::Render();
+				Renderer::Render(s_Camera);
 
 				m_ImGuiLayer->End();
 

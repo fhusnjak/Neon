@@ -1,5 +1,6 @@
 #include "neopch.h"
 
+#include "Renderer/PerspectiveCameraController.h"
 #include "VulkanContext.h"
 #include "VulkanFramebuffer.h"
 #include "VulkanIndexBuffer.h"
@@ -14,17 +15,19 @@
 
 namespace Neon
 {
-	static vk::CommandBuffer s_ImGuiCommandBuffers[10];
+	static std::vector<vk::CommandBuffer> s_ImGuiCommandBuffers;
 	static SharedRef<VulkanShader> s_TestShader;
 	static SharedRef<VulkanVertexBuffer> s_TestVertexBuffer;
 	static SharedRef<VulkanIndexBuffer> s_TestIndexBuffer;
 	static SharedRef<VulkanPipeline> s_TestPipeline;
 	static SharedRef<VulkanRenderPass> s_TestRenderPass;
-	static SharedRef<VulkanFramebuffer> s_TestFramebuffer;
+	static std::vector<SharedRef<VulkanFramebuffer>> s_TestFramebuffers;
 
-	struct TestUBO
+	struct CameraMatrices
 	{
-		float color;
+		glm::mat4 Model = glm::mat4(1.f);
+		glm::mat4 View = glm::mat4(1.f);
+		glm::mat4 Projection = glm::mat4(1.f);
 	};
 
 	glm::vec3 positions[3] = {glm::vec3(0.f, -0.5f, 0.f), glm::vec3(0.5f, 0.5f, 0.f), glm::vec3(-0.5f, 0.5f, 0.f)};
@@ -37,9 +40,21 @@ namespace Neon
 
 	void VulkanRendererAPI::Init()
 	{
+		s_ImGuiCommandBuffers.resize(VulkanContext::Get()->GetTargetMaxFramesInFlight());
 		for (auto& cmdBuff : s_ImGuiCommandBuffers)
 		{
 			cmdBuff = VulkanContext::GetDevice()->CreateSecondaryCommandBuffer();
+		}
+
+		RenderPassSpecification renderPassSpecification;
+		s_TestRenderPass = RenderPass::Create(renderPassSpecification).As<VulkanRenderPass>();
+
+		s_TestFramebuffers.resize(VulkanContext::Get()->GetTargetMaxFramesInFlight());
+		FramebufferSpecification framebufferSpecification;
+		framebufferSpecification.Pass = s_TestRenderPass;
+		for (auto& fb : s_TestFramebuffers)
+		{
+			fb = Framebuffer::Create(framebufferSpecification).As<VulkanFramebuffer>();
 		}
 
 		vk::PhysicalDeviceProperties props = VulkanContext::GetDevice()->GetPhysicalDevice()->GetProperties();
@@ -49,7 +64,7 @@ namespace Neon
 		caps.Renderer = "Vulkan";
 		caps.Version = "1.0";
 
-		std::vector<UniformBinding> bindings = {{0, UniformType::UniformBuffer, 2, sizeof(TestUBO), ShaderStageFlag::Fragment}};
+		std::vector<UniformBinding> bindings = {{0, UniformType::UniformBuffer, 1, sizeof(CameraMatrices), ShaderStageFlag::Vertex}};
 
 		s_TestShader = Shader::Create(bindings).As<VulkanShader>();
 		s_TestShader->LoadShader("C:/VisualStudioProjects/Neon/Neon/src/Shaders/build/test_vert.spv", ShaderType::Vertex);
@@ -60,28 +75,20 @@ namespace Neon
 
 		s_TestIndexBuffer = IndexBuffer::Create(indices, sizeof(indices)).As<VulkanIndexBuffer>();
 
-		RenderPassSpecification renderPassSpecification;
-		s_TestRenderPass = RenderPass::Create(renderPassSpecification).As<VulkanRenderPass>();
-
-		FramebufferSpecification framebufferSpecification;
-		framebufferSpecification.Pass = s_TestRenderPass;
-		s_TestFramebuffer = Framebuffer::Create(framebufferSpecification).As<VulkanFramebuffer>();
-
 		PipelineSpecification pipelineSpecification;
 		pipelineSpecification.Shader = s_TestShader;
 		pipelineSpecification.Layout = layout;
 		pipelineSpecification.Pass = s_TestRenderPass;
 		s_TestPipeline = Pipeline::Create(pipelineSpecification).As<VulkanPipeline>();
-
-		TestUBO test[2] = {};
-		test[0].color = 1.f;
-		test[1].color = 1.f;
-		s_TestShader->SetUniformBuffer(0, 0, &test[0]);
-		s_TestShader->SetUniformBuffer(0, 1, &test[1]);
 	}
 
-	void VulkanRendererAPI::Render()
+	void VulkanRendererAPI::Render(const SharedRef<PerspectiveCameraController>& camera)
 	{
+		CameraMatrices cameraMatrices = {};
+		cameraMatrices.View = camera->GetCamera().GetViewMatrix();
+		cameraMatrices.Projection = camera->GetCamera().GetProjectionMatrix();
+		s_TestShader->SetUniformBuffer(0, 0, &cameraMatrices);
+
 		const VulkanSwapChain& swapChain = VulkanContext::Get()->GetSwapChain();
 		vk::CommandBuffer renderCommandBuffer = swapChain.GetCurrentDrawCommandBuffer();
 
@@ -104,7 +111,7 @@ namespace Neon
 		renderPassBeginInfo.renderArea.extent.height = height;
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearValues;
-		renderPassBeginInfo.framebuffer = s_TestFramebuffer->GetHandle();
+		renderPassBeginInfo.framebuffer = s_TestFramebuffers[swapChain.GetCurrentFrameIndex()]->GetHandle();
 
 		renderCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
@@ -138,7 +145,8 @@ namespace Neon
 		renderCommandBuffer.endRenderPass();
 
 		ImGui::Begin("Viewport");
-		ImGui::Image(s_TestFramebuffer->GetColorImageID(), ImVec2{static_cast<float>(width), static_cast<float>(height)});
+		ImGui::Image(s_TestFramebuffers[swapChain.GetCurrentFrameIndex()]->GetColorImageID(),
+					 ImVec2{static_cast<float>(width), static_cast<float>(height)});
 		ImGui::End();
 
 		ImGui::End();

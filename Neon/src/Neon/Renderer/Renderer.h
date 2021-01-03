@@ -3,6 +3,7 @@
 #include "Neon/Core/Application.h"
 #include "RendererAPI.h"
 #include "RendererContext.h"
+#include "PerspectiveCameraController.h"
 
 namespace Neon
 {
@@ -11,7 +12,7 @@ namespace Neon
 	public:
 		static void Init();
 
-		static void Render();
+		static void Render(const SharedRef<PerspectiveCameraController>& camera);
 
 		static void Shutdown();
 

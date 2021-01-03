@@ -95,7 +95,7 @@ namespace Neon
 		void FindSurfaceFormatAndColorSpace();
 
 	private:
-		uint32 m_TargetMaxFramesInFlight = 2;
+		uint32 m_TargetMaxFramesInFlight = 3;
 
 		vk::Instance m_Instance;
 		SharedRef<VulkanDevice> m_Device;

@@ -13,7 +13,7 @@ namespace Neon
 		~VulkanRendererAPI() override;
 
 		void Init() override;
-		void Render() override;
+		void Render(const SharedRef<PerspectiveCameraController>& camera) override;
 
 		void Shutdown() override;
 	};

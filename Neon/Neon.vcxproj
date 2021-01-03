@@ -106,9 +106,12 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Neon\Renderer\Mesh.cpp" />
     <ClCompile Include="src\Neon\Platform\Vulkan\VulkanFramebuffer.cpp" />
     <ClCompile Include="src\Neon\Renderer\Framebuffer.cpp" />
     <ClCompile Include="src\Neon\Renderer\IndexBuffer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\PerspectiveCamera.cpp" />
+    <ClCompile Include="src\Neon\Renderer\PerspectiveCameraController.cpp" />
     <ClCompile Include="src\Neon\Renderer\RenderPass.cpp" />
     <ClCompile Include="src\Neon\Renderer\Pipeline.cpp" />
     <ClCompile Include="src\Neon\Core\Core.cpp" />
@@ -159,9 +162,12 @@
     <ClCompile Include="src\Neon\Platform\Vulkan\VulkanIndexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Neon\Renderer\Mesh.h" />
     <ClInclude Include="src\Neon\Platform\Vulkan\VulkanFramebuffer.h" />
     <ClInclude Include="src\Neon\Renderer\Framebuffer.h" />
     <ClInclude Include="src\Neon\Renderer\IndexBuffer.h" />
+    <ClInclude Include="src\Neon\Renderer\PerspectiveCamera.h" />
+    <ClInclude Include="src\Neon\Renderer\PerspectiveCameraController.h" />
     <ClInclude Include="src\Neon\Renderer\RenderPass.h" />
     <ClInclude Include="src\Neon\Renderer\Pipeline.h" />
     <ClInclude Include="src\Neon\Core\Event\ApplicationEvent.h" />

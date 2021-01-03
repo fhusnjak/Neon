@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Neon/Core/Core.h"
+#include "PerspectiveCameraController.h"
 
 namespace Neon
 {
@@ -28,7 +29,7 @@ namespace Neon
 		virtual ~RendererAPI() = default;
 
 		virtual void Init() = 0;
-		virtual void Render() = 0;
+		virtual void Render(const SharedRef<PerspectiveCameraController>& camera) = 0;
 		virtual void Shutdown() = 0;
 
 		static RenderAPICapabilities& GetCapabilities()

@@ -37,6 +37,9 @@
     <ClCompile Include="src\Neon\Platform\Vulkan\VulkanIndexBuffer.cpp" />
     <ClCompile Include="src\Neon\Renderer\Framebuffer.cpp" />
     <ClCompile Include="src\Neon\Platform\Vulkan\VulkanFramebuffer.cpp" />
+    <ClCompile Include="src\Neon\Renderer\Mesh.cpp" />
+    <ClCompile Include="src\Neon\Renderer\PerspectiveCamera.cpp" />
+    <ClCompile Include="src\Neon\Renderer\PerspectiveCameraController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\neopch.h" />
@@ -91,6 +94,9 @@
     <ClInclude Include="src\Neon\Platform\Vulkan\VulkanIndexBuffer.h" />
     <ClInclude Include="src\Neon\Renderer\Framebuffer.h" />
     <ClInclude Include="src\Neon\Platform\Vulkan\VulkanFramebuffer.h" />
+    <ClInclude Include="src\Neon\Renderer\Mesh.h" />
+    <ClInclude Include="src\Neon\Renderer\PerspectiveCamera.h" />
+    <ClInclude Include="src\Neon\Renderer\PerspectiveCameraController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vendor\glfw-3.3.2\docs\html\search\all_0.html" />

@@ -44,7 +44,7 @@ namespace Neon
 		// DEPTH ATTACHMENT
 		if (m_Specification.HasDepth)
 		{
-			const vk::Format depthFormat = VulkanContext::GetDevice()->GetPhysicalDevice()->GetDepthFormat();
+			const vk::Format depthFormat = device->GetPhysicalDevice()->GetDepthFormat();
 
 			vk::AttachmentDescription depthDesc;
 			depthDesc.format = depthFormat;
@@ -92,4 +92,5 @@ namespace Neon
 
 		m_Handle = device->GetHandle().createRenderPassUnique(renderPassInfo);
 	}
+
 } // namespace Neon

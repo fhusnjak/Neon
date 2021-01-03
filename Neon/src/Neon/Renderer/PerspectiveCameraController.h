@@ -1,53 +1,50 @@
 #pragma once
 
-#include "Event/ApplicationEvent.h"
-#include "Event.h"
-#include "Event/ApplicationEvent.h"
-#include "Event/Event.h"
-#include "Event/KeyEvent.h"
-#include "KeyEvent.h"
+#include "Core/Event/ApplicationEvent.h"
+#include "Core/Event/Event.h"
+#include "Core/Event/KeyEvent.h"
 #include "PerspectiveCamera.h"
 
 namespace Neon
 {
-class PerspectiveCameraController
-{
-public:
-	explicit PerspectiveCameraController(float aspectRatio, bool rotation = false) noexcept;
-
-	void OnUpdate(float ts);
-	void OnEvent(Event& e);
-
-	PerspectiveCamera& GetCamera()
+	class PerspectiveCameraController : public RefCounted
 	{
-		return m_Camera;
-	}
+	public:
+		explicit PerspectiveCameraController(float aspectRatio, bool rotation = false) noexcept;
 
-	const PerspectiveCamera& GetCamera() const
-	{
-		return m_Camera;
-	}
+		void OnUpdate(float ts);
+		void OnEvent(Event& e);
 
-	float GetZoomLevel() const
-	{
-		return m_ZoomLevel;
-	}
+		PerspectiveCamera& GetCamera()
+		{
+			return m_Camera;
+		}
 
-	void SetZoomLevel(float level)
-	{
-		m_ZoomLevel = level;
-	}
+		const PerspectiveCamera& GetCamera() const
+		{
+			return m_Camera;
+		}
 
-private:
-	bool OnWindowResize(WindowResizeEvent& e);
-	bool OnKeyPress(KeyPressedEvent& e);
+		float GetZoomLevel() const
+		{
+			return m_ZoomLevel;
+		}
 
-private:
-	PerspectiveCamera m_Camera;
-	float m_AspectRatio;
-	bool m_Rotation = false;
-	float m_CameraSpeed = 0.02f;
-	float m_ZoomLevel = 1.0f;
-	bool m_Cursor = true;
-};
+		void SetZoomLevel(float level)
+		{
+			m_ZoomLevel = level;
+		}
+
+	private:
+		bool OnWindowResize(WindowResizeEvent& e);
+		bool OnKeyPress(KeyPressedEvent& e);
+
+	private:
+		PerspectiveCamera m_Camera;
+		float m_AspectRatio;
+		bool m_Rotation = false;
+		float m_CameraSpeed = 0.02f;
+		float m_ZoomLevel = 1.0f;
+		bool m_Cursor = true;
+	};
 } // namespace Neon
