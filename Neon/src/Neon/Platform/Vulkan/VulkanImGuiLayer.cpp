@@ -4,8 +4,8 @@
 #include "VulkanContext.h"
 #include "VulkanImGuiLayer.h"
 
-#include <examples/imgui_impl_glfw.h>
-#include <examples/imgui_impl_vulkan.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
 
 namespace Neon
 {

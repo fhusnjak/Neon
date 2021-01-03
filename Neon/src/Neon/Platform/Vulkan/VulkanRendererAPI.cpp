@@ -10,8 +10,8 @@
 
 #include <imgui/imgui.h>
 
-#include <examples/imgui_impl_glfw.h>
-#include <examples/imgui_impl_vulkan.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
 
 namespace Neon
 {
@@ -60,7 +60,7 @@ namespace Neon
 		vk::PhysicalDeviceProperties props = VulkanContext::GetDevice()->GetPhysicalDevice()->GetProperties();
 
 		RendererAPI::RenderAPICapabilities& caps = RendererAPI::GetCapabilities();
-		caps.Vendor = props.deviceName;
+		//caps.Vendor = props.deviceName;
 		caps.Renderer = "Vulkan";
 		caps.Version = "1.0";
 
@@ -145,8 +145,8 @@ namespace Neon
 		renderCommandBuffer.endRenderPass();
 
 		ImGui::Begin("Viewport");
-		ImGui::Image(s_TestFramebuffers[swapChain.GetCurrentFrameIndex()]->GetColorImageID(),
-					 ImVec2{static_cast<float>(width), static_cast<float>(height)});
+		//ImGui::Image(s_TestFramebuffers[swapChain.GetCurrentFrameIndex()]->GetColorImageID(),
+		//			 ImVec2{static_cast<float>(width), static_cast<float>(height)});
 		ImGui::End();
 
 		ImGui::End();

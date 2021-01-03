@@ -197,7 +197,7 @@ namespace Neon
 		m_Handle = m_Device->GetHandle().createSwapchainKHR(swapchainCreateInfo);
 
 		// Cleanup old swap chain
-		if (oldSwapchain != VK_NULL_HANDLE)
+		if (oldSwapchain)
 		{
 			for (auto& buffer : m_Buffers)
 			{
@@ -391,7 +391,7 @@ namespace Neon
 		presentInfo.pSwapchains = &m_Handle;
 		presentInfo.pImageIndices = &imageIndex;
 		// Check if a wait semaphore has been specified to wait for before presenting the image
-		if (waitSemaphore != VK_NULL_HANDLE)
+		if (waitSemaphore)
 		{
 			presentInfo.waitSemaphoreCount = 1;
 			presentInfo.pWaitSemaphores = &waitSemaphore;

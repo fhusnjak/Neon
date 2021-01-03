@@ -26,7 +26,7 @@ namespace Neon
 		// Create the pipeline layout that is used to generate the rendering pipelines that are based on this descriptor set layout
 		// In a more complex scenario you would have different pipeline layouts for different descriptor set layouts that could be reused
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
-		if (descriptorSetLayout != VK_NULL_HANDLE)
+		if (descriptorSetLayout)
 		{
 			pPipelineLayoutCreateInfo.setLayoutCount = 1;
 			pPipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
