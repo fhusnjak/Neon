@@ -64,7 +64,8 @@ namespace Neon
 		caps.Renderer = "Vulkan";
 		caps.Version = "1.0";
 
-		std::vector<UniformBinding> bindings = {{0, UniformType::UniformBuffer, 1, sizeof(CameraMatrices), ShaderStageFlag::Vertex}};
+		std::vector<UniformBinding> bindings = {
+			{0, UniformType::UniformBuffer, 1, sizeof(CameraMatrices), ShaderStageFlag::Vertex}};
 
 		s_TestShader = Shader::Create(bindings).As<VulkanShader>();
 		s_TestShader->LoadShader("C:/VisualStudioProjects/Neon/Neon/src/Shaders/build/test_vert.spv", ShaderType::Vertex);
@@ -145,8 +146,8 @@ namespace Neon
 		renderCommandBuffer.endRenderPass();
 
 		ImGui::Begin("Viewport");
-		//ImGui::Image(s_TestFramebuffers[swapChain.GetCurrentFrameIndex()]->GetColorImageID(),
-		//			 ImVec2{static_cast<float>(width), static_cast<float>(height)});
+		ImGui::Image(s_TestFramebuffers[swapChain.GetCurrentFrameIndex()]->GetColorImageID(),
+					 ImVec2{static_cast<float>(width), static_cast<float>(height)});
 		ImGui::End();
 
 		ImGui::End();

@@ -15,7 +15,7 @@ namespace Neon
 	{
 		m_VulkanRenderPass = m_Specification.Pass.As<VulkanRenderPass>()->GetHandle();
 
-		//m_ColorImageId = ImGui_ImplVulkan_CreateTexture();
+		m_ColorImageId = ImGui_ImplVulkan_CreateTexture();
 
 		Resize(spec.Width, spec.Height, true);
 	}
@@ -148,8 +148,8 @@ namespace Neon
 			m_DescriptorImageInfo.imageView = m_ColorAttachment.View.get();
 			m_DescriptorImageInfo.sampler = m_ColorAttachmentSampler.get();
 
-			//ImGui_ImplVulkan_UpdateTexture(m_ColorImageId, m_ColorAttachmentSampler.get(), m_ColorAttachment.View.get(),
-			//							   (VkImageLayout)m_DescriptorImageInfo.imageLayout);
+			ImGui_ImplVulkan_UpdateTexture(m_ColorImageId, m_ColorAttachmentSampler.get(), m_ColorAttachment.View.get(),
+										   (VkImageLayout)m_DescriptorImageInfo.imageLayout);
 		}
 		else
 		{
