@@ -9,7 +9,7 @@ namespace Neon
 	{
 	public:
 		VulkanFramebuffer(const FramebufferSpecification& spec);
-		~VulkanFramebuffer() = default;
+		~VulkanFramebuffer();
 		void Resize(uint32 width, uint32 height, bool forceRecreate = false) override;
 
 		vk::Framebuffer GetHandle() const
@@ -32,7 +32,7 @@ namespace Neon
 
 		FrameBufferAttachment m_ColorAttachment;
 		FrameBufferAttachment m_DepthAttachment;
-		vk::RenderPass m_VulkanRenderPass;
+		vk::RenderPass m_RenderPass;
 		vk::UniqueSampler m_ColorAttachmentSampler;
 		vk::UniqueFramebuffer m_Handle;
 		vk::DescriptorImageInfo m_DescriptorImageInfo;

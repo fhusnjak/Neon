@@ -4,6 +4,8 @@
 
 #include <GLFW/glfw3.h>
 
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
+
 namespace Neon
 {
 	static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugReportCallback(VkDebugReportFlagsEXT flags,
@@ -18,6 +20,10 @@ namespace Neon
 	VulkanContext::VulkanContext(GLFWwindow* windowHandle)
 		: m_WindowHandle(windowHandle)
 	{
+		vk::DynamicLoader dl;
+		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+
 		NEO_CORE_ASSERT(glfwVulkanSupported(), "Vulkan is not supported");
 
 		uint32_t glfwExtensionCount = 0;
@@ -40,7 +46,7 @@ namespace Neon
 			NEO_CORE_ASSERT(found, "Not all required instance extensions are supported");
 		}
 
-		vk::ApplicationInfo applicationInfo("Neon", 1, "Vulkan engine", 1, VK_API_VERSION_1_0);
+		vk::ApplicationInfo applicationInfo("Neon", 1, "Vulkan engine", 1, VK_API_VERSION_1_2);
 #ifdef NEO_DEBUG
 		vk::InstanceCreateInfo instanceCreateInfo({}, &applicationInfo, static_cast<uint32>(m_ValidationLayers.size()),
 												  m_ValidationLayers.data(), static_cast<uint32>(m_InstanceExtensions.size()),
@@ -51,16 +57,19 @@ namespace Neon
 #endif
 		s_Instance = vk::createInstanceUnique(instanceCreateInfo);
 
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(s_Instance.get());
+
 		vk::DebugReportCallbackCreateInfoEXT debugReportCreateInfo = {};
 		debugReportCreateInfo.flags = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning |
 									  vk::DebugReportFlagBitsEXT::ePerformanceWarning;
 		debugReportCreateInfo.pfnCallback = VulkanDebugReportCallback;
 
-		vk::DispatchLoaderDynamic dldi(s_Instance.get(), vkGetInstanceProcAddr);
-		m_DebugReportCallback = s_Instance.get().createDebugReportCallbackEXT(debugReportCreateInfo, nullptr, dldi);
+		m_DebugReportCallback = s_Instance.get().createDebugReportCallbackEXTUnique(debugReportCreateInfo, nullptr);
 
 		m_PhysicalDevice = VulkanPhysicalDevice::Select();
 		m_Device = VulkanDevice::Create(m_PhysicalDevice);
+
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(m_Device->GetHandle());
 
 		m_SwapChain.Init(s_Instance.get(), m_Device);
 		m_SwapChain.InitSurface(m_WindowHandle);

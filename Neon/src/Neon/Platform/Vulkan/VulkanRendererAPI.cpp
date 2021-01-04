@@ -200,13 +200,13 @@ namespace Neon
 	void VulkanRendererAPI::Shutdown()
 	{
 		VulkanContext::GetDevice()->GetHandle().waitIdle();
-		for (auto& cmdBuff : s_ImGuiCommandBuffers)
-		{
-			VulkanContext::GetDevice()->GetHandle().freeCommandBuffers(VulkanContext::GetDevice()->GetCommandPool(), cmdBuff);
-		}
+		s_ImGuiCommandBuffers.clear();
 		s_TestPipeline.Reset();
 		s_TestVertexBuffer.Reset();
+		s_TestIndexBuffer.Reset();
 		s_TestShader.Reset();
+		s_TestFramebuffers.clear();
+		s_TestRenderPass.Reset();
 	}
 
 } // namespace Neon

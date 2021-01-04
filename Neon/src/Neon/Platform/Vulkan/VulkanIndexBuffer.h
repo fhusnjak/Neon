@@ -19,6 +19,5 @@ namespace Neon
 
 	private:
 		VulkanBuffer m_Buffer;
-		vk::DeviceMemory m_DeviceMemory;
 	};
 } // namespace Neon

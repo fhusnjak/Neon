@@ -52,10 +52,11 @@ namespace Neon
 
 		inline static vk::UniqueInstance s_Instance;
 
-		vk::DebugReportCallbackEXT m_DebugReportCallback;
+		vk::UniqueDebugReportCallbackEXT m_DebugReportCallback;
+
+		SharedRef<VulkanDevice> m_Device;
 
 		SharedRef<VulkanPhysicalDevice> m_PhysicalDevice;
-		SharedRef<VulkanDevice> m_Device;
 
 		VulkanSwapChain m_SwapChain;
 

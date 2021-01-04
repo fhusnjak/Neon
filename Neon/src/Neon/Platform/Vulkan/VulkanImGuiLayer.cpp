@@ -73,28 +73,25 @@ namespace Neon
 		auto vulkanContext = VulkanContext::Get();
 		auto device = VulkanContext::GetDevice();
 
-		VkDescriptorPool descriptorPool;
-
 		// Create Descriptor Pool
-		VkDescriptorPoolSize poolSizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
-											{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
-											{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
-											{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
-											{VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
-											{VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
-											{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
-											{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
-											{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
-											{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
-											{VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
-		VkDescriptorPoolCreateInfo imguiPoolCreateInfo = {};
-		imguiPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		imguiPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+		vk::DescriptorPoolSize poolSizes[] = {{vk::DescriptorType::eSampler, 1000},
+											  {vk::DescriptorType::eCombinedImageSampler, 1000},
+											  {vk::DescriptorType::eSampledImage, 1000},
+											  {vk::DescriptorType::eStorageImage, 1000},
+											  {vk::DescriptorType::eUniformTexelBuffer, 1000},
+											  {vk::DescriptorType::eStorageTexelBuffer, 1000},
+											  {vk::DescriptorType::eUniformBuffer, 1000},
+											  {vk::DescriptorType::eStorageBuffer, 1000},
+											  {vk::DescriptorType::eUniformBufferDynamic, 1000},
+											  {vk::DescriptorType::eStorageBufferDynamic, 1000},
+											  {vk::DescriptorType::eInputAttachment, 1000}};
+		vk::DescriptorPoolCreateInfo imguiPoolCreateInfo = {};
+		imguiPoolCreateInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
 		imguiPoolCreateInfo.maxSets = 1000 * IM_ARRAYSIZE(poolSizes);
 		imguiPoolCreateInfo.poolSizeCount = (uint32)IM_ARRAYSIZE(poolSizes);
 		imguiPoolCreateInfo.pPoolSizes = poolSizes;
-		auto err = vkCreateDescriptorPool(device->GetHandle(), &imguiPoolCreateInfo, nullptr, &descriptorPool);
-		CheckVkResult(err);
+
+		m_ImGuiDescPool = device->GetHandle().createDescriptorPoolUnique(imguiPoolCreateInfo);
 
 		// Setup Platform/Renderer bindings
 		ImGui_ImplGlfw_InitForVulkan(window, true);
@@ -105,7 +102,7 @@ namespace Neon
 		imguiInitInfo.QueueFamily = device->GetPhysicalDevice()->GetGraphicsQueueIndex();
 		imguiInitInfo.Queue = device->GetGraphicsQueue();
 		imguiInitInfo.PipelineCache = nullptr;
-		imguiInitInfo.DescriptorPool = descriptorPool;
+		imguiInitInfo.DescriptorPool = m_ImGuiDescPool.get();
 		imguiInitInfo.Allocator = nullptr;
 		imguiInitInfo.MinImageCount = 2;
 		imguiInitInfo.ImageCount = vulkanContext->GetSwapChain().GetImageCount();
@@ -132,8 +129,7 @@ namespace Neon
 		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
 		VulkanContext::GetDevice()->FlushCommandBuffer(commandBuffer);
 
-		err = vkDeviceWaitIdle(device->GetHandle());
-		CheckVkResult(err);
+		device->GetHandle().waitIdle();
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}
 
@@ -141,8 +137,7 @@ namespace Neon
 	{
 		auto device = VulkanContext::GetDevice()->GetHandle();
 
-		auto err = vkDeviceWaitIdle(device);
-		CheckVkResult(err);
+		device.waitIdle();
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();

@@ -13,11 +13,16 @@ namespace Neon
 	VulkanFramebuffer::VulkanFramebuffer(const FramebufferSpecification& spec)
 		: Framebuffer(spec)
 	{
-		m_VulkanRenderPass = m_Specification.Pass.As<VulkanRenderPass>()->GetHandle();
+		m_RenderPass = m_Specification.Pass.As<VulkanRenderPass>()->GetHandle();
 
 		m_ColorImageId = ImGui_ImplVulkan_CreateTexture();
 
 		Resize(spec.Width, spec.Height, true);
+	}
+
+	VulkanFramebuffer::~VulkanFramebuffer()
+	{
+		ImGui_ImplVulkan_DestroyTexture(m_ColorImageId);
 	}
 
 	void VulkanFramebuffer::Resize(uint32 width, uint32 height, bool forceRecreate /*= false*/)
@@ -134,7 +139,7 @@ namespace Neon
 			}
 
 			vk::FramebufferCreateInfo framebufferCreateInfo = {};
-			framebufferCreateInfo.renderPass = m_VulkanRenderPass;
+			framebufferCreateInfo.renderPass = m_RenderPass;
 			framebufferCreateInfo.attachmentCount = static_cast<uint32>(attachments.size());
 			framebufferCreateInfo.pAttachments = attachments.data();
 			framebufferCreateInfo.width = width;
@@ -154,7 +159,7 @@ namespace Neon
 		else
 		{
 			const VulkanSwapChain& swapChain = VulkanContext::Get()->GetSwapChain();
-			m_VulkanRenderPass = swapChain.GetRenderPass();
+			m_RenderPass = swapChain.GetRenderPass();
 		}
 	}
 } // namespace Neon

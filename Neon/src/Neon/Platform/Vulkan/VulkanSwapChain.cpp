@@ -9,6 +9,7 @@ namespace Neon
 {
 	VulkanSwapChain::~VulkanSwapChain()
 	{
+		m_Device->GetHandle().waitIdle();
 		m_Device->GetHandle().destroySwapchainKHR(m_Handle);
 	}
 
