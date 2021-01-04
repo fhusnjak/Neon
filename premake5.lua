@@ -13,7 +13,7 @@ workspace "Neon"
 		"MultiProcessorCompile"
 	}
 
-	startproject "Sandbox"
+	startproject "NeonEditor"
 	
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
@@ -94,8 +94,8 @@ project "Neon"
 		optimize "On"
 
 group "Tools"
-project "Sandbox"
-	location "Sandbox"
+project "NeonEditor"
+	location "NeonEditor"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"

@@ -12,9 +12,6 @@ namespace Neon
 		uint32 Height = 1080;
 		SharedRef<RenderPass> Pass;
 		glm::vec4 ClearColor = {1.f, 1.f, 1.f, 1.f};
-
-		// Is screen target
-		bool SwapChainTarget = false;
 	};
 
 	class Framebuffer : public RefCounted

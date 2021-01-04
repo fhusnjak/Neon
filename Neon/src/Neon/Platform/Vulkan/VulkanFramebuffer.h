@@ -9,7 +9,7 @@ namespace Neon
 	{
 	public:
 		VulkanFramebuffer(const FramebufferSpecification& spec);
-		~VulkanFramebuffer();
+		~VulkanFramebuffer() = default;
 		void Resize(uint32 width, uint32 height, bool forceRecreate = false) override;
 
 		vk::Framebuffer GetHandle() const
@@ -19,7 +19,7 @@ namespace Neon
 
 		void* GetColorImageID() const override
 		{
-			return m_ColorImageId;
+			return m_ColorImageDescSet.get();
 		}
 
 	private:
@@ -37,6 +37,8 @@ namespace Neon
 		vk::UniqueFramebuffer m_Handle;
 		vk::DescriptorImageInfo m_DescriptorImageInfo;
 
-		VkDescriptorSet m_ColorImageId;
+		vk::UniqueDescriptorPool m_DescPool;
+		vk::UniqueDescriptorSetLayout m_ColorImageDescSetLayout;
+		vk::UniqueDescriptorSet m_ColorImageDescSet;
 	};
 } // namespace Neon

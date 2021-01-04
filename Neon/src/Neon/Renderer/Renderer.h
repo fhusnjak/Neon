@@ -12,7 +12,7 @@ namespace Neon
 	public:
 		static void Init();
 
-		static void Render(const SharedRef<PerspectiveCameraController>& camera);
+		static void Render(SharedRef<PerspectiveCameraController>& camera);
 
 		static void Shutdown();
 
@@ -24,6 +24,11 @@ namespace Neon
 		static SharedRef<RendererContext> GetContext()
 		{
 			return Application::Get().GetWindow().GetRenderContext();
+		}
+
+		static void* GetColorImageId()
+		{
+			return s_RendererAPI->GetColorImageId();
 		}
 
 	private:

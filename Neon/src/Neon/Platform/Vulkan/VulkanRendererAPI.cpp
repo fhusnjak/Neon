@@ -60,7 +60,7 @@ namespace Neon
 		vk::PhysicalDeviceProperties props = VulkanContext::GetDevice()->GetPhysicalDevice()->GetProperties();
 
 		RendererAPI::RenderAPICapabilities& caps = RendererAPI::GetCapabilities();
-		//caps.Vendor = props.deviceName;
+		caps.Vendor = props.deviceName.operator std::string();
 		caps.Renderer = "Vulkan";
 		caps.Version = "1.0";
 
@@ -83,23 +83,23 @@ namespace Neon
 		s_TestPipeline = Pipeline::Create(pipelineSpecification).As<VulkanPipeline>();
 	}
 
-	void VulkanRendererAPI::Render(const SharedRef<PerspectiveCameraController>& camera)
+	void VulkanRendererAPI::Render(SharedRef<PerspectiveCameraController>& camera)
 	{
+		const VulkanSwapChain& swapChain = VulkanContext::Get()->GetSwapChain();
+		uint32 width = swapChain.GetWidth();
+		uint32 height = swapChain.GetHeight();
+
 		CameraMatrices cameraMatrices = {};
 		cameraMatrices.View = camera->GetCamera().GetViewMatrix();
 		cameraMatrices.Projection = camera->GetCamera().GetProjectionMatrix();
 		s_TestShader->SetUniformBuffer(0, 0, &cameraMatrices);
 
-		const VulkanSwapChain& swapChain = VulkanContext::Get()->GetSwapChain();
 		vk::CommandBuffer renderCommandBuffer = swapChain.GetCurrentDrawCommandBuffer();
 
 		vk::ClearValue clearValues[2];
 		std::array<float, 4> clearColor = {0.2f, 0.2f, 0.2f, 1.0f};
 		clearValues[0].color = vk::ClearColorValue(clearColor);
 		clearValues[1].depthStencil = {1.0f, 0};
-
-		uint32_t width = swapChain.GetWidth();
-		uint32_t height = swapChain.GetHeight();
 
 		vk::CommandBufferBeginInfo beginInfo{vk::CommandBufferUsageFlagBits::eOneTimeSubmit};
 		renderCommandBuffer.begin(beginInfo);
@@ -117,24 +117,24 @@ namespace Neon
 		renderCommandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 		// Update dynamic viewport state
-		vk::Viewport viewport = {};
-		viewport.x = 0.f;
-		viewport.y = 0.f;
-		viewport.height = (float)height;
-		viewport.width = (float)width;
-		viewport.minDepth = 0.f;
-		viewport.maxDepth = 1.f;
+		vk::Viewport sceneViewport = {};
+		sceneViewport.x = 0.f;
+		sceneViewport.y = 0.f;
+		sceneViewport.width = (float)width;
+		sceneViewport.height = (float)height;
+		sceneViewport.minDepth = 0.f;
+		sceneViewport.maxDepth = 1.f;
 
-		renderCommandBuffer.setViewport(0, 1, &viewport);
+		renderCommandBuffer.setViewport(0, 1, &sceneViewport);
 
 		// Update dynamic scissor state
-		vk::Rect2D scissor = {};
-		scissor.offset.x = 0;
-		scissor.offset.y = 0;
-		scissor.extent.width = width;
-		scissor.extent.height = height;
+		vk::Rect2D sceneCcissor = {};
+		sceneCcissor.offset.x = 0;
+		sceneCcissor.offset.y = 0;
+		sceneCcissor.extent.width = width;
+		sceneCcissor.extent.height = height;
 
-		renderCommandBuffer.setScissor(0, 1, &scissor);
+		renderCommandBuffer.setScissor(0, 1, &sceneCcissor);
 
 		renderCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetHandle());
 		renderCommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, s_TestPipeline->GetLayout(), 0, 1,
@@ -145,15 +145,26 @@ namespace Neon
 
 		renderCommandBuffer.endRenderPass();
 
-		ImGui::Begin("Viewport");
-		ImGui::Image(s_TestFramebuffers[swapChain.GetCurrentFrameIndex()]->GetColorImageID(),
-					 ImVec2{static_cast<float>(width), static_cast<float>(height)});
-		ImGui::End();
-
-		ImGui::End();
-
 		// ImGui Pass
 		{
+			// Update dynamic viewport state
+			vk::Viewport viewport = {};
+			viewport.x = 0.f;
+			viewport.y = 0.f;
+			viewport.width = (float)width;
+			viewport.height = (float)height;
+			viewport.minDepth = 0.f;
+			viewport.maxDepth = 1.f;
+
+			renderCommandBuffer.setViewport(0, 1, &viewport);
+
+			// Update dynamic scissor state
+			vk::Rect2D scissor = {};
+			scissor.offset.x = 0;
+			scissor.offset.y = 0;
+			scissor.extent.width = width;
+			scissor.extent.height = height;
+
 			vk::RenderPassBeginInfo renderPassBeginInfo = {};
 			renderPassBeginInfo.renderPass = swapChain.GetRenderPass();
 			renderPassBeginInfo.renderArea.offset.x = 0;
@@ -195,6 +206,12 @@ namespace Neon
 		}
 
 		renderCommandBuffer.end();
+	}
+
+	void* VulkanRendererAPI::GetColorImageId()
+	{
+		const VulkanSwapChain& swapChain = VulkanContext::Get()->GetSwapChain();
+		return s_TestFramebuffers[swapChain.GetCurrentFrameIndex()]->GetColorImageID();
 	}
 
 	void VulkanRendererAPI::Shutdown()

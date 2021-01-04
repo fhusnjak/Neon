@@ -10,7 +10,7 @@ namespace Neon
 		s_RendererAPI->Init();
 	}
 
-	void Renderer::Render(const SharedRef<PerspectiveCameraController>& camera)
+	void Renderer::Render(SharedRef<PerspectiveCameraController>& camera)
 	{
 		NEO_CORE_ASSERT(s_RendererAPI, "Renderer API not selected!");
 		s_RendererAPI->Render(camera);

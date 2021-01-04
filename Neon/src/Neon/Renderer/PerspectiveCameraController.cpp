@@ -50,6 +50,14 @@ namespace Neon
 		dispatcher.Dispatch<KeyPressedEvent>([this](KeyPressedEvent& e) { return OnKeyPress(e); });
 	}
 
+	void PerspectiveCameraController::WindowResize(float width, float height)
+	{
+		if (width == 0 || height == 0)
+			return;
+		m_AspectRatio = width / height;
+		m_Camera.SetProjection(glm::radians(45.0f), m_AspectRatio, 0.1f, 10000.0f);
+	}
+
 	bool PerspectiveCameraController::OnWindowResize(WindowResizeEvent& e)
 	{
 		if (e.GetWidth() == 0 || e.GetHeight() == 0)

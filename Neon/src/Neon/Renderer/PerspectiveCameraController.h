@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Core/Event/ApplicationEvent.h"
-#include "Core/Event/Event.h"
-#include "Core/Event/KeyEvent.h"
+#include "Neon/Core/Event/ApplicationEvent.h"
+#include "Neon/Core/Event/Event.h"
+#include "Neon/Core/Event/KeyEvent.h"
 #include "PerspectiveCamera.h"
 
 namespace Neon
@@ -34,6 +34,8 @@ namespace Neon
 		{
 			m_ZoomLevel = level;
 		}
+
+		void WindowResize(float width, float height);
 
 	private:
 		bool OnWindowResize(WindowResizeEvent& e);
